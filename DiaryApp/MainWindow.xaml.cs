@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.IO;
+using System;
 using System.Text.Json;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -11,7 +12,7 @@ namespace DiaryApp;
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.0.1.6";
+    public const string VERSION = "0.0.1.13";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -20,6 +21,13 @@ public partial class MainWindow : Window
 {
     private ObservableCollection<DiaryEntry> _diaries = new ObservableCollection<DiaryEntry>();
     private const string DATA_FILE = "diaries.json";
+    
+    // 获取应用数据文件的完整路径
+    private string GetDataFilePath()
+    {
+        var appDir = AppDomain.CurrentDomain.BaseDirectory;
+        return Path.Combine(appDir, DATA_FILE);
+    }
     private DiaryEntry? _currentEntry;
 
     public MainWindow()
@@ -38,12 +46,18 @@ public partial class MainWindow : Window
 
     private void LoadDiaries()
     {
-        if (File.Exists(DATA_FILE))
+        var dataFile = GetDataFilePath();
+        if (File.Exists(dataFile))
         {
             try 
             {
-                var json = File.ReadAllText(DATA_FILE);
-                var list = JsonSerializer.Deserialize<List<DiaryEntry>>(json);
+                var json = File.ReadAllText(dataFile);
+                var options = new JsonSerializerOptions 
+                { 
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+                var list = JsonSerializer.Deserialize<List<DiaryEntry>>(json, options);
                 if (list != null)
                 {
                     _diaries.Clear();
@@ -59,9 +73,23 @@ public partial class MainWindow : Window
 
     private void SaveDiaries()
     {
-        var options = new JsonSerializerOptions { WriteIndented = true };
-        var json = JsonSerializer.Serialize(_diaries, options);
-        File.WriteAllText(DATA_FILE, json);
+        try
+        {
+            var options = new JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            var json = JsonSerializer.Serialize(_diaries, options);
+            var dataFile = GetDataFilePath();
+            File.WriteAllText(dataFile, json);
+        }
+        catch (Exception ex)
+        {
+            // 保存失败时，记录错误但不中断用户操作
+            System.Diagnostics.Debug.WriteLine($"保存失败: {ex.Message}");
+            throw; // 重新抛出异常，让调用者决定如何处理
+        }
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -209,14 +237,21 @@ public partial class MainWindow : Window
 
                     if (result == MessageBoxResult.Yes)
                     {
-                        _diaries.Clear();
-                        foreach (var entry in restoredDiaries.OrderByDescending(d => d.CreatedAt))
+                        try
                         {
-                            _diaries.Add(entry);
+                            _diaries.Clear();
+                            foreach (var entry in restoredDiaries.OrderByDescending(d => d.CreatedAt))
+                            {
+                                _diaries.Add(entry);
+                            }
+                            
+                            SaveDiaries();
+                            MessageBox.Show("数据导入成功！", "成功");
                         }
-                        
-                        SaveDiaries();
-                        MessageBox.Show("数据导入成功！", "成功");
+                        catch (Exception saveEx)
+                        {
+                            MessageBox.Show($"数据导入成功，但保存到本地文件失败：{saveEx.Message}\n\n数据将在程序重启时丢失。\n请检查程序目录的写权限。", "部分成功", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        }
                     }
                 }
                 else

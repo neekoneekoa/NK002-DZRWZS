@@ -91,8 +91,14 @@ public static class BackupManager
     {
         try
         {
+            var options = new JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            
             var json = File.ReadAllText(filepath, Encoding.UTF8);
-            var backupData = JsonSerializer.Deserialize<BackupData>(json);
+            var backupData = JsonSerializer.Deserialize<BackupData>(json, options);
             
             if (backupData?.Info == null)
                 return false;
@@ -100,12 +106,6 @@ public static class BackupManager
             // 重新计算校验和 - 使用与创建备份时相同的序列化选项
             var originalChecksum = backupData.Info.Checksum;
             backupData.Info.Checksum = "";
-            
-            var options = new JsonSerializerOptions 
-            { 
-                WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
             
             var recomputedJson = JsonSerializer.Serialize(backupData, options);
             var recomputedChecksum = CalculateChecksum(recomputedJson);
@@ -126,8 +126,14 @@ public static class BackupManager
 
         try
         {
+            var options = new JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            
             var json = File.ReadAllText(filepath, Encoding.UTF8);
-            var backupData = JsonSerializer.Deserialize<BackupData>(json);
+            var backupData = JsonSerializer.Deserialize<BackupData>(json, options);
             return backupData?.Diaries;
         }
         catch
@@ -149,8 +155,14 @@ public static class BackupManager
         {
             try
             {
+                var options = new JsonSerializerOptions 
+                { 
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+                
                 var json = File.ReadAllText(file, Encoding.UTF8);
-                var backupData = JsonSerializer.Deserialize<BackupData>(json);
+                var backupData = JsonSerializer.Deserialize<BackupData>(json, options);
                 if (backupData?.Info != null)
                 {
                     backups.Add((file, backupData.Info));
