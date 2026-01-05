@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // 如果已更改目标框架，请确保更新程序路径。
-            "program": "${workspaceFolder}/DiaryApp/bin/Debug/net8.0-windows/DiaryApp.dll",
+            "program": "${workspaceFolder}/DiaryApp/bin/Release/net8.0-windows/DiaryApp.dll",
             "args": [],
             "cwd": "${workspaceFolder}/DiaryApp",
             // 有关“控制台”字段的详细信息，请参阅 https://aka.ms/VSCode-CS-LaunchJson-Console
