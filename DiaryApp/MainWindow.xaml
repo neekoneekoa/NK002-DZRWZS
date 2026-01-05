@@ -58,6 +58,9 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- 转换器 -->
+        <local:PriorityToColorConverter x:Key="PriorityToColorConverter"/>
     </Window.Resources>
 
     <Border CornerRadius="20" Background="#FDFDFD" Margin="20">
@@ -66,77 +69,552 @@
         </Border.Effect>
         
         <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="250"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+            <!-- 窗口控制按钮 -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,20,20,0">
+                <Button Content="⚙" Width="30" Height="30" Click="SettingsButton_Click" Background="Transparent" BorderThickness="0" Foreground="#74B9FF" FontSize="14" FontWeight="Bold" ToolTip="设置"/>
+                <Button Content="—" Width="30" Height="30" Click="MinimizeButton_Click" Background="Transparent" BorderThickness="0" Foreground="#B2BEC3" FontSize="16"/>
+                <Button Content="✕" Width="30" Height="30" Click="CloseButton_Click" Background="Transparent" BorderThickness="0" Foreground="#FF7675" FontSize="16" FontWeight="Bold"/>
+            </StackPanel>
 
-            <!-- 左侧面板 -->
-            <Border Grid.Column="0" CornerRadius="20,0,0,20" Background="#F0F3F8">
-                <Grid Margin="20">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- App 标题 -->
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
-                        <Ellipse Width="15" Height="15" Fill="#FF7675" Margin="0,0,10,0"/>
-                        <TextBlock Text="MoeDiary" FontSize="20" FontWeight="Bold" Foreground="#2D3436" FontFamily="Segoe UI"/>
-                    </StackPanel>
-
-                    <!-- 日记列表 -->
-                    <ListBox Grid.Row="1" x:Name="DiaryListBox" 
-                             Background="Transparent" BorderThickness="0" 
-                             ItemContainerStyle="{StaticResource DiaryItemStyle}"
-                             SelectionChanged="DiaryListBox_SelectionChanged">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Foreground="#2D3436"/>
-                                    <TextBlock Text="{Binding DateStr}" FontSize="12" Foreground="#636E72" Margin="0,4,0,0"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                    
-                    <!-- 新建按钮 (悬浮在列表下方) -->
-                    <Button Grid.Row="1" Width="50" Height="50" HorizontalAlignment="Right" VerticalAlignment="Bottom" 
-                            Style="{StaticResource RoundButtonStyle}" Click="NewButton_Click" Margin="0,0,10,10">
-                        <TextBlock Text="+" FontSize="24"/>
-                    </Button>
-                </Grid>
-            </Border>
-
-            <!-- 右侧内容区域 -->
-            <Grid Grid.Column="1" Margin="30">
+            <!-- 主内容区域 -->
+            <Grid Margin="20,70,20,20">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/> <!-- 顶部控制栏 -->
-                    <RowDefinition Height="Auto"/> <!-- 标题输入 -->
-                    <RowDefinition Height="*"/>    <!-- 内容输入 -->
-                    <RowDefinition Height="Auto"/> <!-- 底部按钮 -->
+                    <RowDefinition Height="Auto"/> <!-- 模块标题栏 -->
+                    <RowDefinition Height="*"/>    <!-- 内容区域 -->
                 </Grid.RowDefinitions>
 
-                <!-- 窗口控制按钮 -->
-                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="⚙" Width="30" Height="30" Click="SettingsButton_Click" Background="Transparent" BorderThickness="0" Foreground="#74B9FF" FontSize="14" FontWeight="Bold" ToolTip="设置"/>
-                    <Button Content="—" Width="30" Height="30" Click="MinimizeButton_Click" Background="Transparent" BorderThickness="0" Foreground="#B2BEC3" FontSize="16"/>
-                    <Button Content="✕" Width="30" Height="30" Click="CloseButton_Click" Background="Transparent" BorderThickness="0" Foreground="#FF7675" FontSize="16" FontWeight="Bold"/>
-                </StackPanel>
+                <!-- 模块标签页 -->
+                <TabControl x:Name="MainTabControl" Grid.Row="1" Background="Transparent" BorderThickness="0">
+                    <TabControl.Resources>
+                        <Style TargetType="TabItem">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="TabItem">
+                                        <Grid>
+                                            <Border x:Name="border" Background="Transparent" CornerRadius="10" Padding="20,8">
+                                                <ContentPresenter x:Name="contentSite"
+                                                                VerticalAlignment="Center"
+                                                                HorizontalAlignment="Center"
+                                                                ContentSource="Header"
+                                                                Margin="10,5"/>
+                                            </Border>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="border" Property="Background" Value="#6C5CE7"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="border" Property="Background" Value="#A29BFE"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="False">
+                                                <Setter Property="Foreground" Value="#636E72"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </TabControl.Resources>
 
-                <!-- 标题输入 -->
-                <TextBox Grid.Row="1" x:Name="TitleTextBox" 
-                         Text="今天的心情..." FontSize="24" FontWeight="Bold" Foreground="#2D3436"
-                         BorderThickness="0" Background="Transparent" Margin="0,10,0,20"/>
+                    <!-- 日记模块 -->
+                    <TabItem Header="📝 日记">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="250"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                <!-- 内容输入 -->
-                <TextBox Grid.Row="2" x:Name="ContentTextBox"
-                         Text="写点什么吧..." FontSize="16" Foreground="#636E72"
-                         AcceptsReturn="True" TextWrapping="Wrap"
-                         BorderThickness="0" Background="Transparent" VerticalScrollBarVisibility="Auto"/>
+                            <!-- 日记列表面板 -->
+                            <Border Grid.Column="0" CornerRadius="15" Background="#F0F3F8" Margin="0,0,10,0">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- 搜索框 -->
+                                    <TextBox Grid.Row="0" x:Name="DiarySearchBox" 
+                                             FontSize="14"
+                                             BorderThickness="0" Background="White"
+                                             Padding="10,8" Margin="0,0,0,10" TextChanged="DiarySearchBox_TextChanged"/>
+                                    
+                                    <!-- 模块标题 -->
+                                    <TextBlock Grid.Row="1" Text="我的日记" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
+
+                                    <!-- 日记列表 -->
+                                    <ListBox Grid.Row="2" x:Name="DiaryListBox" 
+                                             Background="Transparent" BorderThickness="0" 
+                                             ItemContainerStyle="{StaticResource DiaryItemStyle}"
+                                             SelectionChanged="DiaryListBox_SelectionChanged">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Foreground="#2D3436"/>
+                                                    <TextBlock Text="{Binding DateStr}" FontSize="12" Foreground="#636E72" Margin="0,4,0,0"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                    
+                                    <!-- 新建按钮 -->
+                                    <Button Grid.Row="2" Width="50" Height="50" HorizontalAlignment="Right" VerticalAlignment="Bottom" 
+                                            Style="{StaticResource RoundButtonStyle}" Click="NewDiaryButton_Click" Margin="0,0,5,5">
+                                        <TextBlock Text="+" FontSize="24"/>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <!-- 日记编辑面板 -->
+                            <Border Grid.Column="1" CornerRadius="15" Background="#FFFFFF" Padding="25">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/> <!-- 标题输入 -->
+                                        <RowDefinition Height="Auto"/> <!-- 标签输入 -->
+                                        <RowDefinition Height="*"/>    <!-- 内容输入 -->
+                                        <RowDefinition Height="Auto"/> <!-- 照片区域 -->
+                                    </Grid.RowDefinitions>
+
+                                    <!-- 标题输入 -->
+                                    <TextBox Grid.Row="0" x:Name="DiaryTitleTextBox" 
+                                             Text="今天的心情..." FontSize="20" FontWeight="Bold" Foreground="#2D3436"
+                                             BorderThickness="0" Background="Transparent" Margin="0,0,0,15"/>
+
+                                    <!-- 标签输入 -->
+                                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,15">
+                                        <TextBlock Text="标签：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <TextBox x:Name="DiaryTagsTextBox" Width="300" 
+                                                 Text="生活, 心情" FontSize="14" Foreground="#636E72"
+                                                 BorderThickness="0" Background="#F8F9FA"
+                                                 Padding="8,5" VerticalContentAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <!-- 内容输入 -->
+                                    <TextBox Grid.Row="2" x:Name="DiaryContentTextBox"
+                                             Text="写点什么吧..." FontSize="14" Foreground="#636E72"
+                                             AcceptsReturn="True" TextWrapping="Wrap"
+                                             BorderThickness="0" Background="Transparent" VerticalScrollBarVisibility="Auto"/>
+
+                                    <!-- 照片区域 -->
+                                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,15,0,0">
+                                        <Button Content="📷 添加照片" Width="100" Height="35" 
+                                                Background="#A29BFE" Foreground="White" BorderThickness="0"
+                                                Click="AddDiaryPhotoButton_Click"/>
+                                        <ScrollViewer Grid.Row="3" Margin="15,0,0,0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                            <StackPanel x:Name="DiaryPhotosPanel" Orientation="Horizontal"/>
+                                        </ScrollViewer>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- 任务模块 -->
+                    <TabItem Header="✅ 任务">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="250"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 任务列表面板 -->
+                            <Border Grid.Column="0" CornerRadius="15" Background="#F0F3F8" Margin="0,0,10,0">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- 模块标题 -->
+                                    <TextBlock Grid.Row="0" Text="任务清单" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
+
+                                    <!-- 任务列表 -->
+                                    <ListBox Grid.Row="1" x:Name="TaskListBox" 
+                                             Background="Transparent" BorderThickness="0" 
+                                             ItemContainerStyle="{StaticResource DiaryItemStyle}"
+                                             SelectionChanged="TaskListBox_SelectionChanged">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Foreground="#2D3436"/>
+                                                        <TextBlock Text="{Binding PriorityDescription}" Margin="5,0,0,0" 
+                                                                   Foreground="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}"
+                                                                   FontSize="12" FontWeight="Bold"/>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding StatusDescription}" FontSize="12" Foreground="#636E72" Margin="0,4,0,0"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                    
+                                    <!-- 新建任务按钮 -->
+                                    <Button Grid.Row="1" Width="50" Height="50" HorizontalAlignment="Right" VerticalAlignment="Bottom" 
+                                            Style="{StaticResource RoundButtonStyle}" Click="NewTaskButton_Click" Margin="0,0,5,5">
+                                        <TextBlock Text="+" FontSize="24"/>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <!-- 任务编辑面板 -->
+                            <Border Grid.Column="1" CornerRadius="15" Background="#FFFFFF" Padding="25">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/> <!-- 标题输入 -->
+                                        <RowDefinition Height="Auto"/> <!-- 优先级和级别 -->
+                                        <RowDefinition Height="Auto"/> <!-- 状态 -->
+                                        <RowDefinition Height="*"/>    <!-- 内容输入 -->
+                                        <RowDefinition Height="Auto"/> <!-- 子任务 -->
+                                        <RowDefinition Height="Auto"/> <!-- 完成时间 -->
+                                    </Grid.RowDefinitions>
+
+                                    <!-- 标题输入 -->
+                                    <TextBox Grid.Row="0" x:Name="TaskTitleTextBox" 
+                                             Text="新任务..." FontSize="20" FontWeight="Bold" Foreground="#2D3436"
+                                             BorderThickness="0" Background="Transparent" Margin="0,0,0,15"/>
+
+                                    <!-- 优先级和级别 -->
+                                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,15">
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
+                                            <TextBlock Text="优先级：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <ComboBox x:Name="TaskPriorityCombo" SelectedIndex="1" Width="80" Height="30">
+                                                <ComboBoxItem Content="高"/>
+                                                <ComboBoxItem Content="中"/>
+                                                <ComboBoxItem Content="低"/>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="级别：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <ComboBox x:Name="TaskLevelCombo" SelectedIndex="0" Width="80" Height="30">
+                                                <ComboBoxItem Content="1级"/>
+                                                <ComboBoxItem Content="2级"/>
+                                                <ComboBoxItem Content="3级"/>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- 状态 -->
+                                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,15">
+                                        <TextBlock Text="状态：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <ComboBox x:Name="TaskStatusCombo" SelectedIndex="0" Width="100" Height="30">
+                                            <ComboBoxItem Content="待完成"/>
+                                            <ComboBoxItem Content="进行中"/>
+                                            <ComboBoxItem Content="已完成"/>
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <!-- 内容输入 -->
+                                    <TextBox Grid.Row="3" x:Name="TaskContentTextBox"
+                                             Text="任务描述..." FontSize="14" Foreground="#636E72"
+                                             AcceptsReturn="True" TextWrapping="Wrap"
+                                             BorderThickness="0" Background="#F8F9FA"
+                                             Padding="15" Margin="0,0,0,15"/>
+
+                                    <!-- 子任务 -->
+                                    <Grid Grid.Row="4" Margin="0,0,0,15">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Text="子任务：" FontSize="14" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,8"/>
+                                        <StackPanel Grid.Row="1" x:Name="SubTasksPanel">
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                                <CheckBox x:Name="SubTaskCheckBox1" Margin="0,0,8,0"/>
+                                                <TextBox x:Name="SubTaskTextBox1" Text="子任务1" Width="200" 
+                                                         BorderThickness="0" Background="#F8F9FA" Padding="5"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <Button Grid.Row="1" Content="+ 添加子任务" Width="100" Height="25" 
+                                                HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                Background="#A29BFE" Foreground="White" BorderThickness="0"
+                                                Click="AddSubTaskButton_Click" FontSize="12"/>
+                                    </Grid>
+
+                                    <!-- 完成时间 -->
+                                    <StackPanel Grid.Row="5" Orientation="Horizontal">
+                                        <TextBlock Text="完成时间：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <DatePicker x:Name="TaskCompletedDatePicker" Width="150" Height="30"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- 每日时间记录模块 -->
+                    <TabItem Header="⏰ 时间记录">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/> <!-- 周视图控制 -->
+                                <RowDefinition Height="*"/>    <!-- 时间记录区域 -->
+                            </Grid.RowDefinitions>
+
+                            <!-- 周视图控制 -->
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
+                                <Button Content="◀ 上周" Width="80" Height="35" 
+                                        Background="#A29BFE" Foreground="White" BorderThickness="0"
+                                        Click="PreviousWeekButton_Click" Margin="0,0,10,0"/>
+                                <TextBlock x:Name="CurrentWeekText" Text="2023年第42周" 
+                                           FontSize="18" FontWeight="Bold" Foreground="#2D3436" 
+                                           VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <Button Content="下周 ▶" Width="80" Height="35" 
+                                        Background="#A29BFE" Foreground="White" BorderThickness="0"
+                                        Click="NextWeekButton_Click" Margin="0,0,20,0"/>
+                                <Button Content="+ 添加时间记录" Width="120" Height="35" 
+                                        Background="#6C5CE7" Foreground="White" BorderThickness="0"
+                                        Click="AddTimeRecordButton_Click"/>
+                            </StackPanel>
+
+                            <!-- 周视图时间表 -->
+                            <Border Grid.Row="1" CornerRadius="15" Background="#FFFFFF" Padding="20">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60"/> <!-- 时间列 -->
+                                        <ColumnDefinition Width="*"/>   <!-- 周一到周日 -->
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="30"/>    <!-- 星期标题 -->
+                                        <RowDefinition Height="*"/>    <!-- 时间行 -->
+                                    </Grid.RowDefinitions>
+
+                                    <!-- 星期标题 -->
+                                    <TextBlock Grid.Column="1" Grid.Row="0" Text="周一" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
+                                    <TextBlock Grid.Column="2" Grid.Row="0" Text="周二" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
+                                    <TextBlock Grid.Column="3" Grid.Row="0" Text="周三" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
+                                    <TextBlock Grid.Column="4" Grid.Row="0" Text="周四" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
+                                    <TextBlock Grid.Column="5" Grid.Row="0" Text="周五" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
+                                    <TextBlock Grid.Column="6" Grid.Row="0" Text="周六" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
+                                    <TextBlock Grid.Column="7" Grid.Row="0" Text="周日" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
+
+                                    <!-- 时间标签和时间块 -->
+                                        <Grid x:Name="TimeGrid" Grid.Row="1" Grid.ColumnSpan="2">
+                                            <Grid.RowDefinitions>
+                                            <RowDefinition Height="40"/>
+                                            <RowDefinition Height="40"/>
+                                            <RowDefinition Height="40"/>
+                                            <RowDefinition Height="40"/>
+                                            <RowDefinition Height="40"/>
+                                            <RowDefinition Height="40"/>
+                                            <RowDefinition Height="40"/>
+                                            <RowDefinition Height="40"/>
+                                            <RowDefinition Height="40"/>
+                                            <RowDefinition Height="40"/>
+                                            <RowDefinition Height="40"/>
+                                            <RowDefinition Height="40"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- 时间标签 -->
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="08:00" FontSize="12" Foreground="#636E72" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="09:00" FontSize="12" Foreground="#636E72" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="10:00" FontSize="12" Foreground="#636E72" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="11:00" FontSize="12" Foreground="#636E72" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="12:00" FontSize="12" Foreground="#636E72" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Row="5" Grid.Column="0" Text="13:00" FontSize="12" Foreground="#636E72" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Row="6" Grid.Column="0" Text="14:00" FontSize="12" Foreground="#636E72" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Row="7" Grid.Column="0" Text="15:00" FontSize="12" Foreground="#636E72" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Row="8" Grid.Column="0" Text="16:00" FontSize="12" Foreground="#636E72" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Row="9" Grid.Column="0" Text="17:00" FontSize="12" Foreground="#636E72" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Row="10" Grid.Column="0" Text="18:00" FontSize="12" Foreground="#636E72" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Row="11" Grid.Column="0" Text="19:00" FontSize="12" Foreground="#636E72" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+
+                                        <!-- 时间块占位符 -->
+                                        <Border Grid.Row="0" Grid.Column="1" Grid.RowSpan="1" Grid.ColumnSpan="7" 
+                                                Background="Transparent" BorderBrush="#E8E8E8" BorderThickness="0,0,1,1" CornerRadius="0"/>
+                                        <Border Grid.Row="1" Grid.Column="1" Grid.RowSpan="1" Grid.ColumnSpan="7" 
+                                                Background="Transparent" BorderBrush="#E8E8E8" BorderThickness="0,0,1,1" CornerRadius="0"/>
+                                        <Border Grid.Row="2" Grid.Column="1" Grid.RowSpan="1" Grid.ColumnSpan="7" 
+                                                Background="Transparent" BorderBrush="#E8E8E8" BorderThickness="0,0,1,1" CornerRadius="0"/>
+                                        <Border Grid.Row="3" Grid.Column="1" Grid.RowSpan="1" Grid.ColumnSpan="7" 
+                                                Background="Transparent" BorderBrush="#E8E8E8" BorderThickness="0,0,1,1" CornerRadius="0"/>
+                                        <Border Grid.Row="4" Grid.Column="1" Grid.RowSpan="1" Grid.ColumnSpan="7" 
+                                                Background="Transparent" BorderBrush="#E8E8E8" BorderThickness="0,0,1,1" CornerRadius="0"/>
+                                        <Border Grid.Row="5" Grid.Column="1" Grid.RowSpan="1" Grid.ColumnSpan="7" 
+                                                Background="Transparent" BorderBrush="#E8E8E8" BorderThickness="0,0,1,1" CornerRadius="0"/>
+                                        <Border Grid.Row="6" Grid.Column="1" Grid.RowSpan="1" Grid.ColumnSpan="7" 
+                                                Background="Transparent" BorderBrush="#E8E8E8" BorderThickness="0,0,1,1" CornerRadius="0"/>
+                                        <Border Grid.Row="7" Grid.Column="1" Grid.RowSpan="1" Grid.ColumnSpan="7" 
+                                                Background="Transparent" BorderBrush="#E8E8E8" BorderThickness="0,0,1,1" CornerRadius="0"/>
+                                        <Border Grid.Row="8" Grid.Column="1" Grid.RowSpan="1" Grid.ColumnSpan="7" 
+                                                Background="Transparent" BorderBrush="#E8E8E8" BorderThickness="0,0,1,1" CornerRadius="0"/>
+                                        <Border Grid.Row="9" Grid.Column="1" Grid.RowSpan="1" Grid.ColumnSpan="7" 
+                                                Background="Transparent" BorderBrush="#E8E8E8" BorderThickness="0,0,1,1" CornerRadius="0"/>
+                                        <Border Grid.Row="10" Grid.Column="1" Grid.RowSpan="1" Grid.ColumnSpan="7" 
+                                                Background="Transparent" BorderBrush="#E8E8E8" BorderThickness="0,0,1,1" CornerRadius="0"/>
+                                        <Border Grid.Row="11" Grid.Column="1" Grid.RowSpan="1" Grid.ColumnSpan="7" 
+                                                Background="Transparent" BorderBrush="#E8E8E8" BorderThickness="0,0,1,1" CornerRadius="0"/>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- 累计打卡模块 -->
+                    <TabItem Header="🎯 打卡统计">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="250"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 打卡记录列表 -->
+                            <Border Grid.Column="0" CornerRadius="15" Background="#F0F3F8" Margin="0,0,10,0">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- 打卡类型选择 -->
+                                    <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                                        <TextBlock Text="打卡类型：" FontSize="14" Foreground="#636E72" Margin="0,0,0,5"/>
+                                        <ComboBox x:Name="CheckInTypeCombo" SelectedIndex="0" Height="30" SelectionChanged="CheckInTypeCombo_SelectionChanged">
+                                            <ComboBoxItem Content="运动"/>
+                                            <ComboBoxItem Content="学习"/>
+                                            <ComboBoxItem Content="阅读"/>
+                                            <ComboBoxItem Content="早睡"/>
+                                            <ComboBoxItem Content="早起"/>
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <!-- 模块标题 -->
+                                    <TextBlock Grid.Row="1" Text="打卡记录" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
+
+                                    <!-- 打卡列表 -->
+                                    <ListBox Grid.Row="2" x:Name="CheckInListBox" 
+                                             Background="Transparent" BorderThickness="0" 
+                                             ItemContainerStyle="{StaticResource DiaryItemStyle}"
+                                             SelectionChanged="CheckInListBox_SelectionChanged">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding Date, StringFormat={}{0:MM-dd}}" FontWeight="SemiBold" Foreground="#2D3436"/>
+                                                        <TextBlock Text="{Binding Value}" Margin="5,0,0,0" FontSize="12" Foreground="#636E72"/>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding Streak, StringFormat={}连续{0}天}" FontSize="12" Foreground="#A29BFE" Margin="0,4,0,0"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                    
+                                    <!-- 打卡按钮 -->
+                                    <Button Grid.Row="2" Width="50" Height="50" HorizontalAlignment="Right" VerticalAlignment="Bottom" 
+                                            Style="{StaticResource RoundButtonStyle}" Click="CheckInButton_Click" Margin="0,0,5,5">
+                                        <TextBlock Text="✓" FontSize="24"/>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <!-- 打卡统计和编辑面板 -->
+                            <Border Grid.Column="1" CornerRadius="15" Background="#FFFFFF" Padding="25">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/> <!-- 统计图表 -->
+                                        <RowDefinition Height="Auto"/> <!-- 连续天数 -->
+                                        <RowDefinition Height="Auto"/> <!-- 打卡记录 -->
+                                        <RowDefinition Height="Auto"/> <!-- 打卡编辑 -->
+                                    </Grid.RowDefinitions>
+
+                                    <!-- 统计图表区域 -->
+                                    <Border Grid.Row="0" CornerRadius="10" Background="#F8F9FA" Padding="20" Margin="0,0,0,20">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="100"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Grid.Row="0" Text="本月打卡统计" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
+                                            <!-- 简单的柱状图占位符 -->
+                                            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+                                                <StackPanel Orientation="Vertical" Margin="2">
+                                                    <Rectangle Width="20" Height="60" Fill="#A29BFE"/>
+                                                    <TextBlock Text="60" FontSize="10" Foreground="#2D3436" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Vertical" Margin="2">
+                                                    <Rectangle Width="20" Height="80" Fill="#6C5CE7"/>
+                                                    <TextBlock Text="80" FontSize="10" Foreground="#2D3436" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Vertical" Margin="2">
+                                                    <Rectangle Width="20" Height="40" Fill="#A29BFE"/>
+                                                    <TextBlock Text="40" FontSize="10" Foreground="#2D3436" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Vertical" Margin="2">
+                                                    <Rectangle Width="20" Height="90" Fill="#6C5CE7"/>
+                                                    <TextBlock Text="90" FontSize="10" Foreground="#2D3436" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Vertical" Margin="2">
+                                                    <Rectangle Width="20" Height="70" Fill="#A29BFE"/>
+                                                    <TextBlock Text="70" FontSize="10" Foreground="#2D3436" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Vertical" Margin="2">
+                                                    <Rectangle Width="20" Height="85" Fill="#6C5CE7"/>
+                                                    <TextBlock Text="85" FontSize="10" Foreground="#2D3436" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Vertical" Margin="2">
+                                                    <Rectangle Width="20" Height="50" Fill="#A29BFE"/>
+                                                    <TextBlock Text="50" FontSize="10" Foreground="#2D3436" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- 连续天数统计 -->
+                                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,20">
+                                        <Border CornerRadius="10" Background="#6C5CE7" Padding="15,10" Margin="0,0,10,0">
+                                            <StackPanel>
+                                                <TextBlock Text="当前连续" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
+                                                <TextBlock x:Name="CurrentStreakText" Text="7" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <Border CornerRadius="10" Background="#A29BFE" Padding="15,10" Margin="0,0,10,0">
+                                            <StackPanel>
+                                                <TextBlock Text="最长连续" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
+                                                <TextBlock x:Name="LongestStreakText" Text="15" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <Border CornerRadius="10" Background="#FD79A8" Padding="15,10">
+                                            <StackPanel>
+                                                <TextBlock Text="成功率" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
+                                                <TextBlock x:Name="SuccessRateText" Text="85%" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- 打卡记录编辑 -->
+                                    <Grid Grid.Row="3">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Text="打卡记录" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
+                                        <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                            <TextBox x:Name="CheckInValueTextBox" Text="完成" Width="150" Height="35" 
+                                                     BorderThickness="0" Background="#F8F9FA"
+                                                     Padding="10,8" VerticalContentAlignment="Center" Margin="0,0,10,0"/>
+                                            <Button Content="💾 保存记录" Width="100" Height="35" 
+                                                    Background="#6C5CE7" Foreground="White" BorderThickness="0"
+                                                    Click="SaveCheckInButton_Click"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
 
                 <!-- 底部操作栏 -->
-                <Grid Grid.Row="3" Margin="0,20,0,0">
+                <Grid Grid.Row="2" Margin="0,20,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>

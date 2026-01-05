@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="设置" Height="400" Width="500"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
         <!-- 颜色定义 -->

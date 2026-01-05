@@ -22,6 +22,9 @@ public class BackupData
 {
     public BackupInfo Info { get; set; } = new();
     public List<DiaryEntry> Diaries { get; set; } = new();
+    public List<TaskEntry> Tasks { get; set; } = new();
+    public List<TimeRecordEntry> TimeRecords { get; set; } = new();
+    public List<CheckInEntry> CheckIns { get; set; } = new();
 }
 
 public static class BackupManager
@@ -50,7 +53,7 @@ public static class BackupManager
     }
 
     // 创建自动备份
-    public static string CreateAutoBackup(List<DiaryEntry> diaries, string description = "")
+    public static string CreateAutoBackup(AppData appData, string description = "")
     {
         EnsureBackupFolder();
         
@@ -62,12 +65,15 @@ public static class BackupManager
         {
             Info = new BackupInfo
             {
-                Version = "1.0",
+                Version = appData.Version,
                 CreatedAt = DateTime.Now,
                 Description = description,
-                EntryCount = diaries.Count
+                EntryCount = appData.Diaries.Count + appData.Tasks.Count + appData.TimeRecords.Count + appData.CheckIns.Count
             },
-            Diaries = diaries
+            Diaries = appData.Diaries,
+            Tasks = appData.Tasks,
+            TimeRecords = appData.TimeRecords,
+            CheckIns = appData.CheckIns
         };
 
         var options = new JsonSerializerOptions 
@@ -119,7 +125,7 @@ public static class BackupManager
     }
 
     // 恢复备份
-    public static List<DiaryEntry>? RestoreBackup(string filepath)
+    public static AppData? RestoreBackup(string filepath)
     {
         if (!ValidateBackup(filepath))
             return null;
@@ -134,7 +140,21 @@ public static class BackupManager
             
             var json = File.ReadAllText(filepath, Encoding.UTF8);
             var backupData = JsonSerializer.Deserialize<BackupData>(json, options);
-            return backupData?.Diaries;
+            
+            if (backupData != null)
+            {
+                return new AppData
+                {
+                    Diaries = backupData.Diaries ?? new List<DiaryEntry>(),
+                    Tasks = backupData.Tasks ?? new List<TaskEntry>(),
+                    TimeRecords = backupData.TimeRecords ?? new List<TimeRecordEntry>(),
+                    CheckIns = backupData.CheckIns ?? new List<CheckInEntry>(),
+                    Version = backupData.Info.Version,
+                    LastSaved = DateTime.Now
+                };
+            }
+            
+            return null;
         }
         catch
         {
@@ -210,18 +230,21 @@ public static class BackupManager
     }
 
     // 手动导出备份到指定位置
-    public static string ExportBackupToLocation(List<DiaryEntry> diaries, string exportPath)
+    public static string ExportBackupToLocation(AppData appData, string exportPath)
     {
         var backupData = new BackupData
         {
             Info = new BackupInfo
             {
-                Version = "1.0",
+                Version = appData.Version,
                 CreatedAt = DateTime.Now,
                 Description = "手动导出备份",
-                EntryCount = diaries.Count
+                EntryCount = appData.Diaries.Count + appData.Tasks.Count + appData.TimeRecords.Count + appData.CheckIns.Count
             },
-            Diaries = diaries
+            Diaries = appData.Diaries,
+            Tasks = appData.Tasks,
+            TimeRecords = appData.TimeRecords,
+            CheckIns = appData.CheckIns
         };
 
         var options = new JsonSerializerOptions 
