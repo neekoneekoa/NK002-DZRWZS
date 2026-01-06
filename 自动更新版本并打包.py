@@ -22,8 +22,8 @@ def read_version_file():
 
 def increment_version(content):
     """自动递增版本号"""
-    # 查找版本号模式 - 支持三位和四位版本号格式
-    pattern = r'public const string VERSION = "([\d.]+)";'
+    # 查找版本号模式 - 支持带V前缀的版本号（如 V0.1.1.1）
+    pattern = r'public const string VERSION = "(V?[\d.]+)";'
     match = re.search(pattern, content)
     
     if match:

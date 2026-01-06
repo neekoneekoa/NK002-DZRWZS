@@ -18,8 +18,8 @@ def update_version():
         with open(version_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # 查找版本号
-        pattern = r'public const string VERSION = "([\d.]+)";'
+        # 查找版本号（支持带V前缀的版本号，如 V0.1.1.1）
+        pattern = r'public const string VERSION = "(V?[\d.]+)";'
         match = re.search(pattern, content)
         
         if match:
