@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.IO;
 using System;
 using System.Text.Json;
@@ -13,10 +14,22 @@ using System.Windows.Media;
 
 namespace DiaryApp;
 
+public static class AppBrushes
+{
+    public static readonly SolidColorBrush A29BFE = new SolidColorBrush(Color.FromArgb(255, 0xA2, 0x9B, 0xFE));
+    public static readonly SolidColorBrush B2BEC3 = new SolidColorBrush(Color.FromArgb(255, 0xB2, 0xBE, 0xC3));
+    public static readonly SolidColorBrush DFE6E9 = new SolidColorBrush(Color.FromArgb(255, 0xDF, 0xE6, 0xE9));
+    public static readonly SolidColorBrush F8F9FA = new SolidColorBrush(Color.FromArgb(255, 0xF8, 0xF9, 0xFA));
+    public static readonly SolidColorBrush _00B894 = new SolidColorBrush(Color.FromArgb(255, 0x00, 0xB8, 0x94));
+    public static readonly SolidColorBrush _FF7675 = new SolidColorBrush(Color.FromArgb(255, 0xFF, 0x76, 0x75));
+    public static readonly SolidColorBrush _636E72 = new SolidColorBrush(Color.FromArgb(255, 0x63, 0x6E, 0x72));
+    public static readonly SolidColorBrush _2D3436 = new SolidColorBrush(Color.FromArgb(255, 0x2D, 0x34, 0x36));
+}
+
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.0.1.29";
+    public const string VERSION = "V0.1.1.1";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -26,7 +39,7 @@ public partial class MainWindow : Window
     // 统一应用数据
     private AppData _appData = new AppData();
     private const string DATA_FILE = "app_data.json";
-    private const string LOG_FILE = "startup_log.txt";
+    private const string LOG_FILE = "app_crash_log.txt";
     
     // 获取应用数据文件的完整路径
     private string GetDataFilePath()
@@ -54,6 +67,66 @@ public partial class MainWindow : Window
         catch { /* 忽略日志错误 */ }
     }
     
+    // 记录崩溃日志
+    private void LogCrash(string message, Exception? ex = null)
+    {
+        try
+        {
+            var logPath = GetLogFilePath();
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("════════════════════════════════════════════════════════════");
+            sb.AppendLine($"崩溃时间: {DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}");
+            sb.AppendLine($"程序版本: {AppVersion.VERSION} ({AppVersion.BUILD_DATE} {AppVersion.BUILD_TIME})");
+            sb.AppendLine($"操作系统: {Environment.OSVersion}");
+            sb.AppendLine($".NET版本: {Environment.Version}");
+            sb.AppendLine($"机器名: {Environment.MachineName}");
+            sb.AppendLine("────────────────────────────────────────────────────────────");
+            sb.AppendLine($"错误信息: {message}");
+            if (ex != null)
+            {
+                sb.AppendLine("────────────────────────────────────────────────────────────");
+                sb.AppendLine("异常详情:");
+                sb.AppendLine($"类型: {ex.GetType().FullName}");
+                sb.AppendLine($"消息: {ex.Message}");
+                sb.AppendLine($"源: {ex.Source}");
+                sb.AppendLine($"堆栈跟踪:");
+                sb.AppendLine(ex.StackTrace);
+                if (ex.InnerException != null)
+                {
+                    sb.AppendLine("────────────────────────────────────────────────────────────");
+                    sb.AppendLine("内部异常:");
+                    sb.AppendLine($"类型: {ex.InnerException.GetType().FullName}");
+                    sb.AppendLine($"消息: {ex.InnerException.Message}");
+                    sb.AppendLine($"堆栈跟踪:");
+                    sb.AppendLine(ex.InnerException.StackTrace);
+                }
+            }
+            sb.AppendLine("════════════════════════════════════════════════════════════");
+            sb.AppendLine();
+            File.AppendAllText(logPath, sb.ToString());
+        }
+        catch { /* 忽略日志错误 */ }
+    }
+    
+    // 全局未处理异常处理 (非UI线程)
+    private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        var ex = e.ExceptionObject as Exception;
+        var msg = ex != null ? ex.Message : "未知错误";
+        LogCrash("UnhandledException (AppDomain)", ex);
+        MessageBox.Show($"程序发生未处理的异常错误。\n错误信息: {msg}\n\n错误详情已保存到 crash_log.txt", 
+            "程序崩溃", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+    
+    // UI线程未处理异常处理
+    private void OnDispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+    {
+        LogCrash("DispatcherUnhandledException (UI Thread)", e.Exception);
+        e.Handled = true; // 标记为已处理，防止程序退出
+        MessageBox.Show($"程序发生未处理的异常错误。\n错误信息: {e.Exception.Message}\n\n错误详情已保存到 crash_log.txt", 
+            "程序崩溃", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+    
     // 当前选中的日记条目（用于编辑）
     private DiaryEntry? _currentDiaryEntry;
     
@@ -68,7 +141,11 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        // 清空日志文件
+        // 设置全局异常处理
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        Application.Current.DispatcherUnhandledException += OnDispatcherUnhandledException;
+        
+        // 清空旧的崩溃日志
         try { File.Delete(GetLogFilePath()); } catch { }
         
         try
@@ -81,7 +158,14 @@ public partial class MainWindow : Window
             
             Log("开始设置窗口拖动");
             // 支持窗口拖动 (因为设置了 WindowStyle="None")
-            this.MouseLeftButtonDown += (s, e) => DragMove();
+            this.MouseLeftButtonDown += (s, e) =>
+            {
+                // 检查鼠标按钮是否确实按下
+                if (e.LeftButton == MouseButtonState.Pressed)
+                {
+                    DragMove();
+                }
+            };
             
             // 双击标题栏区域切换最大化/正常状态
             this.MouseDoubleClick += (s, e) =>
@@ -97,6 +181,10 @@ public partial class MainWindow : Window
                 }
             };
             Log("窗口拖动设置完成");
+            
+            // 设置窗口边缘调整大小
+            SetupWindowResize();
+            Log("窗口调整大小设置完成");
             
             Log("开始调用InitializeUI()");
             InitializeUI();
@@ -134,10 +222,8 @@ public partial class MainWindow : Window
         // 设置初始窗口大小为显示器的70%
         SetWindowSizeTo70Percent();
         
-        // 初始化各个面板
-        DiaryListBox.ItemsSource = _appData.Diaries;
-        TaskListBox.ItemsSource = _appData.Tasks;
-        CheckInListBox.ItemsSource = _appData.CheckIns;
+        // 初始化日记时间轴
+        RefreshDiaryTimeline();
         
         // 设置默认日期时间显示
         DateLabel.Text = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
@@ -166,6 +252,106 @@ public partial class MainWindow : Window
         this.Left = workArea.Left + (workArea.Width - targetWidth) / 2;
         this.Top = workArea.Top + (workArea.Height - targetHeight) / 2;
     }
+    
+    private void SetupWindowResize()
+    {
+        // 顶部调整
+        TopResizeBorder.MouseLeftButtonDown += (s, e) =>
+        {
+            if (WindowState == WindowState.Normal)
+            {
+                DragResize(ResizeDirection.Top);
+            }
+        };
+        TopResizeBorder.MouseEnter += (s, e) => 
+        {
+            if (WindowState == WindowState.Normal)
+                Cursor = Cursors.SizeNS;
+        };
+        TopResizeBorder.MouseLeave += (s, e) => Cursor = Cursors.Arrow;
+        
+        // 左侧调整
+        LeftResizeBorder.MouseLeftButtonDown += (s, e) =>
+        {
+            if (WindowState == WindowState.Normal)
+            {
+                DragResize(ResizeDirection.Left);
+            }
+        };
+        LeftResizeBorder.MouseEnter += (s, e) => 
+        {
+            if (WindowState == WindowState.Normal)
+                Cursor = Cursors.SizeWE;
+        };
+        LeftResizeBorder.MouseLeave += (s, e) => Cursor = Cursors.Arrow;
+        
+        // 右侧调整
+        RightResizeBorder.MouseLeftButtonDown += (s, e) =>
+        {
+            if (WindowState == WindowState.Normal)
+            {
+                DragResize(ResizeDirection.Right);
+            }
+        };
+        RightResizeBorder.MouseEnter += (s, e) => 
+        {
+            if (WindowState == WindowState.Normal)
+                Cursor = Cursors.SizeWE;
+        };
+        RightResizeBorder.MouseLeave += (s, e) => Cursor = Cursors.Arrow;
+        
+        // 底部调整
+        BottomResizeBorder.MouseLeftButtonDown += (s, e) =>
+        {
+            if (WindowState == WindowState.Normal)
+            {
+                DragResize(ResizeDirection.Bottom);
+            }
+        };
+        BottomResizeBorder.MouseEnter += (s, e) => 
+        {
+            if (WindowState == WindowState.Normal)
+                Cursor = Cursors.SizeNS;
+        };
+        BottomResizeBorder.MouseLeave += (s, e) => Cursor = Cursors.Arrow;
+        
+        // 右下角调整手柄
+        ResizeGrip.MouseLeftButtonDown += (s, e) =>
+        {
+            if (WindowState == WindowState.Normal)
+            {
+                DragResize(ResizeDirection.BottomRight);
+            }
+        };
+        ResizeGrip.MouseEnter += (s, e) => 
+        {
+            if (WindowState == WindowState.Normal)
+                Cursor = Cursors.SizeNWSE;
+        };
+        ResizeGrip.MouseLeave += (s, e) => Cursor = Cursors.Arrow;
+    }
+    
+    private enum ResizeDirection { Top, Bottom, Left, Right, BottomRight }
+    
+    private void DragResize(ResizeDirection direction)
+    {
+        var source = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
+        if (source != null)
+        {
+            SendMessage(source.Handle, 0x112, (IntPtr)(61440 + direction switch
+            {
+                ResizeDirection.Top => 3,
+                ResizeDirection.Bottom => 6,
+                ResizeDirection.Left => 1,
+                ResizeDirection.Right => 2,
+                ResizeDirection.BottomRight => 8,
+                _ => 8
+            }), IntPtr.Zero);
+        }
+    }
+    
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern IntPtr SendMessage(IntPtr hWnd, int wMsg, IntPtr wParam, IntPtr lParam);
 
     private void LoadAppData()
     {
@@ -255,56 +441,13 @@ public partial class MainWindow : Window
 
     private void NewDiaryButton_Click(object sender, RoutedEventArgs e)
     {
-        _currentDiaryEntry = null;
-        DiaryListBox.SelectedItem = null;
-        DiaryTitleTextBox.Text = "";
-        DiaryContentTextBox.Text = "今天发生了什么呢...";
-        DiaryTagsTextBox.Text = "生活, 记录";
-        DiaryPhotosPanel.Children.Clear();
-        
-        // 切换到编辑模式
-        DiaryViewMode.Visibility = Visibility.Collapsed;
-        DiaryEditMode.Visibility = Visibility.Visible;
-        
-        DiaryTitleTextBox.Focus();
-    }
-
-    private void DiaryListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (DiaryListBox.SelectedItem is DiaryEntry entry)
+        var editWindow = new DiaryEditWindow();
+        editWindow.Owner = this;
+        if (editWindow.ShowDialog() == true && editWindow.ResultEntry != null)
         {
-            _currentDiaryEntry = entry;
-            
-            // 切换到查看模式
-            DiaryViewMode.Visibility = Visibility.Visible;
-            DiaryEditMode.Visibility = Visibility.Collapsed;
-            
-            // 显示日记详情
-            DiaryViewTitle.Text = entry.Title;
-            DiaryViewDate.Text = entry.DateStr;
-            
-            // 显示标签
-            DiaryViewTags.ItemsSource = entry.Tags;
-            
-            // 显示内容
-            DiaryViewContent.Text = entry.Content;
-            
-            // 加载照片
-            DiaryViewPhotos.Children.Clear();
-            foreach (var photoPath in entry.Photos)
-            {
-                if (File.Exists(photoPath))
-                {
-                    var image = new Image
-                    {
-                        Source = new BitmapImage(new Uri(photoPath)),
-                        Width = 120,
-                        Height = 120,
-                        Margin = new Thickness(5)
-                    };
-                    DiaryViewPhotos.Children.Add(image);
-                }
-            }
+            _appData.Diaries.Add(editWindow.ResultEntry);
+            SaveAppData();
+            RefreshDiaryTimeline();
         }
     }
 
@@ -323,42 +466,369 @@ public partial class MainWindow : Window
 
     private void DiarySearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        var searchText = DiarySearchBox.Text.ToLower().Trim();
-        if (string.IsNullOrEmpty(searchText))
+        RefreshDiaryTimeline();
+    }
+
+    private void DiaryTagFilterBox_GotFocus(object sender, RoutedEventArgs e)
+    {
+        DiaryTagPlaceholder.Visibility = Visibility.Collapsed;
+    }
+
+    private void DiaryTagFilterBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(DiaryTagFilterBox.Text))
         {
-            DiaryListBox.ItemsSource = _appData.Diaries;
-        }
-        else
-        {
-            var filteredDiaries = _appData.Diaries
-                .Where(d => d.SearchableText.Contains(searchText))
-                .OrderByDescending(d => d.CreatedAt)
-                .ToList();
-            DiaryListBox.ItemsSource = filteredDiaries;
+            DiaryTagPlaceholder.Visibility = Visibility.Visible;
         }
     }
 
-    private void AddDiaryPhotoButton_Click(object sender, RoutedEventArgs e)
+    private void DiaryTagFilterBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        var dialog = new OpenFileDialog
-        {
-            Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif",
-            Multiselect = true
-        };
+        RefreshDiaryTimeline();
+    }
 
-        if (dialog.ShowDialog() == true)
+    private void RefreshDiaryMonthDates()
+    {
+        DiaryMonthDatesPanel.Children.Clear();
+        var today = DateTime.Today;
+        var firstDayOfMonth = new DateTime(today.Year, today.Month, 1);
+        var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+
+        var datesWithDiaries = _appData.Diaries
+            .Where(d => d.CreatedAt.Date >= firstDayOfMonth && d.CreatedAt.Date <= lastDayOfMonth)
+            .Select(d => d.CreatedAt.Date)
+            .Distinct()
+            .ToHashSet();
+
+        for (var date = firstDayOfMonth; date <= lastDayOfMonth; date = date.AddDays(1))
         {
-            foreach (var fileName in dialog.FileNames)
+            var hasDiary = datesWithDiaries.Contains(date);
+            var button = new Button
             {
-                var image = new Image
-                {
-                    Source = new BitmapImage(new Uri(fileName)),
-                    Width = 60,
-                    Height = 60,
-                    Margin = new Thickness(5)
-                };
-                DiaryPhotosPanel.Children.Add(image);
+                Content = $"{date.Day}",
+                Height = 30,
+                Margin = new Thickness(2),
+                Padding = new Thickness(8, 0, 8, 0),
+                Background = hasDiary ? (System.Windows.Media.Brush?)AppBrushes.A29BFE : System.Windows.Media.Brushes.Transparent,
+                Foreground = hasDiary ? System.Windows.Media.Brushes.White : AppBrushes._2D3436,
+                BorderThickness = hasDiary ? new Thickness(0) : new Thickness(1),
+                BorderBrush = AppBrushes.DFE6E9,
+                FontSize = 12
+            };
+            button.Click += (s, e) => JumpToDate(date);
+            DiaryMonthDatesPanel.Children.Add(button);
+        }
+    }
+
+    private void JumpToDate(DateTime date)
+    {
+        var targetEntry = _appData.Diaries
+            .Where(d => d.CreatedAt.Date == date.Date)
+            .OrderByDescending(d => d.CreatedAt)
+            .FirstOrDefault();
+        
+        if (targetEntry != null)
+        {
+            var panel = FindDiaryEntryPanel(targetEntry.Id);
+            if (panel != null)
+            {
+                ToggleDiaryEntry(targetEntry.Id, true);
+                panel.BringIntoView();
             }
+        }
+    }
+
+    private StackPanel? FindDiaryEntryPanel(string entryId)
+    {
+        foreach (var child in DiaryTimelinePanel.Children)
+        {
+            if (child is Border border && border.Tag?.ToString() == entryId)
+            {
+                return border.Child as StackPanel;
+            }
+        }
+        return null;
+    }
+
+    private void RefreshDiaryTimeline()
+    {
+        DiaryTimelinePanel.Children.Clear();
+        
+        var searchText = DiarySearchBox.Text.ToLower().Trim();
+        var tagFilter = DiaryTagFilterBox.Text.ToLower().Trim();
+        
+        var filteredDiaries = _appData.Diaries.AsEnumerable();
+        
+        if (!string.IsNullOrEmpty(searchText))
+        {
+            filteredDiaries = filteredDiaries.Where(d => d.SearchableText.Contains(searchText));
+        }
+        
+        if (!string.IsNullOrEmpty(tagFilter))
+        {
+            filteredDiaries = filteredDiaries.Where(d => d.Tags.Any(t => t.ToLower().Contains(tagFilter)));
+        }
+        
+        var sortedDiaries = filteredDiaries.OrderByDescending(d => d.CreatedAt).ToList();
+        
+        if (sortedDiaries.Count == 0)
+        {
+            var emptyText = new TextBlock
+            {
+                Text = "暂无日记",
+                Foreground = AppBrushes.B2BEC3,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 50, 0, 0)
+            };
+            DiaryTimelinePanel.Children.Add(emptyText);
+            return;
+        }
+        
+        var currentMonth = "";
+        foreach (var entry in sortedDiaries)
+        {
+            var entryMonth = entry.CreatedAt.ToString("yyyy年M月");
+            if (entryMonth != currentMonth)
+            {
+                currentMonth = entryMonth;
+                var monthHeader = new TextBlock
+                {
+                    Text = entryMonth,
+                    FontSize = 14,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = AppBrushes.A29BFE,
+                    Margin = new Thickness(0, 15, 0, 10)
+                };
+                DiaryTimelinePanel.Children.Add(monthHeader);
+            }
+            
+            CreateDiaryEntryPanel(entry);
+        }
+        
+        RefreshDiaryMonthDates();
+    }
+
+    private void CreateDiaryEntryPanel(DiaryEntry entry)
+    {
+        var mainStackPanel = new StackPanel
+        {
+            Tag = entry.Id,
+            Margin = new Thickness(0, 0, 0, 10)
+        };
+        
+        var collapsedPanel = new StackPanel();
+        
+        var headerBorder = new Border
+        {
+            Background = System.Windows.Media.Brushes.White,
+            CornerRadius = new System.Windows.CornerRadius(8),
+            Padding = new Thickness(12)
+        };
+        var headerGrid = new Grid();
+        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        
+        var infoStackPanel = new StackPanel();
+        
+        var titleText = new TextBlock
+        {
+            Text = entry.Title,
+            FontSize = 15,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = AppBrushes._2D3436,
+            TextWrapping = TextWrapping.Wrap
+        };
+        infoStackPanel.Children.Add(titleText);
+        
+        var timeRow = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Margin = new Thickness(0, 5, 0, 0)
+        };
+        var timeText = new TextBlock
+        {
+            Text = entry.TimeOnly,
+            FontSize = 12,
+            Foreground = AppBrushes.A29BFE,
+            Margin = new Thickness(0, 0, 10, 0)
+        };
+        timeRow.Children.Add(timeText);
+        
+        if (entry.Tags.Count > 0)
+        {
+            var tagsText = new TextBlock
+            {
+                Text = string.Join(" ", entry.Tags.Select(t => $"#{t}")),
+                FontSize = 11,
+                Foreground = AppBrushes._636E72,
+                TextWrapping = TextWrapping.Wrap
+            };
+            timeRow.Children.Add(tagsText);
+        }
+        infoStackPanel.Children.Add(timeRow);
+        
+        Grid.SetColumn(infoStackPanel, 0);
+        headerGrid.Children.Add(infoStackPanel);
+        
+        var expandButton = new Button
+        {
+            Content = "▼",
+            Width = 24,
+            Height = 24,
+            Background = System.Windows.Media.Brushes.Transparent,
+            Foreground = AppBrushes.B2BEC3,
+            BorderThickness = new Thickness(0),
+            FontSize = 12,
+            Tag = entry.Id
+        };
+        expandButton.Click += DiaryEntry_Expand_Click;
+        Grid.SetColumn(expandButton, 1);
+        headerGrid.Children.Add(expandButton);
+        
+        headerBorder.Child = headerGrid;
+        collapsedPanel.Children.Add(headerBorder);
+        mainStackPanel.Children.Add(collapsedPanel);
+        
+        var expandedPanel = new StackPanel
+        {
+            Visibility = Visibility.Collapsed,
+            Margin = new Thickness(0, 5, 0, 0)
+        };
+        
+        var contentBorder = new Border
+        {
+            Background = AppBrushes.F8F9FA,
+            CornerRadius = new System.Windows.CornerRadius(8),
+            Padding = new Thickness(12)
+        };
+        var contentText = new TextBlock
+        {
+            Text = entry.ContentPreview,
+            FontSize = 13,
+            Foreground = AppBrushes._636E72,
+            TextWrapping = TextWrapping.Wrap,
+            LineHeight = 24
+        };
+        contentBorder.Child = contentText;
+        expandedPanel.Children.Add(contentBorder);
+        
+        var buttonPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Margin = new Thickness(0, 8, 0, 0)
+        };
+        
+        var collapseButton = new Button
+        {
+            Content = "收起",
+            Width = 60,
+            Height = 28,
+            Background = AppBrushes.DFE6E9,
+            Foreground = AppBrushes._2D3436,
+            BorderThickness = new Thickness(0),
+            FontSize = 12,
+            Margin = new Thickness(0, 0, 8, 0)
+        };
+        collapseButton.Click += (s, e) => ToggleDiaryEntry(entry.Id, false);
+        
+        var modifyButton = new Button
+        {
+            Content = "修改",
+            Width = 60,
+            Height = 28,
+            Background = AppBrushes._00B894,
+            Foreground = System.Windows.Media.Brushes.White,
+            BorderThickness = new Thickness(0),
+            FontSize = 12,
+            Margin = new Thickness(0, 0, 8, 0)
+        };
+        modifyButton.Click += (s, e) => EditDiaryEntry(entry);
+        
+        var deleteButton = new Button
+        {
+            Content = "删除",
+            Width = 60,
+            Height = 28,
+            Background = AppBrushes._FF7675,
+            Foreground = System.Windows.Media.Brushes.White,
+            BorderThickness = new Thickness(0),
+            FontSize = 12
+        };
+        deleteButton.Click += (s, e) => DeleteDiaryEntry(entry);
+        
+        buttonPanel.Children.Add(collapseButton);
+        buttonPanel.Children.Add(modifyButton);
+        buttonPanel.Children.Add(deleteButton);
+        expandedPanel.Children.Add(buttonPanel);
+        
+        mainStackPanel.Children.Add(expandedPanel);
+        
+        var containerBorder = new Border
+        {
+            Tag = entry.Id,
+            Child = mainStackPanel
+        };
+        
+        DiaryTimelinePanel.Children.Add(containerBorder);
+    }
+
+    private void DiaryEntry_Expand_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is string entryId)
+        {
+            ToggleDiaryEntry(entryId, true);
+        }
+    }
+
+    private void ToggleDiaryEntry(string entryId, bool expand)
+    {
+        foreach (var child in DiaryTimelinePanel.Children)
+        {
+            if (child is Border border && border.Tag?.ToString() == entryId)
+            {
+                if (border.Child is StackPanel mainPanel && mainPanel.Children.Count >= 2)
+                {
+                    if (mainPanel.Children[0] is StackPanel collapsedPanel)
+                    {
+                        collapsedPanel.Visibility = expand ? Visibility.Collapsed : Visibility.Visible;
+                    }
+                    if (mainPanel.Children[1] is StackPanel expandedPanel)
+                    {
+                        expandedPanel.Visibility = expand ? Visibility.Visible : Visibility.Collapsed;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    private void EditDiaryEntry(DiaryEntry entry)
+    {
+        var editWindow = new DiaryEditWindow(entry);
+        editWindow.Owner = this;
+        if (editWindow.ShowDialog() == true && editWindow.ResultEntry != null)
+        {
+            var index = _appData.Diaries.FindIndex(d => d.Id == entry.Id);
+            if (index >= 0)
+            {
+                _appData.Diaries[index] = editWindow.ResultEntry;
+                SaveAppData();
+                RefreshDiaryTimeline();
+            }
+        }
+    }
+
+    private void DeleteDiaryEntry(DiaryEntry entry)
+    {
+        var result = MessageBox.Show($"确定要删除日记「{entry.Title}」吗？", "确认删除", 
+            MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (result == MessageBoxResult.Yes)
+        {
+            _appData.Diaries.RemoveAll(d => d.Id == entry.Id);
+            SaveAppData();
+            RefreshDiaryTimeline();
         }
     }
 
@@ -879,16 +1349,13 @@ public partial class MainWindow : Window
             switch (selectedTab)
             {
                 case 0: // 日记
-                    SaveDiaryEntry();
                     break;
                 case 1: // 任务
                     SaveTaskEntry();
                     break;
                 case 2: // 时间记录
-                    // 时间记录通过其他方式保存
                     break;
                 case 3: // 打卡
-                    // 打卡记录通过其他方式保存
                     break;
             }
 
@@ -906,63 +1373,6 @@ public partial class MainWindow : Window
         {
             MessageBox.Show($"保存失败：{ex.Message}\n\n详细错误：{ex.StackTrace}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
         }
-    }
-
-    private void SaveDiaryButton_Click(object sender, RoutedEventArgs e)
-    {
-        SaveDiaryEntry();
-    }
-    
-    private void SaveDiaryEntry()
-    {
-        var title = DiaryTitleTextBox.Text.Trim();
-        var content = DiaryContentTextBox.Text.Trim();
-        var tagsText = DiaryTagsTextBox.Text.Trim();
-
-        if (string.IsNullOrEmpty(title) && string.IsNullOrEmpty(content))
-        {
-            return; // 空内容不保存
-        }
-
-        // 收集照片路径
-        var photoPaths = new List<string>();
-        foreach (var child in DiaryPhotosPanel.Children)
-        {
-            if (child is Image image && image.Source is BitmapImage bitmapImage)
-            {
-                photoPaths.Add(bitmapImage.UriSource.LocalPath);
-            }
-        }
-
-        if (_currentDiaryEntry == null)
-        {
-            // 新增
-            var newEntry = new DiaryEntry
-            {
-                Id = Guid.NewGuid().ToString(),
-                Title = string.IsNullOrEmpty(title) ? "无标题" : title,
-                Content = content,
-                Tags = string.IsNullOrEmpty(tagsText) ? new List<string>() : 
-                       tagsText.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                              .Select(t => t.Trim()).ToList(),
-                Photos = photoPaths,
-                CreatedAt = DateTime.Now
-            };
-            _appData.Diaries.Insert(0, newEntry);
-            _currentDiaryEntry = newEntry;
-        }
-        else
-        {
-            // 更新
-            _currentDiaryEntry.Title = title;
-            _currentDiaryEntry.Content = content;
-            _currentDiaryEntry.Tags = string.IsNullOrEmpty(tagsText) ? new List<string>() : 
-                                     tagsText.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                                            .Select(t => t.Trim()).ToList();
-            _currentDiaryEntry.Photos = photoPaths;
-        }
-
-        DiaryListBox.ItemsSource = _appData.Diaries.OrderByDescending(d => d.CreatedAt).ToList();
     }
 
     private void SaveTaskEntry()

@@ -87,7 +87,7 @@
         </Style>
     </Window.Resources>
 
-    <Border CornerRadius="20" Background="#FDFDFD" Margin="20">
+    <Border x:Name="WindowBorder" CornerRadius="20" Background="#FDFDFD" Margin="20">
         <Border.Effect>
             <DropShadowEffect BlurRadius="30" ShadowDepth="0" Opacity="0.3" Color="#6C5CE7"/>
         </Border.Effect>
@@ -97,6 +97,22 @@
                 <RowDefinition Height="Auto"/> <!-- 窗口控制按钮区域 -->
                 <RowDefinition Height="*"/>    <!-- 主内容区域 -->
             </Grid.RowDefinitions>
+            
+            <!-- 顶部调整区域（用于调整窗口大小和拖动窗口） -->
+            <Border Grid.Row="0" Height="5" VerticalAlignment="Top" Background="Transparent" x:Name="TopResizeBorder"/>
+            
+            <!-- 左侧调整区域 -->
+            <Border Grid.Row="1" Width="5" HorizontalAlignment="Left" Background="Transparent" x:Name="LeftResizeBorder"/>
+            
+            <!-- 右侧调整区域 -->
+            <Border Grid.Row="1" Width="5" HorizontalAlignment="Right" Background="Transparent" x:Name="RightResizeBorder"/>
+            
+            <!-- 底部调整区域 -->
+            <Border Grid.Row="2" Height="5" VerticalAlignment="Bottom" Background="Transparent" x:Name="BottomResizeBorder"/>
+            
+            <!-- 右下角调整手柄 -->
+            <ResizeGrip x:Name="ResizeGrip" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" 
+                       Width="15" Height="15" Foreground="#6C5CE7"/>
             
             <!-- 窗口控制按钮和日期显示 -->
             <Grid Grid.Row="0" Margin="15,15,15,0">
@@ -155,23 +171,31 @@
                     <TabItem Header="📝 日记">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="320"/>
-                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="280" MinWidth="150"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*" MinWidth="200"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- 左侧面板：搜索 + 新建 + 列表 -->
+                            <!-- 左侧功能区 -->
                             <Border Grid.Column="0" CornerRadius="15" Background="#F0F3F8" Margin="0,0,10,0">
                                 <Grid Margin="15">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
+                                    <!-- 标题 -->
+                                    <TextBlock Grid.Row="0" Text="📝 日记" FontSize="18" FontWeight="Bold" 
+                                               Foreground="#2D3436" Margin="0,0,0,15"/>
+
                                     <!-- 搜索框（带提示） -->
-                                    <Border Grid.Row="0" Background="White" CornerRadius="8" Margin="0,0,0,10">
+                                    <Border Grid.Row="1" Background="White" CornerRadius="8" Margin="0,0,0,10">
                                         <Grid>
-                                            <TextBlock x:Name="DiarySearchPlaceholder" Text="🔍 搜索日记..." FontSize="13" Foreground="#B2BEC3" 
+                                            <TextBlock x:Name="DiarySearchPlaceholder" Text="� 搜索日记..." 
+                                                       FontSize="12" Foreground="#B2BEC3" 
                                                        VerticalAlignment="Center" Margin="10,0" IsHitTestVisible="False"/>
                                             <TextBox x:Name="DiarySearchBox" BorderThickness="0" 
                                                      Background="Transparent" Padding="10,8"
@@ -180,153 +204,52 @@
                                         </Grid>
                                     </Border>
 
-                                    <!-- 模块标题 -->
-                                    <TextBlock Grid.Row="1" Text="我的日记" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
+                                    <!-- 标签筛选 -->
+                                    <Border Grid.Row="2" Background="White" CornerRadius="8" Margin="0,0,0,10">
+                                        <Grid>
+                                            <TextBlock x:Name="DiaryTagPlaceholder" Text="🏷️ 标签筛选..." 
+                                                       FontSize="12" Foreground="#B2BEC3" 
+                                                       VerticalAlignment="Center" Margin="10,0" IsHitTestVisible="False"/>
+                                            <TextBox x:Name="DiaryTagFilterBox" BorderThickness="0" 
+                                                     Background="Transparent" Padding="10,8"
+                                                     TextChanged="DiaryTagFilterBox_TextChanged"
+                                                     GotFocus="DiaryTagFilterBox_GotFocus" LostFocus="DiaryTagFilterBox_LostFocus"/>
+                                        </Grid>
+                                    </Border>
 
-                                    <!-- 日记列表（时间轴） -->
-                                    <ListBox Grid.Row="2" x:Name="DiaryListBox" 
-                                             Background="Transparent" BorderThickness="0" 
-                                             ItemContainerStyle="{StaticResource DiaryItemStyle}"
-                                             SelectionChanged="DiaryListBox_SelectionChanged">
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Background="White" CornerRadius="8" Padding="12" Margin="0,0,0,8">
-                                                    <StackPanel>
-                                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Foreground="#2D3436" TextWrapping="Wrap"/>
-                                                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                                                            <TextBlock Text="📅" FontSize="11" Margin="0,0,4,0"/>
-                                                            <TextBlock Text="{Binding DateStr}" FontSize="11" Foreground="#A29BFE"/>
-                                                        </StackPanel>
-                                                        <ItemsControl ItemsSource="{Binding Tags}" Margin="0,5,0,0">
-                                                            <ItemsControl.ItemsPanel>
-                                                                <ItemsPanelTemplate>
-                                                                    <WrapPanel/>
-                                                                </ItemsPanelTemplate>
-                                                            </ItemsControl.ItemsPanel>
-                                                            <ItemsControl.ItemTemplate>
-                                                                <DataTemplate>
-                                                                    <Border Background="#E8E8E8" CornerRadius="4" Padding="3,1" Margin="0,0,4,0">
-                                                                        <TextBlock Text="{Binding}" FontSize="10" Foreground="#636E72"/>
-                                                                    </Border>
-                                                                </DataTemplate>
-                                                            </ItemsControl.ItemTemplate>
-                                                        </ItemsControl>
-                                                    </StackPanel>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
-                                    
-                                    <!-- 新建按钮 -->
-                                    <Button Grid.Row="2" Width="50" Height="50" HorizontalAlignment="Right" VerticalAlignment="Bottom" 
-                                            Style="{StaticResource RoundButtonStyle}" Click="NewDiaryButton_Click" Margin="0,0,5,5">
-                                        <TextBlock Text="+" FontSize="24"/>
-                                    </Button>
+                                    <!-- 添加按钮 -->
+                                    <Button Grid.Row="3" Content="+ 新建日记" Height="40" Background="#A29BFE" 
+                                            Foreground="White" BorderThickness="0" FontWeight="Bold"
+                                            Margin="0,0,0,10" Click="NewDiaryButton_Click"/>
+
+                                    <!-- 一个月快速日期定位 -->
+                                    <Border Grid.Row="4" Background="White" CornerRadius="8" Padding="12">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Grid.Row="0" Text="📅 本月" FontSize="12" FontWeight="Bold" 
+                                                       Foreground="#2D3436" Margin="0,0,0,8"/>
+                                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="300">
+                                                <StackPanel x:Name="DiaryMonthDatesPanel"/>
+                                            </ScrollViewer>
+                                        </Grid>
+                                    </Border>
                                 </Grid>
                             </Border>
 
-                            <!-- 右侧面板：查看模式 / 编辑模式 -->
-                            <Border Grid.Column="1" CornerRadius="15" Background="#FFFFFF" Padding="25">
-                                <Grid x:Name="DiaryRightPanel">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/> <!-- 标题 -->
-                                        <RowDefinition Height="Auto"/> <!-- 日期和标签 -->
-                                        <RowDefinition Height="*"/>    <!-- 内容 -->
-                                    </Grid.RowDefinitions>
+                            <!-- 可调整宽度的分隔条 -->
+                            <GridSplitter Grid.Column="1" Width="6" Background="#DFE6E9" 
+                                         HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                                         ResizeBehavior="PreviousAndNext" ResizeDirection="Columns"
+                                         Cursor="SizeWE" Margin="0"/>
 
-                                    <!-- 查看模式：日记详情 -->
-                                    <Grid x:Name="DiaryViewMode" Grid.Row="0">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                        </Grid.RowDefinitions>
-                                        
-                                        <!-- 标题 -->
-                                        <TextBlock Grid.Row="0" x:Name="DiaryViewTitle" Text="选择一篇日记查看" 
-                                                   FontSize="24" FontWeight="Bold" Foreground="#2D3436" TextWrapping="Wrap"/>
-                                        
-                                        <!-- 日期和标签 -->
-                                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,20">
-                                            <TextBlock x:Name="DiaryViewDate" Text="" FontSize="14" Foreground="#A29BFE" Margin="0,0,15,0"/>
-                                            <ItemsControl x:Name="DiaryViewTags">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <WrapPanel/>
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                            </ItemsControl>
-                                        </StackPanel>
-                                        
-                                        <!-- 内容 -->
-                                        <TextBlock Grid.Row="2" x:Name="DiaryViewContent" Text="点击左侧的日记条目查看详细内容，点击+号新建日记" 
-                                                   FontSize="14" Foreground="#636E72" TextWrapping="Wrap" LineHeight="28"/>
-                                        
-                                        <!-- 照片区域 -->
-                                        <ScrollViewer Grid.Row="3" Margin="0,20,0,0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                                            <StackPanel x:Name="DiaryViewPhotos" Orientation="Horizontal"/>
-                                        </ScrollViewer>
-                                    </Grid>
-
-                                    <!-- 编辑模式：新建/编辑日记 -->
-                                    <Grid x:Name="DiaryEditMode" Grid.Row="0" Visibility="Collapsed">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/> <!-- 标题 -->
-                                            <RowDefinition Height="Auto"/> <!-- 标签 -->
-                                            <RowDefinition Height="*"/>    <!-- 内容 -->
-                                            <RowDefinition Height="Auto"/> <!-- 照片和保存 -->
-                                        </Grid.RowDefinitions>
-                                        
-                                        <!-- 标题输入（浅灰背景） -->
-                                        <Border Grid.Row="0" Background="#F8F9FA" CornerRadius="8" Padding="15" Margin="0,0,0,15">
-                                            <TextBox x:Name="DiaryTitleTextBox" 
-                                                     Text="今天的日记标题" FontSize="20" FontWeight="Bold" Foreground="#2D3436"
-                                                     BorderThickness="0" Background="Transparent"/>
-                                        </Border>
-                                        
-                                        <!-- 标签输入（浅灰背景） -->
-                                        <Border Grid.Row="1" Background="#F8F9FA" CornerRadius="8" Padding="15" Margin="0,0,0,15">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="🏷️ 标签：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                                <TextBox x:Name="DiaryTagsTextBox" 
-                                                         Text="生活, 记录" FontSize="14" Foreground="#636E72"
-                                                         BorderThickness="0" Background="Transparent" Width="300"
-                                                         VerticalContentAlignment="Center"/>
-                                            </StackPanel>
-                                        </Border>
-                                        
-                                        <!-- 内容输入（浅米色背景） -->
-                                        <Border Grid.Row="2" Background="#FEFEFE" CornerRadius="8" Padding="15" Margin="0,0,0,15">
-                                            <TextBox x:Name="DiaryContentTextBox"
-                                                     Text="今天发生了什么呢..." FontSize="14" Foreground="#636E72"
-                                                     AcceptsReturn="True" TextWrapping="Wrap"
-                                                     BorderThickness="0" Background="Transparent"
-                                                     VerticalScrollBarVisibility="Auto"/>
-                                        </Border>
-                                        
-                                        <!-- 照片和保存按钮 -->
-                                        <Grid Grid.Row="3">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <Button Content="📷 添加照片" Width="100" Height="40" 
-                                                        Background="#A29BFE" Foreground="White" BorderThickness="0"
-                                                        Click="AddDiaryPhotoButton_Click" Margin="0,0,15,0"/>
-                                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                                                    <StackPanel x:Name="DiaryPhotosPanel" Orientation="Horizontal"/>
-                                                </ScrollViewer>
-                                            </StackPanel>
-                                            
-                                            <Button Grid.Column="2" Content="💾 保存日记" Width="120" Height="40" 
-                                                    Background="#00B894" Foreground="White" BorderThickness="0"
-                                                    FontWeight="Bold" Click="SaveDiaryButton_Click"/>
-                                        </Grid>
-                                    </Grid>
-                                </Grid>
+                            <!-- 右侧时间轴日记目录 -->
+                            <Border Grid.Column="2" CornerRadius="15" Background="#FFFFFF" Padding="15">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <StackPanel x:Name="DiaryTimelinePanel"/>
+                                </ScrollViewer>
                             </Border>
                         </Grid>
                     </TabItem>
@@ -335,8 +258,9 @@
                     <TabItem Header="✅ 任务">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="250"/>
-                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="250" MinWidth="150"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*" MinWidth="200"/>
                             </Grid.ColumnDefinitions>
 
                             <!-- 任务列表面板 -->
@@ -378,8 +302,14 @@
                                 </Grid>
                             </Border>
 
+                            <!-- 可调整宽度的分隔条 -->
+                            <GridSplitter Grid.Column="1" Width="6" Background="#DFE6E9" 
+                                         HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                                         ResizeBehavior="PreviousAndNext" ResizeDirection="Columns"
+                                         Cursor="SizeWE" Margin="0"/>
+
                             <!-- 任务编辑面板 -->
-                            <Border Grid.Column="1" CornerRadius="15" Background="#FFFFFF" Padding="25">
+                            <Border Grid.Column="2" CornerRadius="15" Background="#FFFFFF" Padding="25">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/> <!-- 标题输入 -->

@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 
 namespace DiaryApp;
 
@@ -9,7 +10,13 @@ public partial class SettingsWindow : Window
         InitializeComponent();
         
         // 支持窗口拖动
-        this.MouseLeftButtonDown += (s, e) => DragMove();
+        this.MouseLeftButtonDown += (s, e) =>
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                DragMove();
+            }
+        };
         
         // 设置数据上下文
         DataContext = new SettingsViewModel();

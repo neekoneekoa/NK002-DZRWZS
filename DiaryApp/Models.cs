@@ -67,6 +67,20 @@ namespace DiaryApp
         // 用于界面显示
         public string DateStr => CreatedAt.ToString("yyyy-MM-dd HH:mm");
         
+        public string DateOnly => CreatedAt.ToString("yyyy-MM-dd");
+        
+        public string TimeOnly => CreatedAt.ToString("HH:mm");
+        
+        public string ContentPreview
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Content)) return "";
+                var lines = Content.Split(new[] { '\n', '。' }, StringSplitOptions.RemoveEmptyEntries);
+                return string.Join("。", lines.Take(3)) + (lines.Length > 3 ? "..." : "");
+            }
+        }
+        
         // 用于搜索
         public string SearchableText => $"{Title} {Content} {string.Join(" ", Tags)}".ToLower();
     }
