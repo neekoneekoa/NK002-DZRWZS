@@ -16,7 +16,7 @@ namespace DiaryApp;
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.0.1.19";
+    public const string VERSION = "0.0.1.29";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -82,6 +82,20 @@ public partial class MainWindow : Window
             Log("开始设置窗口拖动");
             // 支持窗口拖动 (因为设置了 WindowStyle="None")
             this.MouseLeftButtonDown += (s, e) => DragMove();
+            
+            // 双击标题栏区域切换最大化/正常状态
+            this.MouseDoubleClick += (s, e) =>
+            {
+                // 只在非最大化状态下双击才切换
+                if (this.WindowState == WindowState.Maximized)
+                {
+                    this.WindowState = WindowState.Normal;
+                }
+                else
+                {
+                    this.WindowState = WindowState.Maximized;
+                }
+            };
             Log("窗口拖动设置完成");
             
             Log("开始调用InitializeUI()");
@@ -117,6 +131,9 @@ public partial class MainWindow : Window
     
     private void InitializeUI()
     {
+        // 设置初始窗口大小为显示器的70%
+        SetWindowSizeTo70Percent();
+        
         // 初始化各个面板
         DiaryListBox.ItemsSource = _appData.Diaries;
         TaskListBox.ItemsSource = _appData.Tasks;
@@ -130,6 +147,24 @@ public partial class MainWindow : Window
         
         // 初始化打卡统计
         UpdateCheckInStats();
+    }
+    
+    private void SetWindowSizeTo70Percent()
+    {
+        // 获取主显示器的工作区域
+        var workArea = SystemParameters.WorkArea;
+        
+        // 计算70%的宽度和高度
+        double targetWidth = workArea.Width * 0.7;
+        double targetHeight = workArea.Height * 0.7;
+        
+        // 设置窗口大小
+        this.Width = targetWidth;
+        this.Height = targetHeight;
+        
+        // 将窗口居中显示在工作区域
+        this.Left = workArea.Left + (workArea.Width - targetWidth) / 2;
+        this.Top = workArea.Top + (workArea.Height - targetHeight) / 2;
     }
 
     private void LoadAppData()
@@ -195,6 +230,18 @@ public partial class MainWindow : Window
         this.WindowState = WindowState.Minimized;
     }
 
+    private void MaximizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (this.WindowState == WindowState.Maximized)
+        {
+            this.WindowState = WindowState.Normal;
+        }
+        else
+        {
+            this.WindowState = WindowState.Maximized;
+        }
+    }
+
     private void SettingsButton_Click(object sender, RoutedEventArgs e)
     {
         var settingsWindow = new SettingsWindow();
@@ -211,9 +258,14 @@ public partial class MainWindow : Window
         _currentDiaryEntry = null;
         DiaryListBox.SelectedItem = null;
         DiaryTitleTextBox.Text = "";
-        DiaryContentTextBox.Text = "";
-        DiaryTagsTextBox.Text = "";
+        DiaryContentTextBox.Text = "今天发生了什么呢...";
+        DiaryTagsTextBox.Text = "生活, 记录";
         DiaryPhotosPanel.Children.Clear();
+        
+        // 切换到编辑模式
+        DiaryViewMode.Visibility = Visibility.Collapsed;
+        DiaryEditMode.Visibility = Visibility.Visible;
+        
         DiaryTitleTextBox.Focus();
     }
 
@@ -222,12 +274,23 @@ public partial class MainWindow : Window
         if (DiaryListBox.SelectedItem is DiaryEntry entry)
         {
             _currentDiaryEntry = entry;
-            DiaryTitleTextBox.Text = entry.Title;
-            DiaryContentTextBox.Text = entry.Content;
-            DiaryTagsTextBox.Text = string.Join(", ", entry.Tags);
+            
+            // 切换到查看模式
+            DiaryViewMode.Visibility = Visibility.Visible;
+            DiaryEditMode.Visibility = Visibility.Collapsed;
+            
+            // 显示日记详情
+            DiaryViewTitle.Text = entry.Title;
+            DiaryViewDate.Text = entry.DateStr;
+            
+            // 显示标签
+            DiaryViewTags.ItemsSource = entry.Tags;
+            
+            // 显示内容
+            DiaryViewContent.Text = entry.Content;
             
             // 加载照片
-            DiaryPhotosPanel.Children.Clear();
+            DiaryViewPhotos.Children.Clear();
             foreach (var photoPath in entry.Photos)
             {
                 if (File.Exists(photoPath))
@@ -235,13 +298,26 @@ public partial class MainWindow : Window
                     var image = new Image
                     {
                         Source = new BitmapImage(new Uri(photoPath)),
-                        Width = 60,
-                        Height = 60,
+                        Width = 120,
+                        Height = 120,
                         Margin = new Thickness(5)
                     };
-                    DiaryPhotosPanel.Children.Add(image);
+                    DiaryViewPhotos.Children.Add(image);
                 }
             }
+        }
+    }
+
+    private void DiarySearchBox_GotFocus(object sender, RoutedEventArgs e)
+    {
+        DiarySearchPlaceholder.Visibility = Visibility.Collapsed;
+    }
+
+    private void DiarySearchBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(DiarySearchBox.Text))
+        {
+            DiarySearchPlaceholder.Visibility = Visibility.Visible;
         }
     }
 
@@ -832,6 +908,11 @@ public partial class MainWindow : Window
         }
     }
 
+    private void SaveDiaryButton_Click(object sender, RoutedEventArgs e)
+    {
+        SaveDiaryEntry();
+    }
+    
     private void SaveDiaryEntry()
     {
         var title = DiaryTitleTextBox.Text.Trim();
@@ -949,6 +1030,19 @@ public partial class MainWindow : Window
         }
 
         TaskListBox.ItemsSource = _appData.Tasks.OrderByDescending(t => t.CreatedAt).ToList();
+    }
+
+    private void SaveDataButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            SaveAppData();
+            MessageBox.Show("数据已成功保存！", "保存成功", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"保存失败：{ex.Message}\n\n请检查程序目录的写权限。", "保存失败", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void ExportBackupButton_Click(object sender, RoutedEventArgs e)

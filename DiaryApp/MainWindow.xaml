@@ -61,6 +61,30 @@
 
         <!-- 转换器 -->
         <local:PriorityToColorConverter x:Key="PriorityToColorConverter"/>
+        
+        <!-- 窗口控制按钮样式 -->
+        <Style x:Key="WindowControlButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E0E0E0"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <Border CornerRadius="20" Background="#FDFDFD" Margin="20">
@@ -69,15 +93,24 @@
         </Border.Effect>
         
         <Grid>
-            <!-- 窗口控制按钮 -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,20,20,0">
-                <Button Content="⚙" Width="30" Height="30" Click="SettingsButton_Click" Background="Transparent" BorderThickness="0" Foreground="#74B9FF" FontSize="14" FontWeight="Bold" ToolTip="设置"/>
-                <Button Content="—" Width="30" Height="30" Click="MinimizeButton_Click" Background="Transparent" BorderThickness="0" Foreground="#B2BEC3" FontSize="16"/>
-                <Button Content="✕" Width="30" Height="30" Click="CloseButton_Click" Background="Transparent" BorderThickness="0" Foreground="#FF7675" FontSize="16" FontWeight="Bold"/>
-            </StackPanel>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- 窗口控制按钮区域 -->
+                <RowDefinition Height="*"/>    <!-- 主内容区域 -->
+            </Grid.RowDefinitions>
+            
+            <!-- 窗口控制按钮和日期显示 -->
+            <Grid Grid.Row="0" Margin="15,15,15,0">
+                <TextBlock x:Name="DateLabel" Text="" FontSize="14" Foreground="#636E72" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="⚙" Style="{StaticResource WindowControlButtonStyle}" Click="SettingsButton_Click" Foreground="#0984E3" FontSize="14" ToolTip="设置"/>
+                    <Button Content="—" Style="{StaticResource WindowControlButtonStyle}" Click="MinimizeButton_Click" Foreground="#2D3436" FontSize="18" ToolTip="最小化"/>
+                    <Button Content="□" Style="{StaticResource WindowControlButtonStyle}" Click="MaximizeButton_Click" Foreground="#2D3436" FontSize="14" ToolTip="全屏"/>
+                    <Button Content="✕" Style="{StaticResource WindowControlButtonStyle}" Click="CloseButton_Click" Foreground="#D63031" FontSize="16" ToolTip="关闭"/>
+                </StackPanel>
+            </Grid>
 
             <!-- 主内容区域 -->
-            <Grid Margin="20,70,20,20">
+            <Grid Grid.Row="1" Margin="20,0,20,20">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/> <!-- 模块标题栏 -->
                     <RowDefinition Height="*"/>    <!-- 内容区域 -->
@@ -122,11 +155,11 @@
                     <TabItem Header="📝 日记">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="250"/>
+                                <ColumnDefinition Width="320"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- 日记列表面板 -->
+                            <!-- 左侧面板：搜索 + 新建 + 列表 -->
                             <Border Grid.Column="0" CornerRadius="15" Background="#F0F3F8" Margin="0,0,10,0">
                                 <Grid Margin="15">
                                     <Grid.RowDefinitions>
@@ -135,26 +168,51 @@
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
-                                    <!-- 搜索框 -->
-                                    <TextBox Grid.Row="0" x:Name="DiarySearchBox" 
-                                             FontSize="14"
-                                             BorderThickness="0" Background="White"
-                                             Padding="10,8" Margin="0,0,0,10" TextChanged="DiarySearchBox_TextChanged"/>
-                                    
+                                    <!-- 搜索框（带提示） -->
+                                    <Border Grid.Row="0" Background="White" CornerRadius="8" Margin="0,0,0,10">
+                                        <Grid>
+                                            <TextBlock x:Name="DiarySearchPlaceholder" Text="🔍 搜索日记..." FontSize="13" Foreground="#B2BEC3" 
+                                                       VerticalAlignment="Center" Margin="10,0" IsHitTestVisible="False"/>
+                                            <TextBox x:Name="DiarySearchBox" BorderThickness="0" 
+                                                     Background="Transparent" Padding="10,8"
+                                                     TextChanged="DiarySearchBox_TextChanged" 
+                                                     GotFocus="DiarySearchBox_GotFocus" LostFocus="DiarySearchBox_LostFocus"/>
+                                        </Grid>
+                                    </Border>
+
                                     <!-- 模块标题 -->
                                     <TextBlock Grid.Row="1" Text="我的日记" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
 
-                                    <!-- 日记列表 -->
+                                    <!-- 日记列表（时间轴） -->
                                     <ListBox Grid.Row="2" x:Name="DiaryListBox" 
                                              Background="Transparent" BorderThickness="0" 
                                              ItemContainerStyle="{StaticResource DiaryItemStyle}"
                                              SelectionChanged="DiaryListBox_SelectionChanged">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Foreground="#2D3436"/>
-                                                    <TextBlock Text="{Binding DateStr}" FontSize="12" Foreground="#636E72" Margin="0,4,0,0"/>
-                                                </StackPanel>
+                                                <Border Background="White" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Foreground="#2D3436" TextWrapping="Wrap"/>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                                            <TextBlock Text="📅" FontSize="11" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="{Binding DateStr}" FontSize="11" Foreground="#A29BFE"/>
+                                                        </StackPanel>
+                                                        <ItemsControl ItemsSource="{Binding Tags}" Margin="0,5,0,0">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <WrapPanel/>
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border Background="#E8E8E8" CornerRadius="4" Padding="3,1" Margin="0,0,4,0">
+                                                                        <TextBlock Text="{Binding}" FontSize="10" Foreground="#636E72"/>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+                                                </Border>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                     </ListBox>
@@ -167,45 +225,107 @@
                                 </Grid>
                             </Border>
 
-                            <!-- 日记编辑面板 -->
+                            <!-- 右侧面板：查看模式 / 编辑模式 -->
                             <Border Grid.Column="1" CornerRadius="15" Background="#FFFFFF" Padding="25">
-                                <Grid>
+                                <Grid x:Name="DiaryRightPanel">
                                     <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/> <!-- 标题输入 -->
-                                        <RowDefinition Height="Auto"/> <!-- 标签输入 -->
-                                        <RowDefinition Height="*"/>    <!-- 内容输入 -->
-                                        <RowDefinition Height="Auto"/> <!-- 照片区域 -->
+                                        <RowDefinition Height="Auto"/> <!-- 标题 -->
+                                        <RowDefinition Height="Auto"/> <!-- 日期和标签 -->
+                                        <RowDefinition Height="*"/>    <!-- 内容 -->
                                     </Grid.RowDefinitions>
 
-                                    <!-- 标题输入 -->
-                                    <TextBox Grid.Row="0" x:Name="DiaryTitleTextBox" 
-                                             Text="今天的心情..." FontSize="20" FontWeight="Bold" Foreground="#2D3436"
-                                             BorderThickness="0" Background="Transparent" Margin="0,0,0,15"/>
-
-                                    <!-- 标签输入 -->
-                                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,15">
-                                        <TextBlock Text="标签：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                        <TextBox x:Name="DiaryTagsTextBox" Width="300" 
-                                                 Text="生活, 心情" FontSize="14" Foreground="#636E72"
-                                                 BorderThickness="0" Background="#F8F9FA"
-                                                 Padding="8,5" VerticalContentAlignment="Center"/>
-                                    </StackPanel>
-
-                                    <!-- 内容输入 -->
-                                    <TextBox Grid.Row="2" x:Name="DiaryContentTextBox"
-                                             Text="写点什么吧..." FontSize="14" Foreground="#636E72"
-                                             AcceptsReturn="True" TextWrapping="Wrap"
-                                             BorderThickness="0" Background="Transparent" VerticalScrollBarVisibility="Auto"/>
-
-                                    <!-- 照片区域 -->
-                                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,15,0,0">
-                                        <Button Content="📷 添加照片" Width="100" Height="35" 
-                                                Background="#A29BFE" Foreground="White" BorderThickness="0"
-                                                Click="AddDiaryPhotoButton_Click"/>
-                                        <ScrollViewer Grid.Row="3" Margin="15,0,0,0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                                            <StackPanel x:Name="DiaryPhotosPanel" Orientation="Horizontal"/>
+                                    <!-- 查看模式：日记详情 -->
+                                    <Grid x:Name="DiaryViewMode" Grid.Row="0">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        
+                                        <!-- 标题 -->
+                                        <TextBlock Grid.Row="0" x:Name="DiaryViewTitle" Text="选择一篇日记查看" 
+                                                   FontSize="24" FontWeight="Bold" Foreground="#2D3436" TextWrapping="Wrap"/>
+                                        
+                                        <!-- 日期和标签 -->
+                                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,20">
+                                            <TextBlock x:Name="DiaryViewDate" Text="" FontSize="14" Foreground="#A29BFE" Margin="0,0,15,0"/>
+                                            <ItemsControl x:Name="DiaryViewTags">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                        
+                                        <!-- 内容 -->
+                                        <TextBlock Grid.Row="2" x:Name="DiaryViewContent" Text="点击左侧的日记条目查看详细内容，点击+号新建日记" 
+                                                   FontSize="14" Foreground="#636E72" TextWrapping="Wrap" LineHeight="28"/>
+                                        
+                                        <!-- 照片区域 -->
+                                        <ScrollViewer Grid.Row="3" Margin="0,20,0,0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                            <StackPanel x:Name="DiaryViewPhotos" Orientation="Horizontal"/>
                                         </ScrollViewer>
-                                    </StackPanel>
+                                    </Grid>
+
+                                    <!-- 编辑模式：新建/编辑日记 -->
+                                    <Grid x:Name="DiaryEditMode" Grid.Row="0" Visibility="Collapsed">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/> <!-- 标题 -->
+                                            <RowDefinition Height="Auto"/> <!-- 标签 -->
+                                            <RowDefinition Height="*"/>    <!-- 内容 -->
+                                            <RowDefinition Height="Auto"/> <!-- 照片和保存 -->
+                                        </Grid.RowDefinitions>
+                                        
+                                        <!-- 标题输入（浅灰背景） -->
+                                        <Border Grid.Row="0" Background="#F8F9FA" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+                                            <TextBox x:Name="DiaryTitleTextBox" 
+                                                     Text="今天的日记标题" FontSize="20" FontWeight="Bold" Foreground="#2D3436"
+                                                     BorderThickness="0" Background="Transparent"/>
+                                        </Border>
+                                        
+                                        <!-- 标签输入（浅灰背景） -->
+                                        <Border Grid.Row="1" Background="#F8F9FA" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="🏷️ 标签：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                <TextBox x:Name="DiaryTagsTextBox" 
+                                                         Text="生活, 记录" FontSize="14" Foreground="#636E72"
+                                                         BorderThickness="0" Background="Transparent" Width="300"
+                                                         VerticalContentAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+                                        
+                                        <!-- 内容输入（浅米色背景） -->
+                                        <Border Grid.Row="2" Background="#FEFEFE" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+                                            <TextBox x:Name="DiaryContentTextBox"
+                                                     Text="今天发生了什么呢..." FontSize="14" Foreground="#636E72"
+                                                     AcceptsReturn="True" TextWrapping="Wrap"
+                                                     BorderThickness="0" Background="Transparent"
+                                                     VerticalScrollBarVisibility="Auto"/>
+                                        </Border>
+                                        
+                                        <!-- 照片和保存按钮 -->
+                                        <Grid Grid.Row="3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="📷 添加照片" Width="100" Height="40" 
+                                                        Background="#A29BFE" Foreground="White" BorderThickness="0"
+                                                        Click="AddDiaryPhotoButton_Click" Margin="0,0,15,0"/>
+                                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                                    <StackPanel x:Name="DiaryPhotosPanel" Orientation="Horizontal"/>
+                                                </ScrollViewer>
+                                            </StackPanel>
+                                            
+                                            <Button Grid.Column="2" Content="💾 保存日记" Width="120" Height="40" 
+                                                    Background="#00B894" Foreground="White" BorderThickness="0"
+                                                    FontWeight="Bold" Click="SaveDiaryButton_Click"/>
+                                        </Grid>
+                                    </Grid>
                                 </Grid>
                             </Border>
                         </Grid>
@@ -611,56 +731,62 @@
                             </Border>
                         </Grid>
                     </TabItem>
-                </TabControl>
 
-                <!-- 底部操作栏 -->
-                <Grid Grid.Row="2" Margin="0,20,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <!-- 左侧：备份管理按钮 -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                        <Button Content="导出备份" Width="80" Height="35" Margin="0,0,10,0" 
-                                Click="ExportBackupButton_Click" Background="#FFA29BFE" Foreground="White" BorderThickness="0">
-                            <Button.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="8"/>
-                                </Style>
-                            </Button.Resources>
-                        </Button>
-                        <Button Content="导入备份" Width="80" Height="35" Margin="0,0,10,0" 
-                                Click="ImportBackupButton_Click" Background="#FFA29BFE" Foreground="White" BorderThickness="0">
-                            <Button.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="8"/>
-                                </Style>
-                            </Button.Resources>
-                        </Button>
-                        <Button Content="管理备份" Width="80" Height="35" 
-                                Click="ManageBackupsButton_Click" Background="#FFA29BFE" Foreground="White" BorderThickness="0">
-                            <Button.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="8"/>
-                                </Style>
-                            </Button.Resources>
-                        </Button>
-                    </StackPanel>
-                    
-                    <!-- 右侧：保存按钮和日期 -->
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <TextBlock x:Name="DateLabel" Text="2023-10-27" VerticalAlignment="Center" Foreground="#B2BEC3" Margin="0,0,20,0"/>
-                        <Button Content="保存" Width="100" Height="40" Click="SaveButton_Click"
-                                Background="#6C5CE7" Foreground="White" BorderThickness="0">
-                            <Button.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="10"/>
-                                </Style>
-                            </Button.Resources>
-                        </Button>
-                    </StackPanel>
-                </Grid>
+                    <!-- 数据管理模块 -->
+                    <TabItem Header="📦 数据管理">
+                        <Border CornerRadius="15" Background="#FFFFFF" Padding="30">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- 标题 -->
+                                <TextBlock Grid.Row="0" Text="📦 数据管理" FontSize="24" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,30"/>
+
+                                <!-- 说明文字 -->
+                                <TextBlock Grid.Row="1" Text="管理您的应用数据，包括保存、导出、导入和备份管理" 
+                                           FontSize="14" Foreground="#636E72" Margin="0,0,0,30"/>
+
+                                <!-- 功能按钮区域 -->
+                                <Grid Grid.Row="2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- 左侧按钮 -->
+                                    <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                                        <Button Content="💾 保存当前数据" Height="60" Margin="0,0,0,15" 
+                                                Background="#00B894" Foreground="White" BorderThickness="0"
+                                                Click="SaveDataButton_Click" FontSize="16" FontWeight="Bold"/>
+                                        <Button Content="📤 导出备份文件" Height="60" 
+                                                Background="#0984E3" Foreground="White" BorderThickness="0"
+                                                Click="ExportBackupButton_Click" FontSize="16" FontWeight="Bold"/>
+                                    </StackPanel>
+
+                                    <!-- 右侧按钮 -->
+                                    <StackPanel Grid.Column="1" Margin="20,0,0,0">
+                                        <Button Content="📥 从备份导入" Height="60" Margin="0,0,0,15" 
+                                                Background="#FDCB6E" Foreground="#2D3436" BorderThickness="0"
+                                                Click="ImportBackupButton_Click" FontSize="16" FontWeight="Bold"/>
+                                        <Button Content="⚙️ 管理备份文件" Height="60" 
+                                                Background="#636E72" Foreground="White" BorderThickness="0"
+                                                Click="ManageBackupsButton_Click" FontSize="16" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- 底部提示 -->
+                                <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,30,0,0">
+                                    <TextBlock Text="💡 提示：" FontSize="12" Foreground="#636E72" FontWeight="Bold"/>
+                                    <TextBlock Text="建议定期导出备份以保护您的数据安全" FontSize="12" Foreground="#636E72"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </TabItem>
+                </TabControl>
             </Grid>
         </Grid>
     </Border>
