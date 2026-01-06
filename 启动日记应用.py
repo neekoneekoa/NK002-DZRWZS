@@ -12,10 +12,13 @@ from pathlib import Path
 
 def find_app_path():
     """查找应用路径 - 优先使用Debug版本（最新修复）"""
+    # 获取当前脚本所在目录
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    
     possible_paths = [
         # 优先使用Debug版本（包含最新修复）
-        "D:\\cunchu\\项目\\电子任务助手\\DiaryApp\\bin\\Debug\\net8.0-windows\\DiaryApp.exe",
-        "D:\\cunchu\\项目\\电子任务助手\\DiaryApp\\bin\\Release\\net8.0-windows\\DiaryApp.exe"
+        os.path.join(base_dir, "DiaryApp", "bin", "Debug", "net8.0-windows", "DiaryApp.exe"),
+        os.path.join(base_dir, "DiaryApp", "bin", "Release", "net8.0-windows", "DiaryApp.exe")
     ]
     
     for path in possible_paths:

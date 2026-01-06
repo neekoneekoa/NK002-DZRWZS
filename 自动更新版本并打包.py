@@ -13,7 +13,9 @@ from datetime import datetime
 
 def read_version_file():
     """读取当前版本信息"""
-    version_file = r"D:\cunchu\项目\电子任务助手\DiaryApp\MainWindow.xaml.cs"
+    # 获取当前脚本所在目录
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    version_file = os.path.join(base_dir, "DiaryApp", "MainWindow.xaml.cs")
     
     with open(version_file, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -60,7 +62,9 @@ def increment_version(content):
 
 def save_version_file(content):
     """保存更新后的版本文件"""
-    version_file = r"D:\cunchu\项目\电子任务助手\DiaryApp\MainWindow.xaml.cs"
+    # 获取当前脚本所在目录
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    version_file = os.path.join(base_dir, "DiaryApp", "MainWindow.xaml.cs")
     
     with open(version_file, 'w', encoding='utf-8') as f:
         f.write(content)
@@ -71,9 +75,13 @@ def clean_project():
     """清理项目"""
     print("🧹 清理项目文件...")
     
+    # 获取当前脚本所在目录
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    project_dir = os.path.join(base_dir, "DiaryApp")
+    
     result = subprocess.run(
         ["dotnet", "clean"], 
-        cwd=r"D:\cunchu\项目\电子任务助手\DiaryApp",
+        cwd=project_dir,
         capture_output=True, 
         text=True
     )
@@ -89,11 +97,17 @@ def build_release():
     """编译Release版本"""
     print("🔨 编译Release版本...")
     
+    # 获取当前脚本所在目录
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    project_dir = os.path.join(base_dir, "DiaryApp")
+    
     result = subprocess.run(
         ["dotnet", "build", "--configuration", "Release"], 
-        cwd=r"D:\cunchu\项目\电子任务助手\DiaryApp",
+        cwd=project_dir,
         capture_output=True, 
-        text=True
+        text=True,
+        encoding='utf-8',
+        errors='ignore'
     )
     
     if result.returncode == 0:
@@ -107,7 +121,9 @@ def test_run():
     """测试运行"""
     print("🚀 测试运行新版本...")
     
-    exe_path = r"D:\cunchu\项目\电子任务助手\DiaryApp\bin\Release\net8.0-windows\DiaryApp.exe"
+    # 获取当前脚本所在目录
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    exe_path = os.path.join(base_dir, "DiaryApp", "bin", "Release", "net8.0-windows", "DiaryApp.exe")
     
     if not os.path.exists(exe_path):
         print(f"❌ 未找到EXE文件：{exe_path}")
@@ -139,14 +155,19 @@ def show_version_info(new_version):
     """显示版本信息"""
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
+    # 获取当前脚本所在目录
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    debug_path = os.path.join(base_dir, "DiaryApp", "bin", "Debug", "net8.0-windows", "DiaryApp.exe")
+    release_path = os.path.join(base_dir, "DiaryApp", "bin", "Release", "net8.0-windows", "DiaryApp.exe")
+    
     print("\n" + "="*50)
     print("🎉 版本更新完成！")
     print("="*50)
     print(f"📦 新版本号：{new_version}")
     print(f"🕐 更新时间：{current_time}")
     print(f"📁 EXE路径：")
-    print(f"   Debug: D:\\cunchu\\项目\\电子任务助手\\DiaryApp\\bin\\Debug\\net8.0-windows\\DiaryApp.exe")
-    print(f"   Release: D:\\cunchu\\项目\\电子任务助手\\DiaryApp\\bin\\Release\\net8.0-windows\\DiaryApp.exe")
+    print(f"   Debug: {debug_path}")
+    print(f"   Release: {release_path}")
     print("="*50)
 
 def main():

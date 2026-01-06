@@ -12,7 +12,9 @@ from datetime import datetime
 
 def update_version():
     """自动更新版本号"""
-    version_file = r"D:\cunchu\项目\电子任务助手\DiaryApp\MainWindow.xaml.cs"
+    # 获取当前脚本所在目录
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    version_file = os.path.join(base_dir, "DiaryApp", "MainWindow.xaml.cs")
     
     try:
         with open(version_file, 'r', encoding='utf-8') as f:
@@ -59,11 +61,15 @@ def update_version():
 def build_and_run():
     """编译并运行"""
     try:
+        # 获取当前脚本所在目录
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        project_dir = os.path.join(base_dir, "DiaryApp")
+        
         # 清理并编译
         print("🔨 编译中...")
         result = subprocess.run(
             ["dotnet", "build", "--configuration", "Debug"], 
-            cwd=r"D:\cunchu\项目\电子任务助手\DiaryApp",
+            cwd=project_dir,
             capture_output=True, 
             text=True,
             encoding='utf-8',
@@ -75,7 +81,7 @@ def build_and_run():
             
             # 运行应用
             print("🚀 启动应用...")
-            exe_path = r"D:\cunchu\项目\电子任务助手\DiaryApp\bin\Debug\net8.0-windows\DiaryApp.exe"
+            exe_path = os.path.join(project_dir, "bin", "Debug", "net8.0-windows", "DiaryApp.exe")
             
             subprocess.Popen([exe_path])
             print(f"✅ 应用已启动！")
