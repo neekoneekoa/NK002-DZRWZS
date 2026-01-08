@@ -1,0 +1,58 @@
+# 程序崩溃修复总结
+
+## 问题分析
+根据崩溃日志，程序在TaskEditWindow.xaml.cs的第131行TaskTypeComboBox_SelectionChanged方法中出现空引用异常。具体错误是在调用SubTasksPanel.Children.Clear()时，SubTasksPanel为null。
+
+## 修复方案
+1. **在TaskTypeComboBox_SelectionChanged方法中添加空检查**：
+   ```csharp
+   private void TaskTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+   {
+       // 防止初始化时SubTasksPanel尚未完全初始化导致的空引用异常
+       if (SubTasksPanel == null)
+           return;
+           
+       if (TaskTypeComboBox.SelectedIndex == 1) // 切换到项目任务
+       {
+           if (SubTasksPanel.Children.Count == 0)
+           {
+               AddDefaultSubTask();
+           }
+       }
+       else if (TaskTypeComboBox.SelectedIndex == 0) // 切换到临时任务
+       {
+           // 清空子任务
+           SubTasksPanel.Children.Clear();
+       }
+   }
+   ```
+
+2. **在LoadTaskData方法中添加对所有UI控件的空检查**：
+   ```csharp
+   private void LoadTaskData()
+   {
+       // 防止初始化时控件尚未完全初始化导致的空引用异常
+       if (TitleTextBox == null || ContentTextBox == null || PriorityComboBox == null || LevelComboBox == null || 
+           StatusComboBox == null || CompletedDatePicker == null || TaskTypeComboBox == null || SubTasksPanel == null ||
+           FontSizeComboBox == null || TextColorButton == null || BackgroundColorButton == null || UnderlineCheckBox == null ||
+           TotalDaysTextBox == null)
+       {
+           return;
+       }
+       // ... 原有代码
+   }
+   ```
+
+## 修复效果
+- 程序不再崩溃，能够正常启动和运行
+- 任务编辑功能正常工作
+- 任务类型切换时不再出现空引用异常
+
+## 预防措施
+1. 在访问任何UI控件之前，先检查其是否为null
+2. 在事件处理程序中添加空检查，特别是在控件初始化过程中可能触发的事件
+3. 使用nullable类型和空检查来提高代码的健壮性
+
+## 其他潜在问题
+- 项目中仍有一些其他的null引用警告，建议后续逐步修复
+- 可以考虑使用可为null的引用类型来提高代码的类型安全性

@@ -1,18 +1,107 @@
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Interop;
-using System.IO;
-using System;
-using System.Text.Json;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
+using System.IO;
 using System.Linq;
-using Microsoft.Win32;
-using System.Windows.Media.Imaging;
+using System.Text.Json;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using Microsoft.Win32;
 
 namespace DiaryApp;
+
+// 多级标题转换器
+public class LevelToMarginConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is int level)
+        {
+            // 根据级别调整缩进，每级缩进20像素
+            return new Thickness(level * 20, 0, 0, 0);
+        }
+        return new Thickness(0);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public class LevelToFontWeightConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is int level)
+        {
+            // 根据级别调整字体粗细
+            return level switch
+            {
+                0 => FontWeights.Regular,
+                1 => FontWeights.Bold,
+                2 => FontWeights.ExtraBold,
+                3 => FontWeights.UltraBold,
+                _ => FontWeights.Regular
+            };
+        }
+        return FontWeights.Regular;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public class LevelToFontSizeConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is int level)
+        {
+            // 根据级别调整字体大小
+            return level switch
+            {
+                0 => 14.0,
+                1 => 16.0,
+                2 => 18.0,
+                3 => 20.0,
+                _ => 14.0
+            };
+        }
+        return 14.0;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+// 布尔值到下划线转换器
+public class BooleanToUnderlineConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is bool isUnderline && isUnderline)
+        {
+            return TextDecorations.Underline;
+        }
+        return null;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
 
 public static class AppBrushes
 {
@@ -29,7 +118,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.5";
+    public const string VERSION = "0.1.1.10";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -74,41 +163,41 @@ public partial class MainWindow : Window
         {
             var logPath = GetLogFilePath();
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("════════════════════════════════════════════════════════════");
+            sb.AppendLine("==================================================");
             sb.AppendLine($"崩溃时间: {DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}");
             sb.AppendLine($"程序版本: {AppVersion.VERSION} ({AppVersion.BUILD_DATE} {AppVersion.BUILD_TIME})");
             sb.AppendLine($"操作系统: {Environment.OSVersion}");
             sb.AppendLine($".NET版本: {Environment.Version}");
-            sb.AppendLine($"机器名: {Environment.MachineName}");
-            sb.AppendLine("────────────────────────────────────────────────────────────");
+            sb.AppendLine($"机器名称: {Environment.MachineName}");
+            sb.AppendLine("--------------------------------------------------");
             sb.AppendLine($"错误信息: {message}");
             if (ex != null)
             {
-                sb.AppendLine("────────────────────────────────────────────────────────────");
+                sb.AppendLine("--------------------------------------------------");
                 sb.AppendLine("异常详情:");
                 sb.AppendLine($"类型: {ex.GetType().FullName}");
-                sb.AppendLine($"消息: {ex.Message}");
+                sb.AppendLine($"信息: {ex.Message}");
                 sb.AppendLine($"源: {ex.Source}");
-                sb.AppendLine($"堆栈跟踪:");
+                sb.AppendLine("堆栈跟踪:");
                 sb.AppendLine(ex.StackTrace);
                 if (ex.InnerException != null)
                 {
-                    sb.AppendLine("────────────────────────────────────────────────────────────");
+                    sb.AppendLine("--------------------------------------------------");
                     sb.AppendLine("内部异常:");
                     sb.AppendLine($"类型: {ex.InnerException.GetType().FullName}");
-                    sb.AppendLine($"消息: {ex.InnerException.Message}");
-                    sb.AppendLine($"堆栈跟踪:");
+                    sb.AppendLine($"信息: {ex.InnerException.Message}");
+                    sb.AppendLine("堆栈跟踪:");
                     sb.AppendLine(ex.InnerException.StackTrace);
                 }
             }
-            sb.AppendLine("════════════════════════════════════════════════════════════");
+            sb.AppendLine("==================================================");
             sb.AppendLine();
             File.AppendAllText(logPath, sb.ToString());
         }
         catch { /* 忽略日志错误 */ }
     }
     
-    // 全局未处理异常处理 (非UI线程)
+    // 全局未处理异常处理(非UI线程)
     private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
         var ex = e.ExceptionObject as Exception;
@@ -127,13 +216,13 @@ public partial class MainWindow : Window
             "程序崩溃", MessageBoxButton.OK, MessageBoxImage.Error);
     }
     
-    // 当前选中的日记条目（用于编辑）
+    // 当前选中的日记条目(用于编辑)
     private DiaryEntry? _currentDiaryEntry;
     
-    // 当前选中的任务条目（用于编辑）
+    // 当前选中的任务条目(用于编辑)
     private TaskEntry? _currentTaskEntry;
     
-    // 当前选中的打卡记录（用于编辑）
+    // 当前选中的打卡条目(用于编辑)
     private CheckInEntry? _currentCheckInEntry;
 
     // 当前查看的周
@@ -157,10 +246,10 @@ public partial class MainWindow : Window
             Log("InitializeComponent()完成");
             
             Log("开始设置窗口拖动");
-            // 支持窗口拖动 (因为设置了 WindowStyle="None")
+            // 支持窗口拖动 (因为设置了WindowStyle="None")
             this.MouseLeftButtonDown += (s, e) =>
             {
-                // 检查鼠标按钮是否确实按下
+                // 检查鼠标左键是否真实按下
                 if (e.LeftButton == MouseButtonState.Pressed)
                 {
                     DragMove();
@@ -195,7 +284,7 @@ public partial class MainWindow : Window
             Log("LoadAppData()完成");
             
             Log("开始设置默认选项卡");
-            // 默认显示日记板块
+            // 默认显示日记模块
             MainTabControl.SelectedIndex = 0;
             Log("选项卡设置完成");
             
@@ -203,7 +292,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            Log($"MainWindow构造函数异常: {ex.Message}");
+            Log($"MainWindow构造函数失败: {ex.Message}");
             Log($"异常堆栈: {ex.StackTrace}");
             var innerEx = ex.InnerException;
             while (innerEx != null)
@@ -212,7 +301,7 @@ public partial class MainWindow : Window
                 Log($"内部异常堆栈: {innerEx.StackTrace}");
                 innerEx = innerEx.InnerException;
             }
-            MessageBox.Show($"初始化错误: {ex.Message}\n\n详细信息: {ex.StackTrace}\n\n请查看 startup_log.txt 获取更多调试信息", "启动错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"初始化错误: {ex.Message}\n\n详细信息: {ex.StackTrace}\n\n请查看startup_log.txt 获取更多调试信息", "启动错误", MessageBoxButton.OK, MessageBoxImage.Error);
             throw;
         }
     }
@@ -222,7 +311,7 @@ public partial class MainWindow : Window
         // 设置初始窗口大小为显示器的70%
         SetWindowSizeTo70Percent();
         
-        // 初始化日记时间轴
+        // 初始化日记时间线
         RefreshDiaryTimeline();
         
         // 设置默认日期时间显示
@@ -588,7 +677,7 @@ public partial class MainWindow : Window
         var currentMonth = "";
         foreach (var entry in sortedDiaries)
         {
-            var entryMonth = entry.CreatedAt.ToString("yyyy年M月");
+            var entryMonth = entry.CreatedAt.ToString("yyyy年MM月");
             if (entryMonth != currentMonth)
             {
                 currentMonth = entryMonth;
@@ -838,91 +927,81 @@ public partial class MainWindow : Window
 
     private void NewTaskButton_Click(object sender, RoutedEventArgs e)
     {
-        _currentTaskEntry = null;
-        TaskListBox.SelectedItem = null;
-        TaskTitleTextBox.Text = "";
-        TaskContentTextBox.Text = "";
-        TaskPriorityCombo.SelectedIndex = 1; // 默认中优先级
-        TaskLevelCombo.SelectedIndex = 0;    // 默认1级
-        TaskStatusCombo.SelectedIndex = 0;   // 默认待完成
-        TaskCompletedDatePicker.SelectedDate = null;
-        SubTasksPanel.Children.Clear();
-        AddDefaultSubTask();
-        TaskTitleTextBox.Focus();
+        var taskEditWindow = new TaskEditWindow();
+        if (taskEditWindow.ShowDialog() == true)
+        {
+            // 如果用户保存了任务，将任务添加到数据源
+            if (taskEditWindow.TaskEntry != null)
+            {
+                _appData.Tasks.Add(taskEditWindow.TaskEntry);
+                SaveAppData();
+            }
+            // 刷新任务列表
+            RefreshTaskLists();
+        }
     }
 
-    private void TaskListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void DeleteTaskButton_Click(object sender, RoutedEventArgs e)
     {
-        if (TaskListBox.SelectedItem is TaskEntry entry)
+        // 检查是否有选中的临时任务
+        if (TempTaskListBox.SelectedItem is TaskEntry tempTask)
         {
-            _currentTaskEntry = entry;
-            TaskTitleTextBox.Text = entry.Title;
-            TaskContentTextBox.Text = entry.Content;
-            TaskPriorityCombo.SelectedIndex = entry.Priority - 1;
-            TaskLevelCombo.SelectedIndex = entry.Level - 1;
-            TaskStatusCombo.SelectedIndex = (int)entry.Status;
-            TaskCompletedDatePicker.SelectedDate = entry.CompletedAt;
-            
-            // 加载子任务
-            SubTasksPanel.Children.Clear();
-            foreach (var subTask in entry.SubTasks)
+            DeleteTask(tempTask);
+        }
+        // 妫€鏌ユ槸鍚︽湁閫変腑鐨勯」鐩换鍔?
+        else if (ProjectTaskListBox.SelectedItem is TaskEntry projectTask)
+        {
+            DeleteTask(projectTask);
+        }
+        else
+        {
+            MessageBox.Show("请先选中要删除的任务", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    private void DeleteTask(TaskEntry task)
+    {
+        var result = MessageBox.Show($"确定要删除任务「{task.Title}」吗？", "确认删除", 
+            MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (result == MessageBoxResult.Yes)
+        {
+            _appData.Tasks.RemoveAll(t => t.Id == task.Id);
+            SaveAppData();
+            RefreshTaskLists();
+        }
+    }
+
+    private void RefreshTaskLists()
+    {
+        // 娓呯┖鐜版湁鍒楄〃
+        TempTaskListBox.Items.Clear();
+        ProjectTaskListBox.Items.Clear();
+        
+        // 灏嗕换鍔″垎绫绘坊鍔犲埌涓嶅悓鍒楄〃
+        foreach (var task in _appData.Tasks)
+        {
+            // 绠€鍗曞垽鏂細娌℃湁瀛愪换鍔＄殑涓轰复鏃朵换鍔★紝鏈夊瓙浠诲姟鐨勪负椤圭洰浠诲姟
+            if (task.SubTasks.Count == 0)
             {
-                AddSubTaskToPanel(subTask);
+                TempTaskListBox.Items.Add(task);
+            }
+            else
+            {
+                ProjectTaskListBox.Items.Add(task);
             }
         }
     }
 
-    private void AddSubTaskButton_Click(object sender, RoutedEventArgs e)
+    private void TempTaskListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        var subTask = new SubTask
-        {
-            Id = Guid.NewGuid().ToString(),
-            Title = "新子任务",
-            IsCompleted = false,
-            CreatedAt = DateTime.Now
-        };
-        AddSubTaskToPanel(subTask);
+        // 鍙栨秷椤圭洰浠诲姟鍒楄〃鐨勯€夋嫨
+        ProjectTaskListBox.SelectedItem = null;
     }
 
-    private void AddDefaultSubTask()
+    private void ProjectTaskListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        var subTask = new SubTask
-        {
-            Id = Guid.NewGuid().ToString(),
-            Title = "子任务1",
-            IsCompleted = false,
-            CreatedAt = DateTime.Now
-        };
-        AddSubTaskToPanel(subTask);
-    }
-
-    private void AddSubTaskToPanel(SubTask subTask)
-    {
-        var subTaskPanel = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Margin = new Thickness(0, 0, 0, 5)
-        };
-
-        var checkBox = new CheckBox
-        {
-            IsChecked = subTask.IsCompleted,
-            Margin = new Thickness(0, 0, 8, 0),
-            VerticalAlignment = VerticalAlignment.Center
-        };
-
-        var textBox = new TextBox
-        {
-            Text = subTask.Title,
-            Width = 200,
-            BorderThickness = new Thickness(0),
-            Background = System.Windows.Media.Brushes.White,
-            Padding = new Thickness(5)
-        };
-
-        subTaskPanel.Children.Add(checkBox);
-        subTaskPanel.Children.Add(textBox);
-        SubTasksPanel.Children.Add(subTaskPanel);
+        // 鍙栨秷涓存椂浠诲姟鍒楄〃鐨勯€夋嫨
+        TempTaskListBox.SelectedItem = null;
     }
 
     #endregion
@@ -946,12 +1025,12 @@ public partial class MainWindow : Window
     private void UpdateWeekDisplay()
     {
         var weekEnd = _currentWeekStart.AddDays(6);
-        CurrentWeekText.Text = $"{_currentWeekStart.Year}年第{GetWeekNumber(_currentWeekStart)}周 ({_currentWeekStart:MM-dd} ~ {weekEnd:MM-dd})";
+        CurrentWeekText.Text = $"{_currentWeekStart.Year}年第{GetWeekNumber(_currentWeekStart)}周({_currentWeekStart:MM-dd} ~ {weekEnd:MM-dd})";
     }
 
     private void AddTimeRecordButton_Click(object sender, RoutedEventArgs e)
     {
-        // 创建新的时间记录
+        // 鍒涘缓鏂扮殑鏃堕棿璁板綍
         var newRecord = new TimeRecordEntry
         {
             Id = Guid.NewGuid().ToString(),
@@ -975,18 +1054,18 @@ public partial class MainWindow : Window
 
     private void UpdateTimeRecordDisplay()
     {
-        // 获取当前周的时间记录
+        // 鑾峰彇褰撳墠鍛ㄧ殑鏃堕棿璁板綍
         var weekRecords = _appData.TimeRecords
             .Where(t => t.Date.Date >= _currentWeekStart.Date && t.Date.Date <= _currentWeekStart.AddDays(6).Date)
             .OrderBy(t => t.Date)
             .ThenBy(t => t.StartTime)
             .ToList();
 
-        // 清除现有的时间块
+        // 娓呴櫎鐜版湁鐨勬椂闂村潡
         var timeGrid = FindName("TimeGrid") as Grid;
         if (timeGrid != null)
         {
-            // 保存时间标签和日期标题
+            // 淇濆瓨鏃堕棿鏍囩鍜屾棩鏈熸爣棰?
             var timeLabels = new List<UIElement>();
             var dateHeaders = new List<UIElement>();
             
@@ -996,22 +1075,22 @@ public partial class MainWindow : Window
                 var row = Grid.GetRow(child);
                 var col = Grid.GetColumn(child);
                 
-                // 保存时间标签（第0列）
+                // 淇濆瓨鏃堕棿鏍囩锛堢0鍒楋級
                 if (col == 0 && child is TextBlock)
                 {
                     timeLabels.Add(child);
                 }
-                // 保存日期标题（第0行）
+                // 淇濆瓨鏃ユ湡鏍囬锛堢0琛岋級
                 else if (row == 0 && child is TextBlock)
                 {
                     dateHeaders.Add(child);
                 }
             }
             
-            // 清除所有子元素
+            // 娓呴櫎鎵€鏈夊瓙鍏冪礌
             timeGrid.Children.Clear();
             
-            // 重新添加时间标签和日期标题
+            // 閲嶆柊娣诲姞鏃堕棿鏍囩鍜屾棩鏈熸爣棰?
             foreach (var label in timeLabels)
             {
                 timeGrid.Children.Add(label);
@@ -1022,12 +1101,12 @@ public partial class MainWindow : Window
             }
         }
 
-        // 重新绘制网格线
+        // 閲嶆柊缁樺埗缃戞牸绾?
         if (timeGrid != null)
         {
             DrawGridLines(timeGrid);
         
-            // 绘制时间记录
+            // 缁樺埗鏃堕棿璁板綍
             DrawTimeRecords(timeGrid, weekRecords);
         }
     }
@@ -1036,7 +1115,7 @@ public partial class MainWindow : Window
     {
         if (timeGrid == null) return;
         
-        // 绘制时间块网格线
+        // 缁樺埗鏃堕棿鍧楃綉鏍肩嚎
         for (int row = 0; row < 12; row++)
         {
             for (int col = 1; col <= 7; col++)
@@ -1047,7 +1126,7 @@ public partial class MainWindow : Window
                     BorderBrush = Brushes.LightGray,
                     BorderThickness = new Thickness(0, 0, 1, 1)
                 };
-                Grid.SetRow(border, row + 1); // +1 是因为第0行是日期标题
+                Grid.SetRow(border, row + 1); // +1 鏄洜涓虹0琛屾槸鏃ユ湡鏍囬
                 Grid.SetColumn(border, col);
                 Grid.SetRowSpan(border, 1);
                 Grid.SetColumnSpan(border, 1);
@@ -1062,18 +1141,18 @@ public partial class MainWindow : Window
         
         foreach (var record in records)
         {
-            // 计算星期几（0=周一, 6=周日）
+            // 璁＄畻鏄熸湡鍑狅紙0=鍛ㄤ竴, 6=鍛ㄦ棩锛?
             int dayOfWeek = (int)record.Date.DayOfWeek;
-            if (dayOfWeek == 0) dayOfWeek = 7; // 将周日从0转换为7
-            dayOfWeek -= 1; // 转换为0-6的索引
+            if (dayOfWeek == 0) dayOfWeek = 7; // 灏嗗懆鏃ヤ粠0杞崲涓?
+            dayOfWeek -= 1; // 杞崲涓?-6鐨勭储寮?
             
-            // 计算开始时间行号（08:00-19:00，共12小时）
+            // 璁＄畻寮€濮嬫椂闂磋鍙凤紙08:00-19:00锛屽叡12灏忔椂锛?
             int startHour = record.StartTime.Hours;
-            if (startHour < 8 || startHour >= 19) continue; // 只显示08:00-19:00的记录
+            if (startHour < 8 || startHour >= 19) continue; // 鍙樉绀?8:00-19:00鐨勮褰?
             
             int startRow = startHour - 8;
             
-            // 计算结束时间行号
+            // 璁＄畻缁撴潫鏃堕棿琛屽彿
             int endHour = record.EndTime.Hours;
             if (endHour <= 8) continue;
             if (endHour > 19) endHour = 19;
@@ -1083,27 +1162,27 @@ public partial class MainWindow : Window
             
             if (rowSpan < 1) rowSpan = 1;
             
-            // 创建时间块
+            // 鍒涘缓鏃堕棿鍧?
             var timeBlock = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(150, 108, 92, 231)), // 半透明紫色
+                Background = new SolidColorBrush(Color.FromArgb(150, 108, 92, 231)), // 鍗婇€忔槑绱壊
                 BorderBrush = Brushes.DarkSlateBlue,
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(4),
                 Cursor = Cursors.Hand
             };
             
-            // 添加点击事件
+            // 娣诲姞鐐瑰嚮浜嬩欢
             timeBlock.MouseLeftButtonDown += (s, e) => EditTimeRecord(record);
             
-            // 创建内容面板
+            // 鍒涘缓鍐呭闈㈡澘
             var contentPanel = new StackPanel
             {
                 Margin = new Thickness(5),
                 Background = Brushes.Transparent
             };
             
-            // 添加活动名称
+            // 娣诲姞娲诲姩鍚嶇О
             var activityText = new TextBlock
             {
                 Text = record.Activity,
@@ -1113,7 +1192,7 @@ public partial class MainWindow : Window
                 TextWrapping = TextWrapping.Wrap
             };
             
-            // 添加时间范围
+            // 娣诲姞鏃堕棿鑼冨洿
             var timeText = new TextBlock
             {
                 Text = $"{record.StartTime:HH:mm} - {record.EndTime:HH:mm}",
@@ -1126,13 +1205,13 @@ public partial class MainWindow : Window
             
             timeBlock.Child = contentPanel;
             
-            // 设置位置和大小
-            Grid.SetRow(timeBlock, startRow + 1); // +1 是因为第0行是日期标题
-            Grid.SetColumn(timeBlock, dayOfWeek + 1); // +1 是因为第0列是时间标签
+            // 璁剧疆浣嶇疆鍜屽ぇ灏?
+            Grid.SetRow(timeBlock, startRow + 1); // +1 鏄洜涓虹0琛屾槸鏃ユ湡鏍囬
+            Grid.SetColumn(timeBlock, dayOfWeek + 1); // +1 鏄洜涓虹0鍒楁槸鏃堕棿鏍囩
             Grid.SetRowSpan(timeBlock, rowSpan);
             Grid.SetColumnSpan(timeBlock, 1);
             
-            // 添加到网格
+            // 娣诲姞鍒扮綉鏍?
             timeGrid.Children.Add(timeBlock);
         }
     }
@@ -1144,14 +1223,14 @@ public partial class MainWindow : Window
         
         if (result == true)
         {
-            // 保存数据
+            // 淇濆瓨鏁版嵁
             SaveAppData();
-            // 更新显示
+            // 鏇存柊鏄剧ず
             UpdateTimeRecordDisplay();
         }
         else if (result == null)
         {
-            // 删除记录
+            // 鍒犻櫎璁板綍
             _appData.TimeRecords.Remove(record);
             SaveAppData();
             UpdateTimeRecordDisplay();
@@ -1168,7 +1247,7 @@ public partial class MainWindow : Window
         {
             _currentCheckInEntry = entry;
             CheckInValueTextBox.Text = entry.Value;
-            // 可以添加更多编辑字段
+            // 鍙互娣诲姞鏇村缂栬緫瀛楁
         }
     }
 
@@ -1182,10 +1261,10 @@ public partial class MainWindow : Window
     {
         try
         {
-            var selectedType = (CheckInTypeCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "运动";
+            var selectedType = (CheckInTypeCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "杩愬姩";
             var value = CheckInValueTextBox.Text.Trim();
             
-            // 创建新的打卡记录
+            // 鍒涘缓鏂扮殑鎵撳崱璁板綍
             var newCheckIn = new CheckInEntry
             {
                 Id = Guid.NewGuid().ToString(),
@@ -1216,7 +1295,7 @@ public partial class MainWindow : Window
         {
             if (_currentCheckInEntry != null)
             {
-                // 更新当前选中的打卡记录
+                // 鏇存柊褰撳墠閫変腑鐨勬墦鍗¤褰?
                 _currentCheckInEntry.Value = CheckInValueTextBox.Text.Trim();
                 _currentCheckInEntry.UpdatedAt = DateTime.Now;
                 
@@ -1297,10 +1376,10 @@ public partial class MainWindow : Window
 
     private void UpdateCheckInList()
     {
-        // 添加空值检查，防止初始化期间出现空引用异常
+        // 娣诲姞绌哄€兼鏌ワ紝闃叉鍒濆鍖栨湡闂村嚭鐜扮┖寮曠敤寮傚父
         if (CheckInTypeCombo == null || CheckInListBox == null) return;
         
-        var selectedType = (CheckInTypeCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "运动";
+        var selectedType = (CheckInTypeCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "杩愬姩";
         var filteredCheckIns = _appData.CheckIns
             .Where(c => c.Type == selectedType)
             .OrderByDescending(c => c.Date)
@@ -1310,10 +1389,10 @@ public partial class MainWindow : Window
 
     private void UpdateCheckInStats()
     {
-        // 添加空值检查，防止初始化期间出现空引用异常
+        // 娣诲姞绌哄€兼鏌ワ紝闃叉鍒濆鍖栨湡闂村嚭鐜扮┖寮曠敤寮傚父
         if (CheckInTypeCombo == null) return;
         
-        var selectedType = (CheckInTypeCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "运动";
+        var selectedType = (CheckInTypeCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "杩愬姩";
         var typeCheckIns = _appData.CheckIns.Where(c => c.Type == selectedType).ToList();
         
         if (typeCheckIns.Any())
@@ -1322,7 +1401,7 @@ public partial class MainWindow : Window
             var longestStreak = CalculateLongestStreak(typeCheckIns);
             var successRate = CalculateSuccessRate(typeCheckIns);
             
-            // 更新UI显示 - 这里需要添加对应的TextBlock到XAML
+            // 鏇存柊UI鏄剧ず - 杩欓噷闇€瑕佹坊鍔犲搴旂殑TextBlock鍒癤AML
             // CurrentStreakText.Text = currentStreak.ToString();
             // LongestStreakText.Text = longestStreak.ToString();
             // SuccessRateText.Text = $"{successRate:F0}%";
@@ -1343,28 +1422,28 @@ public partial class MainWindow : Window
     {
         try
         {
-            // 根据当前选中的标签页保存对应模块的数据
+            // 鏍规嵁褰撳墠閫変腑鐨勬爣绛鹃〉淇濆瓨瀵瑰簲妯″潡鐨勬暟鎹?
             var selectedTab = MainTabControl.SelectedIndex;
             
             switch (selectedTab)
             {
-                case 0: // 日记
+                case 0: // 鏃ヨ
                     break;
-                case 1: // 任务
-                    SaveTaskEntry();
+                case 1: // 浠诲姟
+
                     break;
-                case 2: // 时间记录
+                case 2: // 鏃堕棿璁板綍
                     break;
-                case 3: // 打卡
+                case 3: // 鎵撳崱
                     break;
             }
 
             SaveAppData();
             
-            // 创建自动备份
+            // 鍒涘缓鑷姩澶囦唤
             BackupManager.CreateAutoBackup(_appData, $"自动备份 - {DateTime.Now:yyyy-MM-dd HH:mm}");
             
-            // 清理旧备份，保留最近10个
+            // 娓呯悊鏃у浠斤紝淇濈暀鏈€杩?0涓?
             BackupManager.CleanOldBackups(10);
 
             MessageBox.Show("数据已保存！已自动创建备份。", "成功");
@@ -1373,73 +1452,6 @@ public partial class MainWindow : Window
         {
             MessageBox.Show($"保存失败：{ex.Message}\n\n详细错误：{ex.StackTrace}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
         }
-    }
-
-    private void SaveTaskEntry()
-    {
-        var title = TaskTitleTextBox.Text.Trim();
-        var content = TaskContentTextBox.Text.Trim();
-
-        if (string.IsNullOrEmpty(title))
-        {
-            return; // 空标题不保存
-        }
-
-        // 收集子任务
-        var subTasks = new List<SubTask>();
-        int index = 1;
-        foreach (var child in SubTasksPanel.Children)
-        {
-            if (child is StackPanel subTaskPanel)
-            {
-                var checkBox = subTaskPanel.Children.OfType<CheckBox>().FirstOrDefault();
-                var textBox = subTaskPanel.Children.OfType<TextBox>().FirstOrDefault();
-                
-                if (textBox != null && !string.IsNullOrWhiteSpace(textBox.Text))
-                {
-                    subTasks.Add(new SubTask
-                    {
-                        Id = Guid.NewGuid().ToString(),
-                        Title = textBox.Text.Trim(),
-                        IsCompleted = checkBox?.IsChecked ?? false,
-                        CreatedAt = DateTime.Now
-                    });
-                }
-                index++;
-            }
-        }
-
-        if (_currentTaskEntry == null)
-        {
-            // 新增
-            var newEntry = new TaskEntry
-            {
-                Id = Guid.NewGuid().ToString(),
-                Title = title,
-                Content = content,
-                Priority = TaskPriorityCombo.SelectedIndex + 1,
-                Level = TaskLevelCombo.SelectedIndex + 1,
-                Status = (TaskStatus)TaskStatusCombo.SelectedIndex,
-                CompletedAt = TaskCompletedDatePicker.SelectedDate,
-                SubTasks = subTasks,
-                CreatedAt = DateTime.Now
-            };
-            _appData.Tasks.Insert(0, newEntry);
-            _currentTaskEntry = newEntry;
-        }
-        else
-        {
-            // 更新
-            _currentTaskEntry.Title = title;
-            _currentTaskEntry.Content = content;
-            _currentTaskEntry.Priority = TaskPriorityCombo.SelectedIndex + 1;
-            _currentTaskEntry.Level = TaskLevelCombo.SelectedIndex + 1;
-            _currentTaskEntry.Status = (TaskStatus)TaskStatusCombo.SelectedIndex;
-            _currentTaskEntry.CompletedAt = TaskCompletedDatePicker.SelectedDate;
-            _currentTaskEntry.SubTasks = subTasks;
-        }
-
-        TaskListBox.ItemsSource = _appData.Tasks.OrderByDescending(t => t.CreatedAt).ToList();
     }
 
     private void SaveDataButton_Click(object sender, RoutedEventArgs e)
@@ -1451,7 +1463,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"保存失败：{ex.Message}\n\n请检查程序目录的写权限。", "保存失败", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"保存失败：{ex.Message}\n\n请检查程序目录的写入权限。", "保存失败", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -1494,7 +1506,7 @@ public partial class MainWindow : Window
                 if (restoredData != null)
                 {
                     var result = MessageBox.Show(
-                        $"找到应用数据备份。\n\n是否要导入这些数据？\n\n注意：这将替换当前所有数据！", 
+                        $"发现应用数据备份。\n\n是否要导入这些数据？\n\n注意：这将覆盖当前所有数据！", 
                         "确认导入", 
                         MessageBoxButton.YesNo, 
                         MessageBoxImage.Question);
@@ -1505,7 +1517,7 @@ public partial class MainWindow : Window
                         {
                             _appData = restoredData;
                             
-                            // 重新排序数据
+                            // 閲嶆柊鎺掑簭鏁版嵁
                             _appData.Diaries = _appData.Diaries.OrderByDescending(d => d.CreatedAt).ToList();
                             _appData.Tasks = _appData.Tasks.OrderByDescending(t => t.CreatedAt).ToList();
                             _appData.TimeRecords = _appData.TimeRecords.OrderByDescending(t => t.Date).ThenByDescending(t => t.StartTime).ToList();
@@ -1513,14 +1525,14 @@ public partial class MainWindow : Window
                             
                             SaveAppData();
                             
-                            // 刷新界面
+                            // 鍒锋柊鐣岄潰
                             InitializeUI();
                             
                             MessageBox.Show("数据导入成功！", "成功");
                         }
                         catch (Exception saveEx)
                         {
-                            MessageBox.Show($"数据导入成功，但保存到本地文件失败：{saveEx.Message}\n\n数据将在程序重启时丢失。\n请检查程序目录的写权限。", "部分成功", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            MessageBox.Show($"数据导入成功，但保存到本地文件失败：{saveEx.Message}\n\n数据将在程序重启时丢失。\n请检查程序目录的写入权限。", "部分成功", MessageBoxButton.OK, MessageBoxImage.Warning);
                         }
                     }
                 }
@@ -1549,7 +1561,7 @@ public partial class MainWindow : Window
             $"{index + 1}. {b.info.CreatedAt:yyyy-MM-dd HH:mm} - {b.info.Description}"));
 
         var result = MessageBox.Show(
-            $"找到 {backups.Count} 个备份文件：\n\n{backupList}\n\n是否要打开备份文件夹管理？", 
+            $"找到 {backups.Count} 个备份文件：\n\n{backupList}\n\n是否要打开备份文件管理器？", 
             "备份管理", 
             MessageBoxButton.YesNo, 
             MessageBoxImage.Information);

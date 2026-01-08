@@ -22,6 +22,11 @@ namespace DiaryApp
         public string Title { get; set; } = "";
         public bool IsCompleted { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+        
+        // 时间计划属性
+        public int DurationDays { get; set; } = 1; // 子任务持续天数
+        public DateTime StartDate { get; set; } = DateTime.Now; // 开始日期
+        public DateTime EndDate { get; set; } = DateTime.Now; // 结束日期
     }
 
     public class TaskEntry
@@ -35,6 +40,17 @@ namespace DiaryApp
         public string Content { get; set; } = "";
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? CompletedAt { get; set; }
+        
+        // 文本样式属性
+        public double FontSize { get; set; } = 14; // 字号
+        public string TextColor { get; set; } = "#000000"; // 文字颜色
+        public string BackgroundColor { get; set; } = "#FFFFFF"; // 文字背景色
+        public bool IsUnderline { get; set; } = false; // 是否有下划线
+        
+        // 时间计划属性
+        public int TotalDays { get; set; } = 1; // 总天数
+        public DateTime StartDate { get; set; } = DateTime.Now; // 开始日期
+        public DateTime EndDate { get; set; } = DateTime.Now; // 结束日期
         
         // 用于显示
         public string StatusDescription => Status switch

@@ -61,6 +61,10 @@
 
         <!-- 转换器 -->
         <local:PriorityToColorConverter x:Key="PriorityToColorConverter"/>
+        <local:LevelToMarginConverter x:Key="LevelToMarginConverter"/>
+        <local:LevelToFontWeightConverter x:Key="LevelToFontWeightConverter"/>
+        <local:LevelToFontSizeConverter x:Key="LevelToFontSizeConverter"/>
+        <local:BooleanToUnderlineConverter x:Key="BooleanToUnderlineConverter"/>
         
         <!-- 窗口控制按钮样式 -->
         <Style x:Key="WindowControlButtonStyle" TargetType="Button">
@@ -258,32 +262,67 @@
                     <TabItem Header="✅ 任务">
                         <Grid>
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" MinWidth="100"/>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="250" MinWidth="150"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*" MinWidth="200"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- 任务列表面板 -->
+                            <!-- 左侧功能区 -->
                             <Border Grid.Column="0" CornerRadius="15" Background="#F0F3F8" Margin="0,0,10,0">
+                                <StackPanel Margin="15" Orientation="Vertical">
+                                    <!-- 功能区标题 -->
+                                    <TextBlock Text="功能区" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,15"/>
+                                    
+                                    <!-- 添加任务按钮 -->
+                                    <Button Content="+ 添加任务" Height="40" Background="#A29BFE" 
+                                            Foreground="White" BorderThickness="0" FontWeight="Bold"
+                                            Margin="0,0,0,10" Click="NewTaskButton_Click"/>
+                                    
+                                    <!-- 删除任务按钮 -->
+                                    <Button Content="- 删除任务" Height="40" Background="#FF7675" 
+                                            Foreground="White" BorderThickness="0" FontWeight="Bold"
+                                            Margin="0,0,0,15" Click="DeleteTaskButton_Click"/>
+                                    
+                                    <!-- 功能区其他信息 -->
+                                    <TextBlock Text="📝 任务管理" FontSize="12" Foreground="#636E72" Margin="0,10,0,0"/>
+                                    <TextBlock Text="• 添加新任务" FontSize="12" Foreground="#636E72" Margin="10,5,0,0"/>
+                                    <TextBlock Text="• 删除选中任务" FontSize="12" Foreground="#636E72" Margin="10,5,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 可调整宽度的分隔条 -->
+                            <GridSplitter Grid.Column="1" Width="6" Background="#DFE6E9" 
+                                         HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                                         ResizeBehavior="PreviousAndNext" ResizeDirection="Columns"
+                                         Cursor="SizeWE" Margin="0"/>
+
+                            <!-- 中间临时任务区 -->
+                            <Border Grid.Column="2" CornerRadius="15" Background="#F0F3F8" Margin="0,0,10,0">
                                 <Grid Margin="15">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
-                                    <!-- 模块标题 -->
-                                    <TextBlock Grid.Row="0" Text="任务清单" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
+                                    <!-- 临时任务区标题 -->
+                                    <TextBlock Grid.Row="0" Text="临时任务" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
 
-                                    <!-- 任务列表 -->
-                                    <ListBox Grid.Row="1" x:Name="TaskListBox" 
+                                    <!-- 临时任务列表 -->
+                                    <ListBox Grid.Row="1" x:Name="TempTaskListBox" 
                                              Background="Transparent" BorderThickness="0" 
                                              ItemContainerStyle="{StaticResource DiaryItemStyle}"
-                                             SelectionChanged="TaskListBox_SelectionChanged">
+                                             SelectionChanged="TempTaskListBox_SelectionChanged">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <StackPanel>
+                                                <StackPanel Margin="{Binding Level, Converter={StaticResource LevelToMarginConverter}}">
                                                     <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Foreground="#2D3436"/>
+                                                        <TextBlock Text="{Binding Title}" FontWeight="{Binding Level, Converter={StaticResource LevelToFontWeightConverter}}" 
+                                                                   FontSize="{Binding FontSize}" 
+                                                                   Foreground="{Binding TextColor}"
+                                                                   Background="{Binding BackgroundColor}"
+                                                                   TextDecorations="{Binding IsUnderline, Converter={StaticResource BooleanToUnderlineConverter}}"/>
                                                         <TextBlock Text="{Binding PriorityDescription}" Margin="5,0,0,0" 
                                                                    Foreground="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}"
                                                                    FontSize="12" FontWeight="Bold"/>
@@ -293,100 +332,50 @@
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                     </ListBox>
-                                    
-                                    <!-- 新建任务按钮 -->
-                                    <Button Grid.Row="1" Width="50" Height="50" HorizontalAlignment="Right" VerticalAlignment="Bottom" 
-                                            Style="{StaticResource RoundButtonStyle}" Click="NewTaskButton_Click" Margin="0,0,5,5">
-                                        <TextBlock Text="+" FontSize="24"/>
-                                    </Button>
                                 </Grid>
                             </Border>
-
-                            <!-- 可调整宽度的分隔条 -->
-                            <GridSplitter Grid.Column="1" Width="6" Background="#DFE6E9" 
+                            
+                            <!-- 第二个可调整宽度的分隔条 -->
+                            <GridSplitter Grid.Column="3" Width="6" Background="#DFE6E9" 
                                          HorizontalAlignment="Center" VerticalAlignment="Stretch"
                                          ResizeBehavior="PreviousAndNext" ResizeDirection="Columns"
                                          Cursor="SizeWE" Margin="0"/>
-
-                            <!-- 任务编辑面板 -->
-                            <Border Grid.Column="2" CornerRadius="15" Background="#FFFFFF" Padding="25">
+                            
+                            <!-- 右侧项目任务区 -->
+                            <Border Grid.Column="4" CornerRadius="15" Background="#FFFFFF" Padding="15">
                                 <Grid>
                                     <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/> <!-- 标题输入 -->
-                                        <RowDefinition Height="Auto"/> <!-- 优先级和级别 -->
-                                        <RowDefinition Height="Auto"/> <!-- 状态 -->
-                                        <RowDefinition Height="*"/>    <!-- 内容输入 -->
-                                        <RowDefinition Height="Auto"/> <!-- 子任务 -->
-                                        <RowDefinition Height="Auto"/> <!-- 完成时间 -->
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
-                                    <!-- 标题输入 -->
-                                    <TextBox Grid.Row="0" x:Name="TaskTitleTextBox" 
-                                             Text="新任务..." FontSize="20" FontWeight="Bold" Foreground="#2D3436"
-                                             BorderThickness="0" Background="Transparent" Margin="0,0,0,15"/>
+                                    <!-- 项目任务区标题 -->
+                                    <TextBlock Grid.Row="0" Text="项目任务" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
 
-                                    <!-- 优先级和级别 -->
-                                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,15">
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
-                                            <TextBlock Text="优先级：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                            <ComboBox x:Name="TaskPriorityCombo" SelectedIndex="1" Width="80" Height="30">
-                                                <ComboBoxItem Content="高"/>
-                                                <ComboBoxItem Content="中"/>
-                                                <ComboBoxItem Content="低"/>
-                                            </ComboBox>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="级别：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                            <ComboBox x:Name="TaskLevelCombo" SelectedIndex="0" Width="80" Height="30">
-                                                <ComboBoxItem Content="1级"/>
-                                                <ComboBoxItem Content="2级"/>
-                                                <ComboBoxItem Content="3级"/>
-                                            </ComboBox>
-                                        </StackPanel>
-                                    </StackPanel>
-
-                                    <!-- 状态 -->
-                                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,15">
-                                        <TextBlock Text="状态：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                        <ComboBox x:Name="TaskStatusCombo" SelectedIndex="0" Width="100" Height="30">
-                                            <ComboBoxItem Content="待完成"/>
-                                            <ComboBoxItem Content="进行中"/>
-                                            <ComboBoxItem Content="已完成"/>
-                                        </ComboBox>
-                                    </StackPanel>
-
-                                    <!-- 内容输入 -->
-                                    <TextBox Grid.Row="3" x:Name="TaskContentTextBox"
-                                             Text="任务描述..." FontSize="14" Foreground="#636E72"
-                                             AcceptsReturn="True" TextWrapping="Wrap"
-                                             BorderThickness="0" Background="#F8F9FA"
-                                             Padding="15" Margin="0,0,0,15"/>
-
-                                    <!-- 子任务 -->
-                                    <Grid Grid.Row="4" Margin="0,0,0,15">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <TextBlock Grid.Row="0" Text="子任务：" FontSize="14" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,8"/>
-                                        <StackPanel Grid.Row="1" x:Name="SubTasksPanel">
-                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                                <CheckBox x:Name="SubTaskCheckBox1" Margin="0,0,8,0"/>
-                                                <TextBox x:Name="SubTaskTextBox1" Text="子任务1" Width="200" 
-                                                         BorderThickness="0" Background="#F8F9FA" Padding="5"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                        <Button Grid.Row="1" Content="+ 添加子任务" Width="100" Height="25" 
-                                                HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                                                Background="#A29BFE" Foreground="White" BorderThickness="0"
-                                                Click="AddSubTaskButton_Click" FontSize="12"/>
-                                    </Grid>
-
-                                    <!-- 完成时间 -->
-                                    <StackPanel Grid.Row="5" Orientation="Horizontal">
-                                        <TextBlock Text="完成时间：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                        <DatePicker x:Name="TaskCompletedDatePicker" Width="150" Height="30"/>
-                                    </StackPanel>
+                                    <!-- 项目任务列表 -->
+                                    <ListBox Grid.Row="1" x:Name="ProjectTaskListBox" 
+                                             Background="Transparent" BorderThickness="0" 
+                                             ItemContainerStyle="{StaticResource DiaryItemStyle}"
+                                             SelectionChanged="ProjectTaskListBox_SelectionChanged">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="{Binding Level, Converter={StaticResource LevelToMarginConverter}}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding Title}" FontWeight="{Binding Level, Converter={StaticResource LevelToFontWeightConverter}}" 
+                                                                   FontSize="{Binding FontSize}" 
+                                                                   Foreground="{Binding TextColor}"
+                                                                   Background="{Binding BackgroundColor}"
+                                                                   TextDecorations="{Binding IsUnderline, Converter={StaticResource BooleanToUnderlineConverter}}"/>
+                                                        <TextBlock Text="{Binding PriorityDescription}" Margin="5,0,0,0" 
+                                                                   Foreground="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}"
+                                                                   FontSize="12" FontWeight="Bold"/>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding StatusDescription}" FontSize="12" Foreground="#636E72" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="{Binding SubTasks.Count, StringFormat='子任务数：{0}'}" FontSize="12" Foreground="#636E72" Margin="0,4,0,0"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
                                 </Grid>
                             </Border>
                         </Grid>

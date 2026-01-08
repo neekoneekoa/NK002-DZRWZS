@@ -178,9 +178,9 @@ namespace DiaryApp
             }
         }
 
-        private void TagInputTextBox_KeyDown(object sender, KeyEventArgs e)
+        private void TagInputTextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (e.Key == Key.Enter)
+            if (e.Key == System.Windows.Input.Key.Enter)
             {
                 e.Handled = true;
                 AddTag();
@@ -454,9 +454,9 @@ namespace DiaryApp
             Close();
         }
 
-        private void Window_KeyDown(object sender, KeyEventArgs e)
+        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (e.Key == Key.S && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            if (e.Key == System.Windows.Input.Key.S && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
             {
                 e.Handled = true;
                 SaveButton_Click(sender, e);
