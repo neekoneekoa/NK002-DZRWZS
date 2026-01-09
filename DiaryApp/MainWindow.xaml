@@ -137,7 +137,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- 模块标签页 -->
-                <TabControl x:Name="MainTabControl" Grid.Row="1" Background="Transparent" BorderThickness="0">
+                <TabControl x:Name="MainTabControl" Grid.Row="1" Background="Transparent" BorderThickness="0" SelectionChanged="MainTabControl_SelectionChanged">
                     <TabControl.Resources>
                         <Style TargetType="TabItem">
                             <Setter Property="Template">

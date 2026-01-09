@@ -1,4 +1,51 @@
-﻿using System;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿/*===========================================
+ * 【AI友好型代码框架注释】
+ * 文件名: MainWindow.xaml.cs
+ * 框架类型: WPF桌面应用程序主窗口
+ * 应用类型: 日记/任务/时间/打卡综合管理助手
+ * 主要功能模块:
+ * 1. 转换器类 (Lines: 20-104) - XAML绑定用的各种转换器
+ *    - LevelToMarginConverter: 级别到边距转换器
+ *    - LevelToFontWeightConverter: 级别到字体粗细转换器
+ *    - LevelToFontSizeConverter: 级别到字体大小转换器
+ *    - BooleanToUnderlineConverter: 布尔值到下划线转换器
+ * 
+ * 2. 应用资源 (Lines: 106-116) - 全局颜色定义
+ *    - 预定义各种UI颜色常量
+ * 
+ * 3. 版本信息 (Lines: 119-124) - 应用版本和构建信息
+ *    - 版本号、构建日期和时间
+ * 
+ * 4. 主窗口类 (Lines: 126+) - 核心应用逻辑
+ *    - 成员变量 (Lines: 128-132): 应用数据、文件路径等
+ *    - 路径方法 (Lines: 134-145): 获取数据文件和日志文件路径
+ *    - 日志方法 (Lines: 148-198): 普通日志和崩溃日志记录
+ *    - 异常处理 (Lines: 200-217): 全局异常捕获和处理
+ *    - 当前选择项 (Lines: 219-226): 日记、任务、打卡条目
+ *    - 构造函数 (Lines: 231-307): 初始化、异常处理设置
+ *    - UI初始化 (Lines: 309-325): 窗口大小、时间线、周视图
+ *    - 数据管理 (Lines: 445-494): 数据加载和保存
+ *    - 窗口控制 (Lines: 496-527): 关闭、最小化、最大化等
+ *    - 日记模块 (Lines: 529-1034): 日记的增删改查、搜索、标签筛选
+ *    - 时间记录模块 (Lines: 1036-1267): 周视图、时间记录的添加和编辑
+ *    - 打卡模块 (Lines: 1269-1444): 打卡记录、统计、连续打卡计算
+ *    - 数据备份 (Lines: 1446+): 自动备份、旧备份清理
+ * 
+ * 【关键点标记】
+ * - 异常处理区域: 用于添加新的异常类型和错误处理逻辑
+ * - 数据管理区域: 注意文件I/O异常和JSON序列化错误，需添加适当的错误提示
+ * - UI初始化区域: 避免在构造函数中添加耗时操作，可移至异步方法
+ * - 模块事件区域: 各功能模块的事件处理集中在此，便于定位和维护
+ * - 数据持久化: 所有数据变更后需调用SaveAppData()保存
+ * 
+ * 【报错提示】
+ * - 文件操作可能抛出IOException: 需捕获并提示用户检查文件权限
+ * - JSON序列化可能抛出JsonException: 需记录详细错误信息
+ * - UI线程操作需注意Dispatcher异常: 确保UI元素操作在UI线程执行
+ * - 窗口调整大小可能触发Win32 API异常: 已通过try-catch处理
+ * - 数据访问需注意空引用异常: 对关键属性添加空值检查
+ * ===========================================*/
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -118,7 +165,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.10";
+    public const string VERSION = "0.1.1.12";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -227,6 +274,14 @@ public partial class MainWindow : Window
 
     // 当前查看的周
     private DateTime _currentWeekStart = GetWeekStart(DateTime.Today);
+    
+    // 鼠标拖动相关变量
+    private bool _isDragging = false;
+    private int _startRow = -1;
+    private int _startCol = -1;
+    private int _currentRow = -1;
+    private int _currentCol = -1;
+    private Border? _dragPreviewBorder = null;
 
     public MainWindow()
     {
@@ -288,6 +343,10 @@ public partial class MainWindow : Window
             MainTabControl.SelectedIndex = 0;
             Log("选项卡设置完成");
             
+            // 添加TabControl的SelectionChanged事件处理程序
+            MainTabControl.SelectionChanged += MainTabControl_SelectionChanged;
+            Log("TabControl SelectionChanged事件处理程序添加完成");
+            
             Log("MainWindow构造函数成功完成 - 窗口应该已显示");
         }
         catch (Exception ex)
@@ -319,6 +378,9 @@ public partial class MainWindow : Window
         
         // 初始化周视图
         UpdateWeekDisplay();
+        
+        // 初始化时间记录显示（确保时间记录模块在启动时就正确初始化）
+        UpdateTimeRecordDisplay();
         
         // 初始化打卡统计
         UpdateCheckInStats();
@@ -1006,6 +1068,37 @@ public partial class MainWindow : Window
 
     #endregion
 
+    #region TabControl事件处理
+
+    private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        try
+        {
+            Log("MainTabControl_SelectionChanged事件触发，当前索引: " + MainTabControl.SelectedIndex);
+            
+            // 如果切换到时间记录模块（索引为2），初始化时间记录显示
+            if (MainTabControl.SelectedIndex == 2)
+            {
+                Log("切换到时间记录模块，开始初始化时间记录显示");
+                
+                // 确保周视图正确更新
+                UpdateWeekDisplay();
+                
+                // 重新初始化时间记录显示
+                UpdateTimeRecordDisplay();
+                
+                Log("时间记录显示初始化完成");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogCrash("TabControl切换时发生错误", ex);
+            MessageBox.Show($"TabControl切换时发生错误: {ex.Message}", "错误");
+        }
+    }
+
+    #endregion
+
     #region 时间记录模块事件
 
     private void PreviousWeekButton_Click(object sender, RoutedEventArgs e)
@@ -1024,8 +1117,11 @@ public partial class MainWindow : Window
 
     private void UpdateWeekDisplay()
     {
-        var weekEnd = _currentWeekStart.AddDays(6);
-        CurrentWeekText.Text = $"{_currentWeekStart.Year}年第{GetWeekNumber(_currentWeekStart)}周({_currentWeekStart:MM-dd} ~ {weekEnd:MM-dd})";
+        if (CurrentWeekText != null)
+        {
+            var weekEnd = _currentWeekStart.AddDays(6);
+            CurrentWeekText.Text = $"{_currentWeekStart.Year}年第{GetWeekNumber(_currentWeekStart)}周({_currentWeekStart:MM-dd} ~ {weekEnd:MM-dd})";
+        }
     }
 
     private void AddTimeRecordButton_Click(object sender, RoutedEventArgs e)
@@ -1065,6 +1161,12 @@ public partial class MainWindow : Window
         var timeGrid = FindName("TimeGrid") as Grid;
         if (timeGrid != null)
         {
+            // 首先移除所有鼠标事件处理程序，避免重复订阅
+            timeGrid.MouseLeftButtonDown -= TimeGrid_MouseLeftButtonDown;
+            timeGrid.MouseMove -= TimeGrid_MouseMove;
+            timeGrid.MouseLeftButtonUp -= TimeGrid_MouseLeftButtonUp;
+            timeGrid.MouseLeave -= TimeGrid_MouseLeave;
+            
             // 淇濆瓨鏃堕棿鏍囩鍜屾棩鏈熸爣棰?
             var timeLabels = new List<UIElement>();
             var dateHeaders = new List<UIElement>();
@@ -1099,15 +1201,18 @@ public partial class MainWindow : Window
             {
                 timeGrid.Children.Add(header);
             }
-        }
 
-        // 閲嶆柊缁樺埗缃戞牸绾?
-        if (timeGrid != null)
-        {
+            // 閲嶆柊缁樺埗缃戞牸绾?
             DrawGridLines(timeGrid);
         
             // 缁樺埗鏃堕棿璁板綍
             DrawTimeRecords(timeGrid, weekRecords);
+            
+            // 重新添加鼠标事件处理程序
+            timeGrid.MouseLeftButtonDown += TimeGrid_MouseLeftButtonDown;
+            timeGrid.MouseMove += TimeGrid_MouseMove;
+            timeGrid.MouseLeftButtonUp += TimeGrid_MouseLeftButtonUp;
+            timeGrid.MouseLeave += TimeGrid_MouseLeave;
         }
     }
     
@@ -1195,7 +1300,7 @@ public partial class MainWindow : Window
             // 娣诲姞鏃堕棿鑼冨洿
             var timeText = new TextBlock
             {
-                Text = $"{record.StartTime:HH:mm} - {record.EndTime:HH:mm}",
+                Text = $"{record.StartTime:hh\\:mm} - {record.EndTime:hh\\:mm}",
                 FontSize = 10,
                 Foreground = Brushes.LightGray
             };
@@ -1236,6 +1341,293 @@ public partial class MainWindow : Window
             UpdateTimeRecordDisplay();
         }
     }
+    
+    #region 时间网格鼠标事件处理
+    
+    private void TimeGrid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        var timeGrid = sender as Grid;
+        if (timeGrid == null) return;
+        
+        // 获取鼠标点击位置
+        Point mousePoint = e.GetPosition(timeGrid);
+        
+        // 确定点击的行和列
+        int row = GetRowFromPoint(mousePoint, timeGrid);
+        int col = GetColumnFromPoint(mousePoint, timeGrid);
+        
+        // 只处理有效的行和列（行：1-12，列：1-7）
+        if (row >= 1 && row <= 12 && col >= 1 && col <= 7)
+        {
+            _isDragging = true;
+            _startRow = row;
+            _startCol = col;
+            _currentRow = row;
+            _currentCol = col;
+            
+            // 创建拖动预览边框
+            _dragPreviewBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(100, 108, 92, 231)),
+                BorderBrush = Brushes.DarkSlateBlue,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(4),
+                Opacity = 0.7
+            };
+            
+            // 设置初始位置
+            Grid.SetRow(_dragPreviewBorder, row);
+            Grid.SetColumn(_dragPreviewBorder, col);
+            Grid.SetRowSpan(_dragPreviewBorder, 1);
+            Grid.SetColumnSpan(_dragPreviewBorder, 1);
+            
+            // 添加到网格
+            timeGrid.Children.Add(_dragPreviewBorder);
+            
+            // 捕获鼠标，确保能跟踪到鼠标离开窗口的情况
+            timeGrid.CaptureMouse();
+        }
+    }
+    
+    private void TimeGrid_MouseMove(object sender, MouseEventArgs e)
+    {
+        var timeGrid = sender as Grid;
+        if (timeGrid == null || !_isDragging) return;
+        
+        // 获取鼠标位置
+        Point mousePoint = e.GetPosition(timeGrid);
+        
+        // 确定当前的行和列
+        int row = GetRowFromPoint(mousePoint, timeGrid);
+        int col = GetColumnFromPoint(mousePoint, timeGrid);
+        
+        // 只处理有效的行和列（行：1-12，列：1-7）
+        if (row >= 1 && row <= 12 && col >= 1 && col <= 7)
+        {
+            _currentRow = row;
+            _currentCol = col;
+            
+            // 更新拖动预览边框的位置和大小
+            if (_dragPreviewBorder != null)
+            {
+                // 计算起始和结束位置（确保起始位置小于结束位置）
+                int startRow = Math.Min(_startRow, _currentRow);
+                int endRow = Math.Max(_startRow, _currentRow);
+                int startCol = Math.Min(_startCol, _currentCol);
+                int endCol = Math.Max(_startCol, _currentCol);
+                
+                // 设置位置和跨度
+                Grid.SetRow(_dragPreviewBorder, startRow);
+                Grid.SetColumn(_dragPreviewBorder, startCol);
+                Grid.SetRowSpan(_dragPreviewBorder, endRow - startRow + 1);
+                Grid.SetColumnSpan(_dragPreviewBorder, endCol - startCol + 1);
+            }
+        }
+    }
+    
+    private void TimeGrid_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        var timeGrid = sender as Grid;
+        if (timeGrid == null || !_isDragging)
+        {
+            return;
+        }
+        
+        // 释放鼠标捕获
+        timeGrid.ReleaseMouseCapture();
+        
+        // 移除拖动预览边框
+        if (_dragPreviewBorder != null)
+        {
+            timeGrid.Children.Remove(_dragPreviewBorder);
+            _dragPreviewBorder = null;
+        }
+        
+        // 计算起始和结束位置（确保起始位置小于结束位置）
+        int startRow = Math.Min(_startRow, _currentRow);
+        int endRow = Math.Max(_startRow, _currentRow);
+        int startCol = Math.Min(_startCol, _currentCol);
+        int endCol = Math.Max(_startCol, _currentCol);
+        
+        // 只处理有效的选择（至少1行1列）
+        if (startRow >= 1 && endRow <= 12 && startCol >= 1 && endCol <= 7)
+        {
+            // 创建新的时间记录
+            CreateNewTimeRecord(startCol, endCol, startRow, endRow);
+        }
+        
+        // 重置拖动状态
+        _isDragging = false;
+        _startRow = -1;
+        _startCol = -1;
+        _currentRow = -1;
+        _currentCol = -1;
+    }
+    
+    private void TimeGrid_MouseLeave(object sender, MouseEventArgs e)
+    {
+        var timeGrid = sender as Grid;
+        if (timeGrid == null || !_isDragging)
+        {
+            return;
+        }
+        
+        // 释放鼠标捕获
+        timeGrid.ReleaseMouseCapture();
+        
+        // 移除拖动预览边框
+        if (_dragPreviewBorder != null)
+        {
+            timeGrid.Children.Remove(_dragPreviewBorder);
+            _dragPreviewBorder = null;
+        }
+        
+        // 重置拖动状态
+        _isDragging = false;
+        _startRow = -1;
+        _startCol = -1;
+        _currentRow = -1;
+        _currentCol = -1;
+    }
+    
+    private int GetRowFromPoint(Point point, Grid grid)
+    {
+        double rowHeight = 40; // 行高固定为40
+        int row = (int)Math.Floor(point.Y / rowHeight);
+        
+        // 确保行号在有效范围内（1-12，对应08:00-19:00）
+        return Math.Max(1, Math.Min(12, row));
+    }
+    
+    private int GetColumnFromPoint(Point point, Grid grid)
+    {
+        double timeLabelWidth = 60; // 时间标签列宽固定为60
+        if (point.X < timeLabelWidth)
+        {
+            return 0; // 时间标签列
+        }
+        
+        double totalColumnsWidth = grid.ActualWidth - timeLabelWidth;
+        if (totalColumnsWidth <= 0)
+        {
+            return 1; // 默认返回第一列
+        }
+        
+        double columnWidth = totalColumnsWidth / 7;
+        int col = (int)Math.Floor((point.X - timeLabelWidth) / columnWidth) + 1;
+        
+        // 确保列数在有效范围内
+        return Math.Max(1, Math.Min(7, col));
+    }
+    
+    private void CreateNewTimeRecord(int startCol, int endCol, int startRow, int endRow)
+    {
+        try
+        {
+            // 参数验证
+            if (startCol < 1 || endCol > 7 || startRow < 1 || endRow > 12)
+            {
+                MessageBox.Show("选择的时间段无效，请重新选择！", "错误");
+                return;
+            }
+            
+            // 确保起始位置小于结束位置
+            int actualStartCol = Math.Min(startCol, endCol);
+            int actualEndCol = Math.Max(startCol, endCol);
+            int actualStartRow = Math.Min(startRow, endRow);
+            int actualEndRow = Math.Max(startRow, endRow);
+            
+            // 计算开始时间和结束时间（每一行代表一个小时，从08:00开始）
+            TimeSpan startTime = TimeSpan.FromHours(8 + (actualStartRow - 1));
+            TimeSpan endTime = TimeSpan.FromHours(8 + actualEndRow);
+            
+            // 计算开始日期和结束日期
+            DateTime startDate = _currentWeekStart.AddDays(actualStartCol - 1);
+            DateTime endDate = _currentWeekStart.AddDays(actualEndCol - 1);
+            
+            // 如果选择了多个小时但只有一天，创建一个时间记录
+            if (startDate == endDate)
+            {
+                // 创建新的时间记录
+                var newRecord = new TimeRecordEntry
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Date = startDate,
+                    StartTime = startTime,
+                    EndTime = endTime,
+                    Activity = "新活动",
+                    Category = "工作",
+                    Notes = "",
+                    CreatedAt = DateTime.Now
+                };
+                
+                // 添加到数据
+                _appData.TimeRecords.Add(newRecord);
+            }
+            // 如果选择了多个天，每天创建一个时间记录
+            else
+            {
+                // 第一天的记录
+                var firstDayRecord = new TimeRecordEntry
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Date = startDate,
+                    StartTime = startTime,
+                    EndTime = TimeSpan.FromHours(19),
+                    Activity = "新活动",
+                    Category = "工作",
+                    Notes = "",
+                    CreatedAt = DateTime.Now
+                };
+                _appData.TimeRecords.Add(firstDayRecord);
+                
+                // 中间天的记录（全天）
+                for (int day = actualStartCol + 1; day < actualEndCol; day++)
+                {
+                    var midDayRecord = new TimeRecordEntry
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Date = _currentWeekStart.AddDays(day - 1),
+                        StartTime = TimeSpan.FromHours(8),
+                        EndTime = TimeSpan.FromHours(19),
+                        Activity = "新活动",
+                        Category = "工作",
+                        Notes = "",
+                        CreatedAt = DateTime.Now
+                    };
+                    _appData.TimeRecords.Add(midDayRecord);
+                }
+                
+                // 最后一天的记录
+                var lastDayRecord = new TimeRecordEntry
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Date = endDate,
+                    StartTime = TimeSpan.FromHours(8),
+                    EndTime = endTime,
+                    Activity = "新活动",
+                    Category = "工作",
+                    Notes = "",
+                    CreatedAt = DateTime.Now
+                };
+                _appData.TimeRecords.Add(lastDayRecord);
+            }
+            
+            // 保存数据并更新显示
+            SaveAppData();
+            UpdateTimeRecordDisplay();
+            
+            // 显示成功消息
+            MessageBox.Show("时间段记录已添加！", "成功");
+        }
+        catch (Exception ex)
+        {
+            LogCrash("创建时间记录失败", ex);
+            MessageBox.Show($"添加时间段记录失败：{ex.Message}", "错误");
+        }
+    }
+    
+    #endregion
 
     #endregion
 
