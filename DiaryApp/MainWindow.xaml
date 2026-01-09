@@ -613,19 +613,19 @@
                                         <Border CornerRadius="10" Background="#6C5CE7" Padding="15,10" Margin="0,0,10,0">
                                             <StackPanel>
                                                 <TextBlock Text="当前连续" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-                                                <TextBlock x:Name="CurrentStreakText" Text="7" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                                                <TextBlock x:Name="CurrentStreakText" Text="0" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
                                             </StackPanel>
                                         </Border>
                                         <Border CornerRadius="10" Background="#A29BFE" Padding="15,10" Margin="0,0,10,0">
                                             <StackPanel>
                                                 <TextBlock Text="最长连续" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-                                                <TextBlock x:Name="LongestStreakText" Text="15" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                                                <TextBlock x:Name="LongestStreakText" Text="0" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
                                             </StackPanel>
                                         </Border>
                                         <Border CornerRadius="10" Background="#FD79A8" Padding="15,10">
                                             <StackPanel>
                                                 <TextBlock Text="成功率" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-                                                <TextBlock x:Name="SuccessRateText" Text="85%" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                                                <TextBlock x:Name="SuccessRateText" Text="0%" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
                                             </StackPanel>
                                         </Border>
                                     </StackPanel>

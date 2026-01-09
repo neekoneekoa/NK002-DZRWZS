@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿/*===========================================
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿/*===========================================
  * 【AI友好型代码框架注释】
  * 文件名: MainWindow.xaml.cs
  * 框架类型: WPF桌面应用程序主窗口
@@ -522,11 +522,17 @@ public partial class MainWindow : Window
                 {
                     _appData = data;
                     
-                    // 重新排序数据
+                    // 过滤掉旧的打卡记录（只保留最近30天的）
+                    var thirtyDaysAgo = DateTime.Today.AddDays(-29);
+                    _appData.CheckIns = _appData.CheckIns
+                        .Where(c => c.Date >= thirtyDaysAgo)
+                        .OrderByDescending(c => c.Date)
+                        .ToList();
+                    
+                    // 重新排序其他数据
                     _appData.Diaries = _appData.Diaries.OrderByDescending(d => d.CreatedAt).ToList();
                     _appData.Tasks = _appData.Tasks.OrderByDescending(t => t.CreatedAt).ToList();
                     _appData.TimeRecords = _appData.TimeRecords.OrderByDescending(t => t.Date).ThenByDescending(t => t.StartTime).ToList();
-                    _appData.CheckIns = _appData.CheckIns.OrderByDescending(c => c.Date).ToList();
                 }
             }
             catch { /* 忽略加载错误 */ }
@@ -1714,7 +1720,17 @@ public partial class MainWindow : Window
         var streak = 0;
         var currentDate = date;
         
-        foreach (var checkIn in checkIns)
+        // 检查今天是否有打卡记录
+        var todayCheckIn = checkIns.FirstOrDefault(c => c.Date.Date == date.Date);
+        if (todayCheckIn == null)
+        {
+            return 0; // 如果今天没打卡，连续天数为0
+        }
+        
+        streak = 1; // 今天打卡了，连续天数至少为1
+        currentDate = currentDate.AddDays(-1);
+        
+        foreach (var checkIn in checkIns.Skip(1)) // 跳过今天的记录
         {
             if (checkIn.Date.Date == currentDate.Date)
             {
@@ -1760,10 +1776,16 @@ public partial class MainWindow : Window
     {
         if (!checkIns.Any()) return 0;
         
-        var totalDays = (checkIns.Max(c => c.Date) - checkIns.Min(c => c.Date)).Days + 1;
-        var successDays = checkIns.Count;
+        // 只计算最近30天的成功率，避免历史数据影响
+        var thirtyDaysAgo = DateTime.Today.AddDays(-29); // 包括今天共30天
+        var recentCheckIns = checkIns.Where(c => c.Date >= thirtyDaysAgo).ToList();
         
-        return (double)successDays / totalDays * 100;
+        if (!recentCheckIns.Any()) return 0;
+        
+        var totalDaysInPeriod = (DateTime.Today - thirtyDaysAgo).Days + 1;
+        var successDays = recentCheckIns.Count;
+        
+        return (double)successDays / totalDaysInPeriod * 100;
     }
 
     private void UpdateCheckInList()
@@ -1781,10 +1803,10 @@ public partial class MainWindow : Window
 
     private void UpdateCheckInStats()
     {
-        // 娣诲姞绌哄€兼鏌ワ紝闃叉鍒濆鍖栨湡闂村嚭鐜扮┖寮曠敤寮傚父
-        if (CheckInTypeCombo == null) return;
+        // 添加空值检查，防止初始化期间出现空引用异常
+        if (CheckInTypeCombo == null || CurrentStreakText == null || LongestStreakText == null || SuccessRateText == null) return;
         
-        var selectedType = (CheckInTypeCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "杩愬姩";
+        var selectedType = (CheckInTypeCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "运动";
         var typeCheckIns = _appData.CheckIns.Where(c => c.Type == selectedType).ToList();
         
         if (typeCheckIns.Any())
@@ -1793,16 +1815,17 @@ public partial class MainWindow : Window
             var longestStreak = CalculateLongestStreak(typeCheckIns);
             var successRate = CalculateSuccessRate(typeCheckIns);
             
-            // 鏇存柊UI鏄剧ず - 杩欓噷闇€瑕佹坊鍔犲搴旂殑TextBlock鍒癤AML
-            // CurrentStreakText.Text = currentStreak.ToString();
-            // LongestStreakText.Text = longestStreak.ToString();
-            // SuccessRateText.Text = $"{successRate:F0}%";
+            // 更新UI显示
+            CurrentStreakText.Text = currentStreak.ToString();
+            LongestStreakText.Text = longestStreak.ToString();
+            SuccessRateText.Text = $"{successRate:F0}%";
         }
         else
         {
-            // CurrentStreakText.Text = "0";
-            // LongestStreakText.Text = "0";
-            // SuccessRateText.Text = "0%";
+            // 如果没有该类型的打卡记录，显示0
+            CurrentStreakText.Text = "0";
+            LongestStreakText.Text = "0";
+            SuccessRateText.Text = "0%";
         }
     }
 
