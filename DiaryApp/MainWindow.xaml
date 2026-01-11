@@ -188,6 +188,7 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
@@ -221,22 +222,74 @@
                                         </Grid>
                                     </Border>
 
+                                    <!-- 周期类型筛选 -->
+                                    <Border Grid.Row="3" Background="White" CornerRadius="8" Margin="0,0,0,10">
+                                        <Grid>
+                                            <TextBlock x:Name="DiaryPeriodPlaceholder" Text="📖 周期筛选..." 
+                                                       FontSize="12" Foreground="#B2BEC3" 
+                                                       VerticalAlignment="Center" Margin="10,0" IsHitTestVisible="False"/>
+                                            <ComboBox x:Name="DiaryPeriodFilterBox" BorderThickness="0" 
+                                                      Background="Transparent" Padding="10,8"
+                                                      SelectionChanged="DiaryPeriodFilterBox_SelectionChanged">
+                                                <ComboBoxItem Content="全部"/>
+                                                <ComboBoxItem Content="日常"/>
+                                                <ComboBoxItem Content="周记"/>
+                                                <ComboBoxItem Content="月计"/>
+                                                <ComboBoxItem Content="季记"/>
+                                                <ComboBoxItem Content="年记"/>
+                                            </ComboBox>
+                                        </Grid>
+                                    </Border>
+
                                     <!-- 添加按钮 -->
-                                    <Button Grid.Row="3" Content="+ 新建日记" Height="40" Background="#A29BFE" 
+                                    <Button Grid.Row="4" Content="+ 新建日记" Height="40" Background="#A29BFE" 
                                             Foreground="White" BorderThickness="0" FontWeight="Bold"
                                             Margin="0,0,0,10" Click="NewDiaryButton_Click"/>
 
                                     <!-- 一个月快速日期定位 -->
-                                    <Border Grid.Row="4" Background="White" CornerRadius="8" Padding="12">
+                                    <Border Grid.Row="5" Background="White" CornerRadius="8" Padding="12">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="*"/>
                                             </Grid.RowDefinitions>
-                                            <TextBlock Grid.Row="0" Text="📅 本月" FontSize="12" FontWeight="Bold" 
-                                                       Foreground="#2D3436" Margin="0,0,0,8"/>
-                                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="300">
-                                                <StackPanel x:Name="DiaryMonthDatesPanel"/>
+                                            
+                                            <!-- 月份导航 -->
+                                            <Grid Grid.Row="0" Margin="0,0,0,8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                
+                                                <Button Grid.Column="0" Content="◀" Width="25" Height="25" 
+                                                        Background="Transparent" BorderThickness="1" BorderBrush="#DFE6E9"
+                                                        Click="PreviousMonthButton_Click" FontSize="12"/>
+                                                
+                                                <TextBlock Grid.Column="1" x:Name="CurrentMonthText" Text="2024年1月" 
+                                                           FontSize="14" FontWeight="Bold" Foreground="#2D3436" 
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                
+                                                <Button Grid.Column="2" Content="▶" Width="25" Height="25" 
+                                                        Background="Transparent" BorderThickness="1" BorderBrush="#DFE6E9"
+                                                        Click="NextMonthButton_Click" FontSize="12"/>
+                                            </Grid>
+                                            
+                                            <!-- 星期标题 -->
+                                            <UniformGrid Grid.Row="1" Columns="7" Margin="0,0,0,8">
+                                                <TextBlock Text="日" HorizontalAlignment="Center" FontSize="11" Foreground="#636E72" FontWeight="Bold"/>
+                                                <TextBlock Text="一" HorizontalAlignment="Center" FontSize="11" Foreground="#636E72" FontWeight="Bold"/>
+                                                <TextBlock Text="二" HorizontalAlignment="Center" FontSize="11" Foreground="#636E72" FontWeight="Bold"/>
+                                                <TextBlock Text="三" HorizontalAlignment="Center" FontSize="11" Foreground="#636E72" FontWeight="Bold"/>
+                                                <TextBlock Text="四" HorizontalAlignment="Center" FontSize="11" Foreground="#636E72" FontWeight="Bold"/>
+                                                <TextBlock Text="五" HorizontalAlignment="Center" FontSize="11" Foreground="#636E72" FontWeight="Bold"/>
+                                                <TextBlock Text="六" HorizontalAlignment="Center" FontSize="11" Foreground="#636E72" FontWeight="Bold"/>
+                                            </UniformGrid>
+                                            
+                                            <!-- 日历网格 -->
+                                            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" MaxHeight="250">
+                                                <UniformGrid x:Name="DiaryMonthCalendarPanel" Columns="7"/>
                                             </ScrollViewer>
                                         </Grid>
                                     </Border>
@@ -649,6 +702,102 @@
                                 </Grid>
                             </Border>
                         </Grid>
+                    </TabItem>
+
+                    <!-- 个人信息模块 -->
+                    <TabItem Header="👤 个人">
+                        <Border CornerRadius="15" Background="#FFFFFF" Padding="30">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- 标题 -->
+                                <TextBlock Grid.Row="0" Text="👤 个人信息" FontSize="24" FontWeight="Bold" 
+                                           Foreground="#2D3436" Margin="0,0,0,30"/>
+
+                                <!-- 说明文字 -->
+                                <TextBlock Grid.Row="1" Text="管理您的个人数据信息" 
+                                           FontSize="14" Foreground="#636E72" Margin="0,0,0,20"/>
+
+                                <!-- 姓名 -->
+                                <Border Grid.Row="2" Background="#F0F3F8" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="👤 姓名：" FontSize="14" FontWeight="Bold" 
+                                                   Foreground="#2D3436" Margin="0,0,10,0"/>
+                                        <TextBox x:Name="PersonalNameTextBox" Grid.Column="1" BorderThickness="0" 
+                                                 Background="Transparent" FontSize="14" Padding="5,2"
+                                                 TextChanged="PersonalNameTextBox_TextChanged"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- 电话 -->
+                                <Border Grid.Row="3" Background="#F0F3F8" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="📞 电话：" FontSize="14" FontWeight="Bold" 
+                                                   Foreground="#2D3436" Margin="0,0,10,0"/>
+                                        <TextBox x:Name="PersonalPhoneTextBox" Grid.Column="1" BorderThickness="0" 
+                                                 Background="Transparent" FontSize="14" Padding="5,2"
+                                                 TextChanged="PersonalPhoneTextBox_TextChanged"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- 生日 -->
+                                <Border Grid.Row="4" Background="#F0F3F8" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="🎂 生日：" FontSize="14" FontWeight="Bold" 
+                                                   Foreground="#2D3436" Margin="0,0,10,0"/>
+                                        <DatePicker x:Name="PersonalBirthdayPicker" Grid.Column="1" BorderThickness="0" 
+                                                    Background="Transparent" FontSize="14"
+                                                    SelectedDateChanged="PersonalBirthdayPicker_SelectedDateChanged"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- 存款 -->
+                                <Border Grid.Row="5" Background="#F0F3F8" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="💰 存款：" FontSize="14" FontWeight="Bold" 
+                                                   Foreground="#2D3436" Margin="0,0,10,0"/>
+                                        <TextBox x:Name="PersonalSavingsTextBox" Grid.Column="1" BorderThickness="0" 
+                                                 Background="Transparent" FontSize="14" Padding="5,2"
+                                                 TextChanged="PersonalSavingsTextBox_TextChanged"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- 保存按钮 -->
+                                <Button Grid.Row="6" Content="💾 保存个人信息" Height="45" 
+                                        Background="#00B894" Foreground="White" BorderThickness="0"
+                                        FontSize="16" FontWeight="Bold" Margin="0,10,0,0"
+                                        Click="SavePersonalInfoButton_Click"/>
+
+                                <!-- 最后更新时间 -->
+                                <TextBlock x:Name="PersonalLastUpdatedText" Grid.Row="7" 
+                                           Text="最后更新：" FontSize="12" Foreground="#636E72" 
+                                           HorizontalAlignment="Center" Margin="0,20,0,0"/>
+                            </Grid>
+                        </Border>
                     </TabItem>
 
                     <!-- 数据管理模块 -->

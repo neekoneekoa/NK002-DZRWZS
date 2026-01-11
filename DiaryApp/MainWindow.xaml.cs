@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿/*===========================================
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿/*===========================================
  * 【AI友好型代码框架注释】
  * 文件名: MainWindow.xaml.cs
  * 框架类型: WPF桌面应用程序主窗口
@@ -165,7 +165,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.12";
+    public const string VERSION = "0.1.1.44";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -275,6 +275,9 @@ public partial class MainWindow : Window
     // 当前查看的周
     private DateTime _currentWeekStart = GetWeekStart(DateTime.Today);
     
+    // 当前查看的月份
+    private DateTime _currentMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    
     // 鼠标拖动相关变量
     private bool _isDragging = false;
     private int _startRow = -1;
@@ -330,13 +333,13 @@ public partial class MainWindow : Window
             SetupWindowResize();
             Log("窗口调整大小设置完成");
             
-            Log("开始调用InitializeUI()");
-            InitializeUI();
-            Log("InitializeUI()完成");
-            
             Log("开始调用LoadAppData()");
             LoadAppData();
             Log("LoadAppData()完成");
+            
+            Log("开始调用InitializeUI()");
+            InitializeUI();
+            Log("InitializeUI()完成");
             
             Log("开始设置默认选项卡");
             // 默认显示日记模块
@@ -370,6 +373,12 @@ public partial class MainWindow : Window
         // 设置初始窗口大小为显示器的70%
         SetWindowSizeTo70Percent();
         
+        // 设置日记周期筛选默认为"全部"
+        DiaryPeriodFilterBox.SelectedIndex = 0;
+        
+        // 初始化日历视图
+        RefreshDiaryMonthDates();
+        
         // 初始化日记时间线
         RefreshDiaryTimeline();
         
@@ -384,6 +393,9 @@ public partial class MainWindow : Window
         
         // 初始化打卡统计
         UpdateCheckInStats();
+        
+        // 初始化个人数据
+        LoadPersonalInfo();
     }
     
     private void SetWindowSizeTo70Percent()
@@ -644,36 +656,110 @@ public partial class MainWindow : Window
         RefreshDiaryTimeline();
     }
 
+    private void DiaryPeriodFilterBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // 隐藏提示文字
+        if (DiaryPeriodPlaceholder != null)
+        {
+            DiaryPeriodPlaceholder.Visibility = DiaryPeriodFilterBox.SelectedIndex > 0 ? Visibility.Collapsed : Visibility.Visible;
+        }
+        RefreshDiaryTimeline();
+    }
+
     private void RefreshDiaryMonthDates()
     {
-        DiaryMonthDatesPanel.Children.Clear();
-        var today = DateTime.Today;
-        var firstDayOfMonth = new DateTime(today.Year, today.Month, 1);
-        var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+        // 更新月份标题
+        if (CurrentMonthText != null)
+        {
+            CurrentMonthText.Text = $"{_currentMonth.Year}年{_currentMonth.Month}月";
+        }
 
+        DiaryMonthCalendarPanel.Children.Clear();
+        
+        var firstDayOfMonth = _currentMonth;
+        var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+        
+        // 获取该月第一天是星期几
+        var firstDayWeekDay = (int)firstDayOfMonth.DayOfWeek;
+        
+        // 获取当前的搜索和筛选条件
+        var searchText = DiarySearchBox.Text.ToLower().Trim();
+        var tagFilter = DiaryTagFilterBox.Text.ToLower().Trim();
+        var periodFilter = "";
+        if (DiaryPeriodFilterBox.SelectedIndex > 0 && DiaryPeriodFilterBox.SelectedItem is ComboBoxItem selectedItem)
+        {
+            periodFilter = selectedItem.Content.ToString();
+        }
+        
+        // 获取筛选后的日记（用于日历高亮显示）
+        var filteredDiaries = _appData.Diaries.AsEnumerable();
+        
+        if (!string.IsNullOrEmpty(searchText))
+        {
+            filteredDiaries = filteredDiaries.Where(d => d.SearchableText.Contains(searchText));
+        }
+        
+        if (!string.IsNullOrEmpty(tagFilter))
+        {
+            filteredDiaries = filteredDiaries.Where(d => d.Tags.Any(t => t.ToLower().Contains(tagFilter)));
+        }
+        
+        if (!string.IsNullOrEmpty(periodFilter) && periodFilter != "全部")
+        {
+            filteredDiaries = filteredDiaries.Where(d => d.PeriodTypeDescription == periodFilter);
+        }
+        
+        // 获取筛选后的日期（绿色高亮）
+        var filteredDates = filteredDiaries
+            .Where(d => d.CreatedAt.Date >= firstDayOfMonth && d.CreatedAt.Date <= lastDayOfMonth)
+            .Select(d => d.CreatedAt.Date)
+            .Distinct()
+            .ToHashSet();
+        
+        // 获取该月所有有日记的日期（蓝色普通显示）
         var datesWithDiaries = _appData.Diaries
             .Where(d => d.CreatedAt.Date >= firstDayOfMonth && d.CreatedAt.Date <= lastDayOfMonth)
             .Select(d => d.CreatedAt.Date)
             .Distinct()
             .ToHashSet();
 
+        // 添加空白日期（月初前的空白）
+        for (int i = 0; i < firstDayWeekDay; i++)
+        {
+            var emptyText = new TextBlock
+            {
+                Text = "",
+                Height = 30,
+                Margin = new Thickness(1)
+            };
+            DiaryMonthCalendarPanel.Children.Add(emptyText);
+        }
+
+        // 添加该月的所有日期
         for (var date = firstDayOfMonth; date <= lastDayOfMonth; date = date.AddDays(1))
         {
             var hasDiary = datesWithDiaries.Contains(date);
+            var isFiltered = filteredDates.Contains(date);
+            var isToday = date.Date == DateTime.Today.Date;
+            
             var button = new Button
             {
                 Content = $"{date.Day}",
                 Height = 30,
-                Margin = new Thickness(2),
-                Padding = new Thickness(8, 0, 8, 0),
-                Background = hasDiary ? (System.Windows.Media.Brush?)AppBrushes.A29BFE : System.Windows.Media.Brushes.Transparent,
-                Foreground = hasDiary ? System.Windows.Media.Brushes.White : AppBrushes._2D3436,
-                BorderThickness = hasDiary ? new Thickness(0) : new Thickness(1),
-                BorderBrush = AppBrushes.DFE6E9,
-                FontSize = 12
+                Margin = new Thickness(1),
+                Padding = new Thickness(2),
+                Background = isToday ? AppBrushes._FF7675 : 
+                           (isFiltered ? (System.Windows.Media.Brush?)AppBrushes._00B894 : 
+                           (hasDiary ? (System.Windows.Media.Brush?)AppBrushes.A29BFE : System.Windows.Media.Brushes.Transparent)),
+                Foreground = isToday || isFiltered || hasDiary ? System.Windows.Media.Brushes.White : AppBrushes._2D3436,
+                BorderThickness = isToday ? new Thickness(0) : new Thickness(1),
+                BorderBrush = isToday ? AppBrushes._FF7675 : AppBrushes.DFE6E9,
+                FontSize = 11,
+                FontWeight = isToday ? FontWeights.Bold : FontWeights.Normal,
+                Tag = date
             };
             button.Click += (s, e) => JumpToDate(date);
-            DiaryMonthDatesPanel.Children.Add(button);
+            DiaryMonthCalendarPanel.Children.Add(button);
         }
     }
 
@@ -686,11 +772,61 @@ public partial class MainWindow : Window
         
         if (targetEntry != null)
         {
-            var panel = FindDiaryEntryPanel(targetEntry.Id);
-            if (panel != null)
+            // 获取当前的搜索和筛选条件
+            var currentSearchText = DiarySearchBox.Text.ToLower().Trim();
+            var currentTagFilter = DiaryTagFilterBox.Text.ToLower().Trim();
+            var currentPeriodFilter = "";
+            if (DiaryPeriodFilterBox.SelectedIndex > 0 && DiaryPeriodFilterBox.SelectedItem is ComboBoxItem selectedItem)
             {
-                ToggleDiaryEntry(targetEntry.Id, true);
-                panel.BringIntoView();
+                currentPeriodFilter = selectedItem.Content.ToString();
+            }
+            
+            // 获取所有符合条件的日记
+            var filteredDiaries = _appData.Diaries.AsEnumerable();
+            
+            if (!string.IsNullOrEmpty(currentSearchText))
+            {
+                filteredDiaries = filteredDiaries.Where(d => d.SearchableText.Contains(currentSearchText));
+            }
+            
+            if (!string.IsNullOrEmpty(currentTagFilter))
+            {
+                filteredDiaries = filteredDiaries.Where(d => d.Tags.Any(t => t.ToLower().Contains(currentTagFilter)));
+            }
+            
+            if (!string.IsNullOrEmpty(currentPeriodFilter) && currentPeriodFilter != "全部")
+            {
+                filteredDiaries = filteredDiaries.Where(d => d.PeriodTypeDescription == currentPeriodFilter);
+            }
+            
+            var sortedDiaries = filteredDiaries.OrderByDescending(d => d.CreatedAt).ToList();
+            
+            // 将目标日记移到最前面
+            var targetIndex = sortedDiaries.FindIndex(d => d.Id == targetEntry.Id);
+            if (targetIndex > 0)
+            {
+                sortedDiaries.RemoveAt(targetIndex);
+                sortedDiaries.Insert(0, targetEntry);
+            }
+            
+            // 重新创建时间线，将目标日记放在最上面
+            DiaryTimelinePanel.Children.Clear();
+            foreach (var entry in sortedDiaries)
+            {
+                CreateDiaryEntryPanel(entry);
+            }
+            
+            // 展开目标日记
+            ToggleDiaryEntry(targetEntry.Id, true);
+            
+            // 滚动到顶部（因为目标日记已经在最上面）
+            if (DiaryTimelinePanel.Children.Count > 0)
+            {
+                var firstChild = DiaryTimelinePanel.Children[0];
+                if (firstChild is Border firstBorder)
+                {
+                    firstBorder.BringIntoView();
+                }
             }
         }
     }
@@ -714,6 +850,13 @@ public partial class MainWindow : Window
         var searchText = DiarySearchBox.Text.ToLower().Trim();
         var tagFilter = DiaryTagFilterBox.Text.ToLower().Trim();
         
+        // 获取周期类型筛选
+        var periodFilter = "";
+        if (DiaryPeriodFilterBox.SelectedIndex > 0 && DiaryPeriodFilterBox.SelectedItem is ComboBoxItem selectedItem)
+        {
+            periodFilter = selectedItem.Content.ToString();
+        }
+        
         var filteredDiaries = _appData.Diaries.AsEnumerable();
         
         if (!string.IsNullOrEmpty(searchText))
@@ -724,6 +867,12 @@ public partial class MainWindow : Window
         if (!string.IsNullOrEmpty(tagFilter))
         {
             filteredDiaries = filteredDiaries.Where(d => d.Tags.Any(t => t.ToLower().Contains(tagFilter)));
+        }
+        
+        // 周期类型筛选
+        if (!string.IsNullOrEmpty(periodFilter) && periodFilter != "全部")
+        {
+            filteredDiaries = filteredDiaries.Where(d => d.PeriodTypeDescription == periodFilter);
         }
         
         var sortedDiaries = filteredDiaries.OrderByDescending(d => d.CreatedAt).ToList();
@@ -742,22 +891,22 @@ public partial class MainWindow : Window
             return;
         }
         
-        var currentMonth = "";
+        var currentDate = "";
         foreach (var entry in sortedDiaries)
         {
-            var entryMonth = entry.CreatedAt.ToString("yyyy年MM月");
-            if (entryMonth != currentMonth)
+            var entryDate = entry.CreatedAt.ToString("MM月dd日");
+            if (entryDate != currentDate)
             {
-                currentMonth = entryMonth;
-                var monthHeader = new TextBlock
+                currentDate = entryDate;
+                var dateHeader = new TextBlock
                 {
-                    Text = entryMonth,
-                    FontSize = 14,
+                    Text = entryDate,
+                    FontSize = 18,
                     FontWeight = FontWeights.Bold,
                     Foreground = AppBrushes.A29BFE,
-                    Margin = new Thickness(0, 15, 0, 10)
+                    Margin = new Thickness(0, 20, 0, 15)
                 };
-                DiaryTimelinePanel.Children.Add(monthHeader);
+                DiaryTimelinePanel.Children.Add(dateHeader);
             }
             
             CreateDiaryEntryPanel(entry);
@@ -774,6 +923,13 @@ public partial class MainWindow : Window
             Margin = new Thickness(0, 0, 0, 10)
         };
         
+        // 添加鼠标点击事件到整个条目
+        mainStackPanel.MouseLeftButtonDown += (s, e) =>
+        {
+            ToggleDiaryEntry(entry.Id, true);
+            e.Handled = true; // 防止事件冒泡
+        };
+        
         var collapsedPanel = new StackPanel();
         
         var headerBorder = new Border
@@ -786,44 +942,70 @@ public partial class MainWindow : Window
         headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         
-        var infoStackPanel = new StackPanel();
+        // 创建标题行，包含标题和时间
+        var titleRow = new Grid();
+        titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         
         var titleText = new TextBlock
         {
             Text = entry.Title,
-            FontSize = 15,
-            FontWeight = FontWeights.SemiBold,
+            FontSize = 18,
+            FontWeight = FontWeights.Bold,
             Foreground = AppBrushes._2D3436,
-            TextWrapping = TextWrapping.Wrap
-        };
-        infoStackPanel.Children.Add(titleText);
-        
-        var timeRow = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Margin = new Thickness(0, 5, 0, 0)
-        };
-        var timeText = new TextBlock
-        {
-            Text = entry.TimeOnly,
-            FontSize = 12,
-            Foreground = AppBrushes.A29BFE,
+            TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 0, 10, 0)
         };
-        timeRow.Children.Add(timeText);
+        Grid.SetColumn(titleText, 0);
+        titleRow.Children.Add(titleText);
         
+        // 时间（放在右边）
+        var timeText = new TextBlock
+        {
+            Text = entry.CreatedAt.ToString("MM月dd日 HH:mm"),
+            FontSize = 14,
+            FontWeight = FontWeights.Medium,
+            Foreground = AppBrushes.A29BFE,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        Grid.SetColumn(timeText, 1);
+        titleRow.Children.Add(timeText);
+        
+        var infoStackPanel = new StackPanel();
+        infoStackPanel.Children.Add(titleRow);
+        
+        // 周期类型和标签的行
+        var metaRow = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Margin = new Thickness(0, 8, 0, 0)
+        };
+        
+        // 周期类型
+        var periodTypeText = new TextBlock
+        {
+            Text = entry.PeriodTypeDescription,
+            FontSize = 13,
+            FontWeight = FontWeights.Bold,
+            Foreground = AppBrushes.A29BFE,
+            Margin = new Thickness(0, 0, 15, 0)
+        };
+        metaRow.Children.Add(periodTypeText);
+        
+        // 标签
         if (entry.Tags.Count > 0)
         {
             var tagsText = new TextBlock
             {
                 Text = string.Join(" ", entry.Tags.Select(t => $"#{t}")),
-                FontSize = 11,
+                FontSize = 13,
+                FontWeight = FontWeights.Medium,
                 Foreground = AppBrushes._636E72,
                 TextWrapping = TextWrapping.Wrap
             };
-            timeRow.Children.Add(tagsText);
+            metaRow.Children.Add(tagsText);
         }
-        infoStackPanel.Children.Add(timeRow);
+        infoStackPanel.Children.Add(metaRow);
         
         Grid.SetColumn(infoStackPanel, 0);
         headerGrid.Children.Add(infoStackPanel);
@@ -844,10 +1026,10 @@ public partial class MainWindow : Window
         headerGrid.Children.Add(expandButton);
         
         headerBorder.Child = headerGrid;
-        collapsedPanel.Children.Add(headerBorder);
-        mainStackPanel.Children.Add(collapsedPanel);
+        mainStackPanel.Children.Add(headerBorder);
         
-        var expandedPanel = new StackPanel
+        // 创建内容面板，用于显示展开的内容
+        var contentPanel = new StackPanel
         {
             Visibility = Visibility.Collapsed,
             Margin = new Thickness(0, 5, 0, 0)
@@ -859,16 +1041,25 @@ public partial class MainWindow : Window
             CornerRadius = new System.Windows.CornerRadius(8),
             Padding = new Thickness(12)
         };
+        // 只显示内容的前三行
+        var lines = entry.Content.Split('\n');
+        var previewLines = lines.Take(3).ToArray();
+        var previewContent = string.Join("\n", previewLines);
+        if (lines.Length > 3)
+        {
+            previewContent += "...";
+        }
+        
         var contentText = new TextBlock
         {
-            Text = entry.ContentPreview,
+            Text = previewContent,
             FontSize = 13,
             Foreground = AppBrushes._636E72,
             TextWrapping = TextWrapping.Wrap,
             LineHeight = 24
         };
         contentBorder.Child = contentText;
-        expandedPanel.Children.Add(contentBorder);
+        contentPanel.Children.Add(contentBorder);
         
         var buttonPanel = new StackPanel
         {
@@ -918,9 +1109,9 @@ public partial class MainWindow : Window
         buttonPanel.Children.Add(collapseButton);
         buttonPanel.Children.Add(modifyButton);
         buttonPanel.Children.Add(deleteButton);
-        expandedPanel.Children.Add(buttonPanel);
         
-        mainStackPanel.Children.Add(expandedPanel);
+        contentPanel.Children.Add(buttonPanel);
+        mainStackPanel.Children.Add(contentPanel);
         
         var containerBorder = new Border
         {
@@ -935,11 +1126,11 @@ public partial class MainWindow : Window
     {
         if (sender is Button button && button.Tag is string entryId)
         {
-            ToggleDiaryEntry(entryId, true);
+            ToggleDiaryEntry(entryId); // 使用切换逻辑，而不是只能展开
         }
     }
 
-    private void ToggleDiaryEntry(string entryId, bool expand)
+    private void ToggleDiaryEntry(string entryId, bool? expand = null)
     {
         foreach (var child in DiaryTimelinePanel.Children)
         {
@@ -947,13 +1138,30 @@ public partial class MainWindow : Window
             {
                 if (border.Child is StackPanel mainPanel && mainPanel.Children.Count >= 2)
                 {
-                    if (mainPanel.Children[0] is StackPanel collapsedPanel)
+                    // 现在 mainPanel.Children[0] 是标题，mainPanel.Children[1] 是内容面板
+                    if (mainPanel.Children[1] is StackPanel contentPanel)
                     {
-                        collapsedPanel.Visibility = expand ? Visibility.Collapsed : Visibility.Visible;
-                    }
-                    if (mainPanel.Children[1] is StackPanel expandedPanel)
-                    {
-                        expandedPanel.Visibility = expand ? Visibility.Visible : Visibility.Collapsed;
+                        bool shouldExpand;
+                        if (expand.HasValue)
+                        {
+                            shouldExpand = expand.Value;
+                        }
+                        else
+                        {
+                            // 切换状态：如果当前是收起状态，则展开；反之亦然
+                            shouldExpand = contentPanel.Visibility == Visibility.Collapsed;
+                        }
+                        
+                        contentPanel.Visibility = shouldExpand ? Visibility.Visible : Visibility.Collapsed;
+                        
+                        // 更新展开按钮图标
+                        if (mainPanel.Children[0] is Border headerBorder && 
+                            headerBorder.Child is Grid headerGrid &&
+                            headerGrid.Children.Count > 1 &&
+                            headerGrid.Children[1] is Button expandButton)
+                        {
+                            expandButton.Content = shouldExpand ? "▲" : "▼";
+                        }
                     }
                 }
                 break;
@@ -987,6 +1195,18 @@ public partial class MainWindow : Window
             SaveAppData();
             RefreshDiaryTimeline();
         }
+    }
+
+    private void PreviousMonthButton_Click(object sender, RoutedEventArgs e)
+    {
+        _currentMonth = _currentMonth.AddMonths(-1);
+        RefreshDiaryMonthDates();
+    }
+
+    private void NextMonthButton_Click(object sender, RoutedEventArgs e)
+    {
+        _currentMonth = _currentMonth.AddMonths(1);
+        RefreshDiaryMonthDates();
     }
 
     #endregion
@@ -1902,6 +2122,75 @@ public partial class MainWindow : Window
             {
                 MessageBox.Show($"导出失败：{ex.Message}", "错误");
             }
+        }
+    }
+
+    // ===== 个人数据管理功能 =====
+    private void LoadPersonalInfo()
+    {
+        try
+        {
+            var personalInfo = _appData.PersonalInfo;
+            PersonalNameTextBox.Text = personalInfo.Name;
+            PersonalPhoneTextBox.Text = personalInfo.Phone;
+            PersonalBirthdayPicker.SelectedDate = personalInfo.Birthday;
+            PersonalSavingsTextBox.Text = personalInfo.Savings.ToString();
+            PersonalLastUpdatedText.Text = $"最后更新：{personalInfo.LastUpdated:yyyy-MM-dd HH:mm}";
+        }
+        catch (Exception ex)
+        {
+            Log($"加载个人数据失败：{ex.Message}");
+        }
+    }
+
+    private void PersonalNameTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        _appData.PersonalInfo.Name = PersonalNameTextBox.Text;
+        _appData.PersonalInfo.LastUpdated = DateTime.Now;
+        PersonalLastUpdatedText.Text = $"最后更新：{_appData.PersonalInfo.LastUpdated:yyyy-MM-dd HH:mm}";
+    }
+
+    private void PersonalPhoneTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        _appData.PersonalInfo.Phone = PersonalPhoneTextBox.Text;
+        _appData.PersonalInfo.LastUpdated = DateTime.Now;
+        PersonalLastUpdatedText.Text = $"最后更新：{_appData.PersonalInfo.LastUpdated:yyyy-MM-dd HH:mm}";
+    }
+
+    private void PersonalBirthdayPicker_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
+    {
+        _appData.PersonalInfo.Birthday = PersonalBirthdayPicker.SelectedDate;
+        _appData.PersonalInfo.LastUpdated = DateTime.Now;
+        PersonalLastUpdatedText.Text = $"最后更新：{_appData.PersonalInfo.LastUpdated:yyyy-MM-dd HH:mm}";
+    }
+
+    private void PersonalSavingsTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        try
+        {
+            if (decimal.TryParse(PersonalSavingsTextBox.Text, out decimal savings))
+            {
+                _appData.PersonalInfo.Savings = savings;
+                _appData.PersonalInfo.LastUpdated = DateTime.Now;
+                PersonalLastUpdatedText.Text = $"最后更新：{_appData.PersonalInfo.LastUpdated:yyyy-MM-dd HH:mm}";
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"存款输入错误：{ex.Message}");
+        }
+    }
+
+    private void SavePersonalInfoButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            SaveAppData();
+            MessageBox.Show("个人信息已保存！", "保存成功", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"保存失败：{ex.Message}", "保存失败", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

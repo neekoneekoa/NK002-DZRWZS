@@ -89,6 +89,9 @@ namespace DiaryApp
             DiaryTitleTextBox.Text = entry.Title;
             DatePicker.SelectedDate = entry.CreatedAt.Date;
             
+            // 设置周期类型
+            PeriodTypeComboBox.SelectedIndex = (int)entry.PeriodType;
+            
             foreach (var tag in entry.Tags)
             {
                 _tags.Add(tag);
@@ -503,7 +506,8 @@ namespace DiaryApp
                     Content = content,
                     Tags = _tags.ToList(),
                     Photos = _photoPaths.ToList(),
-                    CreatedAt = createdAt
+                    CreatedAt = createdAt,
+                    PeriodType = (DiaryPeriodType)PeriodTypeComboBox.SelectedIndex
                 };
                 
                 if (_isNewEntry)

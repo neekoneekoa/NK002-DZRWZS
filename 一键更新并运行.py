@@ -68,7 +68,7 @@ def build_and_run():
         # 清理并编译
         print("🔨 编译中...")
         result = subprocess.run(
-            ["dotnet", "build", "--configuration", "Debug"], 
+            ["dotnet", "build", "DiaryApp.csproj", "--configuration", "Debug"], 
             cwd=project_dir,
             capture_output=True, 
             text=True,

@@ -30,6 +30,15 @@
                     <TextBlock Text="📅" FontSize="14" Foreground="#636E72" Margin="0,0,5,0"/>
                     <DatePicker x:Name="DatePicker" Background="Transparent" BorderThickness="0" 
                                 Width="120" VerticalContentAlignment="Center"/>
+                    <TextBlock Text="📖" FontSize="14" Foreground="#636E72" Margin="15,0,5,0"/>
+                    <ComboBox x:Name="PeriodTypeComboBox" Width="80" SelectedIndex="0" 
+                              Background="Transparent" BorderThickness="1" BorderBrush="#DFE6E9">
+                        <ComboBoxItem Content="日常"/>
+                        <ComboBoxItem Content="周记"/>
+                        <ComboBoxItem Content="月计"/>
+                        <ComboBoxItem Content="季记"/>
+                        <ComboBoxItem Content="年记"/>
+                    </ComboBox>
                 </StackPanel>
             </StackPanel>
         </Border>

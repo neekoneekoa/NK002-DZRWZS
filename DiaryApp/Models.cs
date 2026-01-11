@@ -4,16 +4,31 @@ using System.ComponentModel;
 
 namespace DiaryApp
 {
-    // ===== 任务状态枚举 =====
-    public enum TaskStatus
-    {
-        [Description("待完成")]
-        Pending = 0,
-        [Description("进行中")]
-        InProgress = 1,
-        [Description("已完成")]
-        Completed = 2
-    }
+    // ===== 日记周期类型枚举 =====
+public enum DiaryPeriodType
+{
+    [Description("日常")]
+    Daily = 0,
+    [Description("周记")]
+    Weekly = 1,
+    [Description("月计")]
+    Monthly = 2,
+    [Description("季记")]
+    Quarterly = 3,
+    [Description("年记")]
+    Yearly = 4
+}
+
+// ===== 任务状态枚举 =====
+public enum TaskStatus
+{
+    [Description("待完成")]
+    Pending = 0,
+    [Description("进行中")]
+    InProgress = 1,
+    [Description("已完成")]
+    Completed = 2
+}
 
     // ===== 任务数据模型 =====
     public class SubTask
@@ -79,6 +94,7 @@ namespace DiaryApp
         public List<string> Photos { get; set; } = new List<string>();
         public List<string> Tags { get; set; } = new List<string>();
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DiaryPeriodType PeriodType { get; set; } = DiaryPeriodType.Daily;
         
         // 用于界面显示
         public string DateStr => CreatedAt.ToString("yyyy-MM-dd HH:mm");
@@ -99,6 +115,17 @@ namespace DiaryApp
         
         // 用于搜索
         public string SearchableText => $"{Title} {Content} {string.Join(" ", Tags)}".ToLower();
+        
+        // 周期类型描述
+        public string PeriodTypeDescription => PeriodType switch
+        {
+            DiaryPeriodType.Daily => "日常",
+            DiaryPeriodType.Weekly => "周记",
+            DiaryPeriodType.Monthly => "月计",
+            DiaryPeriodType.Quarterly => "季记",
+            DiaryPeriodType.Yearly => "年记",
+            _ => "日常"
+        };
     }
 
     // ===== 时间记录数据模型 =====
@@ -118,6 +145,22 @@ namespace DiaryApp
         
         // 用于显示
         public string TimeRange => $"{StartTime:hh\\:mm} - {EndTime:hh\\:mm}";
+    }
+
+    // ===== 个人信息数据模型 =====
+    public class PersonalInfo
+    {
+        public string Id { get; set; } = "personal_info";
+        public string Name { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public DateTime? Birthday { get; set; }
+        public decimal Savings { get; set; } = 0;
+        public DateTime LastUpdated { get; set; } = DateTime.Now;
+        
+        // 用于显示
+        public string BirthdayStr => Birthday?.ToString("yyyy-MM-dd") ?? "";
+        public string SavingsStr => $"¥{Savings:N2}";
+        public string DisplayName => string.IsNullOrEmpty(Name) ? "未设置姓名" : Name;
     }
 
     // ===== 打卡数据模型 =====
@@ -151,6 +194,7 @@ namespace DiaryApp
         public List<TaskEntry> Tasks { get; set; } = new List<TaskEntry>();
         public List<TimeRecordEntry> TimeRecords { get; set; } = new List<TimeRecordEntry>();
         public List<CheckInEntry> CheckIns { get; set; } = new List<CheckInEntry>();
+        public PersonalInfo PersonalInfo { get; set; } = new PersonalInfo();
         public DateTime LastSaved { get; set; } = DateTime.Now;
         public string Version { get; set; } = "1.0";
     }

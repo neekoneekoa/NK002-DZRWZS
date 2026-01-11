@@ -80,10 +80,12 @@ def clean_project():
     project_dir = os.path.join(base_dir, "DiaryApp")
     
     result = subprocess.run(
-        ["dotnet", "clean"], 
+        ["dotnet", "clean", "DiaryApp.csproj"], 
         cwd=project_dir,
         capture_output=True, 
-        text=True
+        text=True,
+        encoding='utf-8',
+        errors='ignore'
     )
     
     if result.returncode == 0:
@@ -102,7 +104,7 @@ def build_release():
     project_dir = os.path.join(base_dir, "DiaryApp")
     
     result = subprocess.run(
-        ["dotnet", "build", "--configuration", "Release"], 
+        ["dotnet", "build", "DiaryApp.csproj", "--configuration", "Release"], 
         cwd=project_dir,
         capture_output=True, 
         text=True,
@@ -134,7 +136,9 @@ def test_run():
         process = subprocess.Popen(
             [exe_path], 
             stdout=subprocess.PIPE, 
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
+            encoding='utf-8',
+            errors='ignore'
         )
         
         print(f"✅ 应用已启动，进程ID: {process.pid}")
