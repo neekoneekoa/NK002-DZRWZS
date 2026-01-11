@@ -50,8 +50,8 @@ namespace DiaryApp
             _originalTitle = entry.Title;
             _originalContent = entry.Content;
             this.Title = "编辑日记";
-            LoadEntry(entry);
             InitializeRichTextBox();
+            LoadEntry(entry);
         }
 
         private void InitializeRichTextBox()
