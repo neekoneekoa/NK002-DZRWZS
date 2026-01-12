@@ -123,6 +123,7 @@
                 <TextBlock x:Name="DateLabel" Text="" FontSize="14" Foreground="#636E72" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Content="⚙" Style="{StaticResource WindowControlButtonStyle}" Click="SettingsButton_Click" Foreground="#0984E3" FontSize="14" ToolTip="设置"/>
+                    <Button Content="🔙" Style="{StaticResource WindowControlButtonStyle}" Click="BackgroundButton_Click" Foreground="#20B2AA" FontSize="14" ToolTip="后台运行"/>
                     <Button Content="—" Style="{StaticResource WindowControlButtonStyle}" Click="MinimizeButton_Click" Foreground="#2D3436" FontSize="18" ToolTip="最小化"/>
                     <Button Content="□" Style="{StaticResource WindowControlButtonStyle}" Click="MaximizeButton_Click" Foreground="#2D3436" FontSize="14" ToolTip="全屏"/>
                     <Button Content="✕" Style="{StaticResource WindowControlButtonStyle}" Click="CloseButton_Click" Foreground="#D63031" FontSize="16" ToolTip="关闭"/>

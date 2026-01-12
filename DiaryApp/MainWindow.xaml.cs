@@ -59,6 +59,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Microsoft.Win32;
 
 namespace DiaryApp;
@@ -176,6 +177,10 @@ public partial class MainWindow : Window
     private AppData _appData = new AppData();
     private const string DATA_FILE = "app_data.json";
     private const string LOG_FILE = "app_crash_log.txt";
+    
+    // 提醒功能相关变量
+    private DispatcherTimer _reminderTimer;
+    private DateTime _lastReminderDate = DateTime.MinValue;
     
     // 获取应用数据文件的完整路径
     private string GetDataFilePath()
@@ -349,6 +354,10 @@ public partial class MainWindow : Window
             // 添加TabControl的SelectionChanged事件处理程序
             MainTabControl.SelectionChanged += MainTabControl_SelectionChanged;
             Log("TabControl SelectionChanged事件处理程序添加完成");
+            
+            // 初始化提醒功能
+            InitializeReminder();
+            Log("提醒功能初始化完成");
             
             Log("MainWindow构造函数成功完成 - 窗口应该已显示");
         }
@@ -623,7 +632,15 @@ public partial class MainWindow : Window
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
-        Application.Current.Shutdown();
+        // 如果启用了后台运行，则隐藏窗口而不是关闭
+        if (_appData.ReminderSetting.IsEnabled && _appData.ReminderSetting.IsMinimizedToTray)
+        {
+            HideWindow();
+        }
+        else
+        {
+            ExitApplication();
+        }
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
@@ -645,9 +662,122 @@ public partial class MainWindow : Window
 
     private void SettingsButton_Click(object sender, RoutedEventArgs e)
     {
-        var settingsWindow = new SettingsWindow();
+        var settingsWindow = new SettingsWindow(_appData);
         settingsWindow.Owner = this;
         settingsWindow.ShowDialog();
+        
+        // 保存设置并更新提醒定时器
+        SaveAppData();
+        UpdateReminderTimer();
+    }
+    
+    // 后台运行按钮点击事件
+    private void BackgroundButton_Click(object sender, RoutedEventArgs e)
+    {
+        HideWindow();
+    }
+    
+    // 显示主窗口
+    private void ShowWindow()
+    {
+        this.Visibility = Visibility.Visible;
+        this.WindowState = WindowState.Normal;
+        this.Activate();
+    }
+    
+    // 隐藏主窗口（后台运行）
+    private void HideWindow()
+    {
+        this.Visibility = Visibility.Hidden;
+    }
+    
+    // 退出应用程序
+    private void ExitApplication()
+    {
+        // 停止定时器
+        if (_reminderTimer != null)
+        {
+            _reminderTimer.Stop();
+        }
+        
+        Application.Current.Shutdown();
+    }
+    
+    // 初始化提醒功能
+    private void InitializeReminder()
+    {
+        // 创建提醒定时器，每分钟检查一次
+        _reminderTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMinutes(1)
+        };
+        _reminderTimer.Tick += ReminderTimer_Tick;
+        
+        // 根据当前配置启动或停止定时器
+        UpdateReminderTimer();
+    }
+    
+    // 根据配置更新提醒定时器
+    private void UpdateReminderTimer()
+    {
+        if (_appData.ReminderSetting.IsEnabled)
+        {
+            if (!_reminderTimer.IsEnabled)
+            {
+                _reminderTimer.Start();
+            }
+        }
+        else
+        {
+            if (_reminderTimer.IsEnabled)
+            {
+                _reminderTimer.Stop();
+            }
+        }
+    }
+    
+    // 提醒定时器的Tick事件处理程序
+    private void ReminderTimer_Tick(object sender, EventArgs e)
+    {
+        // 检查是否应该显示提醒
+        if (ShouldShowReminder())
+        {
+            ShowReminder();
+            
+            // 更新最后提醒日期
+            _lastReminderDate = DateTime.Now.Date;
+        }
+    }
+    
+    // 检查是否应该显示提醒
+    private bool ShouldShowReminder()
+    {
+        if (!_appData.ReminderSetting.IsEnabled)
+        {
+            return false;
+        }
+        
+        // 检查是否是当天第一次提醒
+        if (_lastReminderDate == DateTime.Now.Date)
+        {
+            return false;
+        }
+        
+        // 检查当前时间是否达到提醒时间
+        var now = DateTime.Now;
+        var reminderTime = new DateTime(now.Year, now.Month, now.Day, 
+                                      _appData.ReminderSetting.ReminderTime.Hours, 
+                                      _appData.ReminderSetting.ReminderTime.Minutes, 
+                                      0);
+        
+        return now >= reminderTime;
+    }
+    
+    // 显示提醒消息
+    private void ShowReminder()
+    {
+        // 使用WPF消息框显示提醒
+        MessageBox.Show(_appData.ReminderSetting.ReminderMessage, "我的日记助手", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     #endregion

@@ -153,7 +153,7 @@ namespace DiaryApp
             "#000080", "#808000", "#800080", "#008080", "#C0C0C0",
             "#FFA500", "#FFC0CB", "#808080", "#A52A2A", "#FFE4C4"
         };
-        private Button? _currentColorButton = null; // 记录当前点击的颜色按钮
+        private System.Windows.Controls.Button? _currentColorButton = null; // 记录当前点击的颜色按钮
 
         // 文字颜色按钮点击事件
         private void TextColorButton_Click(object sender, RoutedEventArgs e)
