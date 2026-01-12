@@ -85,6 +85,20 @@ public enum TaskStatus
         };
     }
 
+    // ===== 参数数据模型 =====
+    public class DiaryParam
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Name { get; set; } = "";
+        public string Value { get; set; } = "";
+        public string Unit { get; set; } = "";
+        
+        public override string ToString()
+        {
+            return string.IsNullOrEmpty(Unit) ? $"{Name}: {Value}" : $"{Name}: {Value}{Unit}";
+        }
+    }
+
     // ===== 日记数据模型 =====
     public class DiaryEntry
     {
@@ -93,6 +107,7 @@ public enum TaskStatus
         public string Content { get; set; } = "";
         public List<string> Photos { get; set; } = new List<string>();
         public List<string> Tags { get; set; } = new List<string>();
+        public List<DiaryParam> Parameters { get; set; } = new List<DiaryParam>();
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DiaryPeriodType PeriodType { get; set; } = DiaryPeriodType.Daily;
         

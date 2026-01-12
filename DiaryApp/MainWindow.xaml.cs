@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿/*===========================================
+﻿/*===========================================
  * 【AI友好型代码框架注释】
  * 文件名: MainWindow.xaml.cs
  * 框架类型: WPF桌面应用程序主窗口
@@ -165,7 +165,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.46";
+    public const string VERSION = "0.1.1.57";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -549,6 +549,52 @@ public partial class MainWindow : Window
             }
             catch { /* 忽略加载错误 */ }
         }
+        
+        // 重新计算个人信息数值
+        RecalculatePersonalInfo();
+    }
+
+    // 重新计算个人信息数值
+    private void RecalculatePersonalInfo()
+    {
+        try
+        {
+            // 从所有日记中收集参数并重新计算
+            decimal totalSavings = 0;
+            
+            // 遍历所有日记
+            foreach (var diary in _appData.Diaries)
+            {
+                // 遍历日记中的所有参数
+                foreach (var param in diary.Parameters)
+                {
+                    string trimmedName = param.Name.Trim();
+                    if (trimmedName.Equals("金钱", StringComparison.OrdinalIgnoreCase) || 
+                        trimmedName.Equals("savings", StringComparison.OrdinalIgnoreCase) || 
+                        trimmedName.Equals("Savings", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (decimal.TryParse(param.Value, out decimal paramValue))
+                        {
+                            totalSavings += paramValue;
+                        }
+                    }
+                }
+            }
+            
+            // 更新个人信息
+            _appData.PersonalInfo.Savings = totalSavings;
+            _appData.PersonalInfo.LastUpdated = DateTime.Now;
+            
+            // 更新UI显示
+            PersonalSavingsTextBox.Text = totalSavings.ToString();
+            PersonalLastUpdatedText.Text = $"最后更新：{_appData.PersonalInfo.LastUpdated:yyyy-MM-dd HH:mm}";
+            
+            System.Diagnostics.Debug.WriteLine($"个人信息重新计算完成：存款 = {totalSavings}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"重新计算个人信息失败：{ex.Message}");
+        }
     }
 
     private void SaveAppData()
@@ -610,13 +656,15 @@ public partial class MainWindow : Window
 
     private void NewDiaryButton_Click(object sender, RoutedEventArgs e)
     {
-        var editWindow = new DiaryEditWindow();
+        var editWindow = new DiaryEditWindow(_appData.PersonalInfo);
         editWindow.Owner = this;
         if (editWindow.ShowDialog() == true && editWindow.ResultEntry != null)
         {
             _appData.Diaries.Add(editWindow.ResultEntry);
             SaveAppData();
             RefreshDiaryTimeline();
+            // 重新计算个人信息数值
+            RecalculatePersonalInfo();
         }
     }
 
@@ -1171,7 +1219,7 @@ public partial class MainWindow : Window
 
     private void EditDiaryEntry(DiaryEntry entry)
     {
-        var editWindow = new DiaryEditWindow(entry);
+        var editWindow = new DiaryEditWindow(_appData.PersonalInfo, entry);
         editWindow.Owner = this;
         if (editWindow.ShowDialog() == true && editWindow.ResultEntry != null)
         {
@@ -1181,6 +1229,8 @@ public partial class MainWindow : Window
                 _appData.Diaries[index] = editWindow.ResultEntry;
                 SaveAppData();
                 RefreshDiaryTimeline();
+                // 重新计算个人信息数值
+                RecalculatePersonalInfo();
             }
         }
     }
@@ -1194,6 +1244,8 @@ public partial class MainWindow : Window
             _appData.Diaries.RemoveAll(d => d.Id == entry.Id);
             SaveAppData();
             RefreshDiaryTimeline();
+            // 重新计算个人信息数值
+            RecalculatePersonalInfo();
         }
     }
 
@@ -2181,12 +2233,35 @@ public partial class MainWindow : Window
         }
     }
 
+    private void EditPersonalInfoButton_Click(object sender, RoutedEventArgs e)
+    {
+        // 启用所有输入控件
+        PersonalNameTextBox.IsEnabled = true;
+        PersonalPhoneTextBox.IsEnabled = true;
+        PersonalBirthdayPicker.IsEnabled = true;
+        PersonalSavingsTextBox.IsEnabled = true;
+        
+        // 禁用修改按钮，启用保存按钮
+        EditPersonalInfoButton.IsEnabled = false;
+        SavePersonalInfoButton.IsEnabled = true;
+    }
+
     private void SavePersonalInfoButton_Click(object sender, RoutedEventArgs e)
     {
         try
         {
             SaveAppData();
             MessageBox.Show("个人信息已保存！", "保存成功", MessageBoxButton.OK, MessageBoxImage.Information);
+            
+            // 禁用所有输入控件
+            PersonalNameTextBox.IsEnabled = false;
+            PersonalPhoneTextBox.IsEnabled = false;
+            PersonalBirthdayPicker.IsEnabled = false;
+            PersonalSavingsTextBox.IsEnabled = false;
+            
+            // 启用修改按钮，禁用保存按钮
+            EditPersonalInfoButton.IsEnabled = true;
+            SavePersonalInfoButton.IsEnabled = false;
         }
         catch (Exception ex)
         {
