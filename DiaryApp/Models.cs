@@ -31,12 +31,26 @@ public enum TaskStatus
 }
 
     // ===== 任务数据模型 =====
+    public class TaskChapter
+    {
+        public string Id { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Content { get; set; } = "";
+        public List<SubTask> SubTasks { get; set; } = new List<SubTask>();
+        public string Notes { get; set; } = ""; // 注意事项备注
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public int OrderIndex { get; set; } = 0; // 章节顺序
+    }
+
     public class SubTask
     {
         public string Id { get; set; } = "";
         public string Title { get; set; } = "";
         public bool IsCompleted { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime? ScheduledTime { get; set; } // 计划时间
+        public string Content { get; set; } = ""; // 子任务内容
+        public string Notes { get; set; } = ""; // 注意事项备注
         
         // 时间计划属性
         public int DurationDays { get; set; } = 1; // 子任务持续天数
@@ -51,6 +65,8 @@ public enum TaskStatus
         public int Priority { get; set; } = 2; // 1-3级优先级
         public int Level { get; set; } = 1; // 1-3级标题
         public TaskStatus Status { get; set; } = TaskStatus.Pending;
+        public List<TaskChapter> Chapters { get; set; } = new List<TaskChapter>();
+        [Obsolete("使用Chapters替代")]
         public List<SubTask> SubTasks { get; set; } = new List<SubTask>();
         public string Content { get; set; } = "";
         public DateTime CreatedAt { get; set; } = DateTime.Now;

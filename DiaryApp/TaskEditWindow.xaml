@@ -22,11 +22,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -34,128 +30,47 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         
-        <!-- 颜色选择面板 -->
-        <Border Grid.Column="1" Grid.Row="0" Grid.RowSpan="9" Background="#F5F6FA" BorderThickness="1" BorderBrush="#DCDDE1" Margin="20,0,0,0" Visibility="Collapsed" CornerRadius="5">
-            <Grid x:Name="ColorPickerGrid">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <TextBlock Text="选择颜色" FontSize="14" FontWeight="Bold" Foreground="#2D3436" Margin="10,10,0,10" Grid.Row="0"/>
-                <WrapPanel Grid.Row="1" Margin="10" x:Name="ColorPalette" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            </Grid>
-        </Border>
+
             
-            <!-- 标题 -->
-            <TextBlock Grid.Row="0" Text="编辑任务" FontSize="20" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,20" HorizontalAlignment="Center"/>
+    
             
             <!-- 任务标题 -->
             <StackPanel Grid.Row="1" Margin="0,0,0,15">
-                <TextBlock Text="任务标题：" FontSize="14" Foreground="#636E72" Margin="0,0,0,5"/>
-                <TextBox x:Name="TitleTextBox" Width="300" FontSize="16" Padding="10"/>
+                <TextBox x:Name="TitleTextBox" Width="300" FontSize="16" Padding="10" Tag="请输入任务标题"/>
             </StackPanel>
             
-            <!-- 任务内容 -->
-            <StackPanel Grid.Row="2" Margin="0,0,0,15">
-                <TextBlock Text="任务内容：" FontSize="14" Foreground="#636E72" Margin="0,0,0,5"/>
-                <TextBox x:Name="ContentTextBox" AcceptsReturn="True" TextWrapping="Wrap" FontSize="14" Height="100" Padding="10"/>
-            </StackPanel>
+
             
-            <!-- 优先级和级别 -->
-            <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,15" VerticalAlignment="Center">
+            <!-- 优先级、状态和完成时间 -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,15" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
-                    <TextBlock Text="优先级：" FontSize="14" Foreground="#636E72" Width="80"/>
-                    <ComboBox x:Name="PriorityComboBox" SelectedIndex="1" Width="100" Height="30">
+                    <TextBlock Text="优先级：" FontSize="14" Foreground="#636E72" Width="60"/>
+                    <ComboBox x:Name="PriorityComboBox" SelectedIndex="1" Width="80" Height="30">
                         <ComboBoxItem Content="高"/>
                         <ComboBoxItem Content="中"/>
                         <ComboBoxItem Content="低"/>
                     </ComboBox>
                 </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
+                    <TextBlock Text="状态：" FontSize="14" Foreground="#636E72" Width="50"/>
+                    <ComboBox x:Name="StatusComboBox" SelectedIndex="0" Width="100" Height="30">
+                        <ComboBoxItem Content="待完成"/>
+                        <ComboBoxItem Content="进行中"/>
+                        <ComboBoxItem Content="已完成"/>
+                    </ComboBox>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="级别：" FontSize="14" Foreground="#636E72" Width="80"/>
-                    <ComboBox x:Name="LevelComboBox" SelectedIndex="0" Width="100" Height="30">
-                        <ComboBoxItem Content="1级"/>
-                        <ComboBoxItem Content="2级"/>
-                        <ComboBoxItem Content="3级"/>
-                    </ComboBox>
+                    <TextBlock Text="完成时间：" FontSize="14" Foreground="#636E72" Width="80"/>
+                    <DatePicker x:Name="CompletedDatePicker" Width="120" Height="30"/>
                 </StackPanel>
             </StackPanel>
             
-            <!-- 状态 -->
-            <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,0,0,15" VerticalAlignment="Center">
-                <TextBlock Text="状态：" FontSize="14" Foreground="#636E72" Width="80"/>
-                <ComboBox x:Name="StatusComboBox" SelectedIndex="0" Width="120" Height="30">
-                    <ComboBoxItem Content="待完成"/>
-                    <ComboBoxItem Content="进行中"/>
-                    <ComboBoxItem Content="已完成"/>
-                </ComboBox>
-            </StackPanel>
+
             
-            <!-- 完成时间 -->
-            <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,0,0,15" VerticalAlignment="Center">
-                <TextBlock Text="完成时间：" FontSize="14" Foreground="#636E72" Width="80"/>
-                <DatePicker x:Name="CompletedDatePicker" Width="150" Height="30"/>
-            </StackPanel>
-            
-            <!-- 文本样式 -->
-            <StackPanel Grid.Row="6" Margin="0,0,0,15">
-                <TextBlock Text="文本样式：" FontSize="14" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,8"/>
-                
-                <!-- 字号选择 -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,8" VerticalAlignment="Center">
-                    <TextBlock Text="字号：" FontSize="14" Foreground="#636E72" Width="60"/>
-                    <ComboBox x:Name="FontSizeComboBox" Width="100" Height="30">
-                        <ComboBoxItem Content="12" Tag="12"/>
-                        <ComboBoxItem Content="14" Tag="14"/>
-                        <ComboBoxItem Content="16" Tag="16"/>
-                        <ComboBoxItem Content="18" Tag="18"/>
-                        <ComboBoxItem Content="20" Tag="20"/>
-                        <ComboBoxItem Content="24" Tag="24"/>
-                    </ComboBox>
-                </StackPanel>
-                
-                <!-- 文字颜色 -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,8" VerticalAlignment="Center">
-                    <TextBlock Text="文字颜色：" FontSize="14" Foreground="#636E72" Width="60"/>
-                    <Button x:Name="TextColorButton" Width="100" Height="30" Background="#000000" Click="TextColorButton_Click"/>
-                </StackPanel>
-                
-                <!-- 文字背景色 -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,8" VerticalAlignment="Center">
-                    <TextBlock Text="背景颜色：" FontSize="14" Foreground="#636E72" Width="60"/>
-                    <Button x:Name="BackgroundColorButton" Width="100" Height="30" Background="#FFFFFF" Click="BackgroundColorButton_Click"/>
-                </StackPanel>
-                
-                <!-- 下划线 -->
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="下划线：" FontSize="14" Foreground="#636E72" Width="60"/>
-                    <CheckBox x:Name="UnderlineCheckBox" Width="100" Height="30"/>
-                </StackPanel>
-            </StackPanel>
-            
-            <!-- 时间计划 -->
-            <StackPanel Grid.Row="7" Margin="0,0,0,15">
-                <TextBlock Text="时间计划：" FontSize="14" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,8"/>
-                
-                <!-- 总天数 -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,8" VerticalAlignment="Center">
-                    <TextBlock Text="总天数：" FontSize="14" Foreground="#636E72" Width="60"/>
-                    <TextBox x:Name="TotalDaysTextBox" Width="100" Height="30" Text="1" InputMethod.IsInputMethodEnabled="False"/>
-                </StackPanel>
-            </StackPanel>
-            
-            <!-- 任务类型 -->
-            <StackPanel Grid.Row="8" Orientation="Horizontal" Margin="0,0,0,15" VerticalAlignment="Center">
-                <TextBlock Text="任务类型：" FontSize="14" Foreground="#636E72" Width="80"/>
-                <ComboBox x:Name="TaskTypeComboBox" SelectedIndex="0" Width="120" Height="30" SelectionChanged="TaskTypeComboBox_SelectionChanged">
-                    <ComboBoxItem Content="临时任务"/>
-                    <ComboBoxItem Content="项目任务"/>
-                </ComboBox>
-            </StackPanel>
-            
-            <!-- 子任务 -->
-            <Grid Grid.Row="9" Margin="0,0,0,15">
+            <!-- 章节和子任务 -->
+            <Grid Grid.Row="3" Grid.RowSpan="2" Margin="0,0,0,15">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
@@ -164,18 +79,22 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="子任务：" FontSize="14" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,8"/>
-                <Button Grid.Row="0" Grid.Column="1" Content="+ 添加子任务" Width="100" Height="25"
-                        Background="#A29BFE" Foreground="White" BorderThickness="0"
-                        Click="AddSubTaskButton_Click" FontSize="12"/>
+                <!-- 章节标题和控制按钮 -->
+                <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="章节：" FontSize="14" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,10,0"/>
+                    <Button x:Name="AddChapterButton" Content="+ 添加章节" Width="100" Height="25"
+                            Background="#6C5CE7" Foreground="White" BorderThickness="0"
+                            Click="AddChapterButton_Click" FontSize="12"/>
+                </StackPanel>
                 
+                <!-- 章节列表 -->
                 <ScrollViewer Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0">
-                    <StackPanel x:Name="SubTasksPanel"/>
+                    <StackPanel x:Name="ChaptersPanel"/>
                 </ScrollViewer>
             </Grid>
             
             <!-- 按钮 -->
-            <StackPanel Grid.Row="10" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+            <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                 <Button x:Name="SaveButton" Content="保存" Width="80" Height="35" Background="#6C5CE7" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="SaveButton_Click"/>
                 <Button x:Name="DeleteButton" Content="删除" Width="80" Height="35" Background="#FF7675" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="DeleteButton_Click"/>
                 <Button x:Name="CancelButton" Content="取消" Width="80" Height="35" Background="#BDC3C7" Foreground="#2D3436" BorderThickness="0" Click="CancelButton_Click"/>

@@ -17,342 +17,315 @@ namespace DiaryApp
             TaskEntry = taskEntry;
             LoadTaskData();
             
-            // 添加颜色按钮点击事件
-            TextColorButton.Click += TextColorButton_Click;
-            BackgroundColorButton.Click += BackgroundColorButton_Click;
+            // 添加标题文本框事件处理
+            TitleTextBox.GotFocus += TitleTextBox_GotFocus;
+            TitleTextBox.LostFocus += TitleTextBox_LostFocus;
+            
+            // 初始化提示文字
+            InitializeTitlePlaceholder();
         }
 
         private void LoadTaskData()
     {
         // 防止初始化时控件尚未完全初始化导致的空引用异常
-        if (TitleTextBox == null || ContentTextBox == null || PriorityComboBox == null || LevelComboBox == null || 
-            StatusComboBox == null || CompletedDatePicker == null || TaskTypeComboBox == null || SubTasksPanel == null ||
-            FontSizeComboBox == null || TextColorButton == null || BackgroundColorButton == null || UnderlineCheckBox == null ||
-            TotalDaysTextBox == null)
+        if (TitleTextBox == null || PriorityComboBox == null || 
+            StatusComboBox == null || CompletedDatePicker == null || ChaptersPanel == null)
         {
             return;
         }
         
         if (TaskEntry != null)
         {
-            TitleTextBox.Text = TaskEntry.Title;
-            ContentTextBox.Text = TaskEntry.Content;
+            if (!string.IsNullOrEmpty(TaskEntry.Title))
+            {
+                TitleTextBox.Text = TaskEntry.Title;
+                TitleTextBox.Foreground = Brushes.Black;
+            }
+            else
+            {
+                InitializeTitlePlaceholder();
+            }
             PriorityComboBox.SelectedIndex = TaskEntry.Priority - 1;
-            LevelComboBox.SelectedIndex = TaskEntry.Level - 1;
             StatusComboBox.SelectedIndex = (int)TaskEntry.Status;
             CompletedDatePicker.SelectedDate = TaskEntry.CompletedAt;
-            TaskTypeComboBox.SelectedIndex = TaskEntry.SubTasks.Count > 0 ? 1 : 0;
-            
-            // 加载文本样式属性
-            FontSizeComboBox.SelectedValuePath = "Tag";
-            FontSizeComboBox.SelectedValue = TaskEntry.FontSize;
-            
-            // 加载文字颜色（添加错误处理）
-            try
-            {
-                TextColorButton.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(TaskEntry.TextColor));
-            }
-            catch (Exception)
-            {
-                TextColorButton.Background = new SolidColorBrush(Colors.Black); // 默认黑色
-            }
-            
-            // 加载背景颜色（添加错误处理）
-            try
-            {
-                BackgroundColorButton.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(TaskEntry.BackgroundColor));
-            }
-            catch (Exception)
-            {
-                BackgroundColorButton.Background = new SolidColorBrush(Colors.White); // 默认白色
-            }
-            
-            UnderlineCheckBox.IsChecked = TaskEntry.IsUnderline;
-            
-            // 加载时间计划属性
-            TotalDaysTextBox.Text = TaskEntry.TotalDays.ToString();
+            // 使用新的章节结构，不再依赖任务类型
 
-                // 加载子任务
-                SubTasksPanel.Children.Clear();
-                foreach (var subTask in TaskEntry.SubTasks)
+                // 加载章节
+                ChaptersPanel.Children.Clear();
+                foreach (var chapter in TaskEntry.Chapters)
                 {
-                    AddSubTaskToPanel(subTask);
+                    AddChapterToPanel(chapter);
                 }
             }
             else
             {
                 // 默认值
                 TitleTextBox.Text = "";
-                ContentTextBox.Text = "";
                 PriorityComboBox.SelectedIndex = 1;
-                LevelComboBox.SelectedIndex = 0;
                 StatusComboBox.SelectedIndex = 0;
                 CompletedDatePicker.SelectedDate = null;
-                TaskTypeComboBox.SelectedIndex = 0;
 
-                // 根据任务类型决定是否添加子任务
-                SubTasksPanel.Children.Clear();
-                if (TaskTypeComboBox.SelectedIndex == 1) // 项目任务
-                {
-                    AddDefaultSubTask();
-                }
+                // 默认添加第一章
+                ChaptersPanel.Children.Clear();
+                AddDefaultChapter();
             }
 
             TitleTextBox.Focus();
         }
 
-        private void AddSubTaskButton_Click(object sender, RoutedEventArgs e)
+        private void InitializeTitlePlaceholder()
         {
-            var subTask = new SubTask
+            if (string.IsNullOrEmpty(TitleTextBox.Text))
             {
-                Id = Guid.NewGuid().ToString(),
-                Title = "新子任务",
-                IsCompleted = false,
-                CreatedAt = DateTime.Now
-            };
-            AddSubTaskToPanel(subTask);
-        }
-
-        private void AddDefaultSubTask()
-        {
-            var subTask = new SubTask
-            {
-                Id = Guid.NewGuid().ToString(),
-                Title = "子任务1",
-                IsCompleted = false,
-                CreatedAt = DateTime.Now
-            };
-            AddSubTaskToPanel(subTask);
-        }
-
-        private void TaskTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            // 防止初始化时SubTasksPanel尚未完全初始化导致的空引用异常
-            if (SubTasksPanel == null)
-                return;
-                
-            if (TaskTypeComboBox.SelectedIndex == 1) // 切换到项目任务
-            {
-                if (SubTasksPanel.Children.Count == 0)
-                {
-                    AddDefaultSubTask();
-                }
-            }
-            else if (TaskTypeComboBox.SelectedIndex == 0) // 切换到临时任务
-            {
-                // 清空子任务
-                SubTasksPanel.Children.Clear();
+                TitleTextBox.Text = TitleTextBox.Tag?.ToString() ?? "";
+                TitleTextBox.Foreground = Brushes.Gray;
             }
         }
 
-        // 预定义颜色列表
-        private readonly List<string> _predefinedColors = new List<string>
+        private void TitleTextBox_GotFocus(object sender, RoutedEventArgs e)
         {
-            "#000000", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF",
-            "#FFFF00", "#FF00FF", "#00FFFF", "#800000", "#008000",
-            "#000080", "#808000", "#800080", "#008080", "#C0C0C0",
-            "#FFA500", "#FFC0CB", "#808080", "#A52A2A", "#FFE4C4"
-        };
-        private Button? _currentColorButton = null; // 记录当前点击的颜色按钮
-
-        // 文字颜色按钮点击事件
-        private void TextColorButton_Click(object sender, RoutedEventArgs e)
-        {
-            _currentColorButton = (Button)sender;
-            ShowColorPalette();
-        }
-
-        // 文字背景色按钮点击事件
-        private void BackgroundColorButton_Click(object sender, RoutedEventArgs e)
-        {
-            _currentColorButton = (Button)sender;
-            ShowColorPalette();
-        }
-
-        // 显示颜色调色板
-        private void ShowColorPalette()
-        {
-            // 创建或更新颜色调色板
-            ColorPalette.Children.Clear();
-            foreach (var colorHex in _predefinedColors)
+            if (TitleTextBox.Text == TitleTextBox.Tag?.ToString())
             {
-                var colorBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colorHex));
-                var colorButton = new Button
+                TitleTextBox.Text = "";
+                TitleTextBox.Foreground = Brushes.Black;
+            }
+        }
+
+        private void TitleTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TitleTextBox.Text))
+            {
+                TitleTextBox.Text = TitleTextBox.Tag?.ToString() ?? "";
+                TitleTextBox.Foreground = Brushes.Gray;
+            }
+        }
+
+        private void AddChapterButton_Click(object sender, RoutedEventArgs e)
+        {
+            var chapter = new TaskChapter
+            {
+                Id = Guid.NewGuid().ToString(),
+                Title = $"第{ChaptersPanel.Children.Count + 1}章",
+                Content = "",
+                CreatedAt = DateTime.Now,
+                OrderIndex = ChaptersPanel.Children.Count
+            };
+            AddChapterToPanel(chapter);
+        }
+
+        private void AddDefaultChapter()
+        {
+            var chapter = new TaskChapter
+            {
+                Id = Guid.NewGuid().ToString(),
+                Title = "第一章",
+                Content = "",
+                CreatedAt = DateTime.Now,
+                OrderIndex = 0
+            };
+            AddChapterToPanel(chapter);
+        }
+
+
+
+
+
+
+
+        private void AddChapterToPanel(TaskChapter chapter)
+        {
+            var chapterPanel = new StackPanel
+            {
+                Orientation = Orientation.Vertical,
+                Margin = new Thickness(0, 0, 0, 20)
+            };
+
+            // 章节标题栏
+            var chapterHeaderPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+
+            var chapterTitleTextBox = new TextBox
+            {
+                Text = chapter.Title,
+                Width = 200,
+                FontSize = 16,
+                FontWeight = FontWeights.Bold,
+                BorderThickness = new Thickness(1),
+                BorderBrush = Brushes.Gray,
+                Background = Brushes.LightYellow,
+                Padding = new Thickness(8)
+            };
+
+            var addSubTaskButton = new Button
+            {
+                Content = "+ 添加子任务",
+                Width = 100,
+                Height = 30,
+                Background = Brushes.LightBlue,
+                Foreground = Brushes.Black,
+                BorderThickness = new Thickness(1),
+                Margin = new Thickness(10, 0, 0, 0),
+                FontSize = 12
+            };
+
+            addSubTaskButton.Click += (sender, e) =>
+            {
+                var subTask = new SubTask
                 {
-                    Width = 30,
-                    Height = 30,
-                    Background = colorBrush,
-                    Margin = new Thickness(5),
-                    Tag = colorHex
+                    Id = Guid.NewGuid().ToString(),
+                    Title = "新子任务",
+                    IsCompleted = false,
+                    CreatedAt = DateTime.Now,
+                    ScheduledTime = DateTime.Now,
+                    Content = "",
+                    Notes = ""
                 };
-                colorButton.Click += ColorButton_Click;
-                ColorPalette.Children.Add(colorButton);
+                AddSubTaskToChapterPanel(subTask, chapterPanel);
+            };
+
+            chapterHeaderPanel.Children.Add(chapterTitleTextBox);
+            chapterHeaderPanel.Children.Add(addSubTaskButton);
+
+            // 章节内容
+            var chapterContentTextBox = new TextBox
+            {
+                Text = chapter.Content,
+                AcceptsReturn = true,
+                TextWrapping = TextWrapping.Wrap,
+                Height = 80,
+                FontSize = 14,
+                BorderThickness = new Thickness(1),
+                BorderBrush = Brushes.LightGray,
+                Background = Brushes.White,
+                Padding = new Thickness(10),
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+
+            // 子任务列表
+            var subTasksPanel = new StackPanel
+            {
+                Margin = new Thickness(20, 0, 0, 0)
+            };
+
+            // 加载现有子任务
+            foreach (var subTask in chapter.SubTasks)
+            {
+                AddSubTaskToChapterPanel(subTask, subTasksPanel);
             }
-            ColorPickerGrid.Visibility = Visibility.Visible;
+
+            chapterPanel.Children.Add(chapterHeaderPanel);
+            chapterPanel.Children.Add(chapterContentTextBox);
+            chapterPanel.Children.Add(subTasksPanel);
+
+            // 添加到章节列表
+            ChaptersPanel.Children.Add(chapterPanel);
         }
 
-        // 颜色按钮点击事件
-        private void ColorButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_currentColorButton == null) return;
-            
-            var colorButton = (Button)sender;
-            var colorHex = colorButton.Tag.ToString();
-            var colorBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colorHex));
-            _currentColorButton.Background = colorBrush;
-            ColorPickerGrid.Visibility = Visibility.Collapsed;
-        }
-
-        private void AddSubTaskToPanel(SubTask subTask)
+        private void AddSubTaskToChapterPanel(SubTask subTask, Panel parentPanel)
         {
             var subTaskPanel = new StackPanel
             {
-                Orientation = Orientation.Vertical
+                Orientation = Orientation.Vertical,
+                Margin = new Thickness(0, 0, 0, 15)
             };
 
-            // 创建带边框的容器
-            var border = new Border
+            var subTaskBorder = new Border
             {
+                Background = Brushes.LightGray,
+                Padding = new Thickness(10),
                 BorderThickness = new Thickness(1),
-                BorderBrush = Brushes.LightGray,
-                Padding = new Thickness(5),
-                Margin = new Thickness(0, 0, 0, 10),
+                BorderBrush = Brushes.DarkGray,
                 Child = subTaskPanel
             };
 
-            // 子任务基本信息
-            var basicInfoPanel = new StackPanel
+            // 第一行：时间和名称
+            var firstRowPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 0, 0, 5)
+                Margin = new Thickness(0, 0, 0, 8)
             };
 
-            var checkBox = new CheckBox
+            var timePicker = new DatePicker
             {
-                IsChecked = subTask.IsCompleted,
-                Margin = new Thickness(0, 0, 8, 0),
-                VerticalAlignment = VerticalAlignment.Center
+                SelectedDate = subTask.ScheduledTime,
+                Width = 120,
+                FontSize = 12,
+                Margin = new Thickness(0, 0, 10, 0)
             };
 
-            var textBox = new TextBox
+            var nameTextBox = new TextBox
             {
                 Text = subTask.Title,
-                Width = 250,
+                Width = 200,
+                FontSize = 14,
                 BorderThickness = new Thickness(1),
-                BorderBrush = Brushes.LightGray,
-                Background = Brushes.White,
                 Padding = new Thickness(5)
             };
 
-            basicInfoPanel.Children.Add(checkBox);
-            basicInfoPanel.Children.Add(textBox);
-
-            // 子任务时间计划
-            var timePlanPanel = new StackPanel
+            var completedCheckBox = new CheckBox
             {
-                Orientation = Orientation.Horizontal,
-                Margin = new Thickness(25, 0, 0, 0),
-                HorizontalAlignment = HorizontalAlignment.Left
-            };
-
-            // 持续天数
-            var durationPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 0, 10, 0),
+                IsChecked = subTask.IsCompleted,
+                Margin = new Thickness(10, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center
             };
 
-            var durationLabel = new TextBlock
+            firstRowPanel.Children.Add(timePicker);
+            firstRowPanel.Children.Add(nameTextBox);
+            firstRowPanel.Children.Add(completedCheckBox);
+
+            // 第二行：子任务内容
+            var contentTextBox = new TextBox
             {
-                Text = "天数：",
+                Text = subTask.Content,
+                AcceptsReturn = true,
+                TextWrapping = TextWrapping.Wrap,
+                Height = 60,
                 FontSize = 12,
-                Foreground = Brushes.Gray,
-                Margin = new Thickness(0, 0, 5, 0),
-                VerticalAlignment = VerticalAlignment.Center
+                BorderThickness = new Thickness(1),
+                BorderBrush = Brushes.Gray,
+                Background = Brushes.White,
+                Padding = new Thickness(8),
+                Margin = new Thickness(0, 0, 0, 8)
             };
 
-            var durationTextBox = new TextBox
+            // 第三行：章节文本内容
+            var chapterContentTextBox = new TextBox
             {
-                Text = subTask.DurationDays.ToString(),
-                Width = 40,
+                Text = "章节文本内容",
+                AcceptsReturn = true,
+                TextWrapping = TextWrapping.Wrap,
+                Height = 40,
                 FontSize = 12,
                 BorderThickness = new Thickness(1),
                 BorderBrush = Brushes.LightGray,
-                Background = Brushes.White,
-                Padding = new Thickness(5),
-                ToolTip = "子任务持续天数"
+                Background = Brushes.WhiteSmoke,
+                Padding = new Thickness(8),
+                Margin = new Thickness(0, 0, 0, 8)
             };
 
-            durationPanel.Children.Add(durationLabel);
-            durationPanel.Children.Add(durationTextBox);
-
-            // 开始日期
-            var startDatePanel = new StackPanel
+            // 第四行：注意事项备注
+            var notesTextBox = new TextBox
             {
-                Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 0, 10, 0),
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            var startDateLabel = new TextBlock
-            {
-                Text = "开始：",
+                Text = subTask.Notes,
+                AcceptsReturn = true,
+                TextWrapping = TextWrapping.Wrap,
+                Height = 40,
                 FontSize = 12,
-                Foreground = Brushes.Gray,
-                Margin = new Thickness(0, 0, 5, 0),
-                VerticalAlignment = VerticalAlignment.Center
+                BorderThickness = new Thickness(1),
+                BorderBrush = Brushes.Orange,
+                Background = Brushes.LightYellow,
+                Padding = new Thickness(8)
             };
 
-            var startDatePicker = new DatePicker
-            {
-                SelectedDate = subTask.StartDate,
-                Width = 100,
-                FontSize = 12,
-                ToolTip = "子任务开始日期"
-            };
+            subTaskPanel.Children.Add(firstRowPanel);
+            subTaskPanel.Children.Add(contentTextBox);
+            subTaskPanel.Children.Add(chapterContentTextBox);
+            subTaskPanel.Children.Add(notesTextBox);
 
-            startDatePanel.Children.Add(startDateLabel);
-            startDatePanel.Children.Add(startDatePicker);
-
-            // 结束日期
-            var endDatePanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            var endDateLabel = new TextBlock
-            {
-                Text = "结束：",
-                FontSize = 12,
-                Foreground = Brushes.Gray,
-                Margin = new Thickness(0, 0, 5, 0),
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            var endDatePicker = new DatePicker
-            {
-                SelectedDate = subTask.EndDate,
-                Width = 100,
-                FontSize = 12,
-                ToolTip = "子任务结束日期"
-            };
-
-            endDatePanel.Children.Add(endDateLabel);
-            endDatePanel.Children.Add(endDatePicker);
-
-            // 将所有控件添加到时间计划面板
-            timePlanPanel.Children.Add(durationPanel);
-            timePlanPanel.Children.Add(startDatePanel);
-            timePlanPanel.Children.Add(endDatePanel);
-
-            // 将基本信息和时间计划面板添加到子任务面板
-            subTaskPanel.Children.Add(basicInfoPanel);
-            subTaskPanel.Children.Add(timePlanPanel);
-
-            // 添加到子任务列表
-            SubTasksPanel.Children.Add(border);
+            parentPanel.Children.Add(subTaskBorder);
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -363,136 +336,81 @@ namespace DiaryApp
                 return;
             }
 
-            // 收集子任务
-            var subTasks = new List<SubTask>();
-            foreach (var child in SubTasksPanel.Children)
+            // 收集章节数据
+            var chapters = new List<TaskChapter>();
+            foreach (var chapterChild in ChaptersPanel.Children)
             {
-                // 处理Border控件的情况
-                StackPanel subTaskPanel = null;
-                if (child is Border border)
+                if (chapterChild is StackPanel chapterPanel)
                 {
-                    subTaskPanel = border.Child as StackPanel;
-                }
-                else if (child is StackPanel panel)
-                {
-                    subTaskPanel = panel;
-                }
-
-                if (subTaskPanel == null) continue;
-                if (subTaskPanel.Children.Count >= 2)
-                {
-                    // 获取基本信息面板
-                    if (subTaskPanel.Children[0] is StackPanel basicInfoPanel)
+                    var chapter = new TaskChapter
                     {
-                        if (basicInfoPanel.Children[0] is CheckBox checkBox && basicInfoPanel.Children[1] is TextBox textBox)
+                        Id = Guid.NewGuid().ToString(),
+                        SubTasks = new List<SubTask>()
+                    };
+
+                    // 获取章节标题
+                    if (chapterPanel.Children[0] is StackPanel chapterHeaderPanel)
+                    {
+                        if (chapterHeaderPanel.Children[0] is TextBox chapterTitleTextBox)
                         {
-                            if (!string.IsNullOrWhiteSpace(textBox.Text))
+                            chapter.Title = chapterTitleTextBox.Text;
+                        }
+                    }
+
+                    // 获取章节内容
+                    if (chapterPanel.Children[1] is TextBox chapterContentTextBox)
+                    {
+                        chapter.Content = chapterContentTextBox.Text;
+                    }
+
+                    // 获取子任务
+                    if (chapterPanel.Children[2] is StackPanel subTasksPanel)
+                    {
+                        foreach (var subTaskChild in subTasksPanel.Children)
+                        {
+                            if (subTaskChild is StackPanel subTaskPanel)
                             {
-                                // 获取时间计划面板
-                                if (subTaskPanel.Children[1] is StackPanel timePlanPanel)
+                                var subTask = new SubTask
                                 {
-                                    // 提取持续天数
-                                    int durationDays = 1;
-                                    if (timePlanPanel.Children[0] is StackPanel durationPanel)
-                                    {
-                                        if (durationPanel.Children[1] is TextBox durationTextBox)
-                                        {
-                                            int.TryParse(durationTextBox.Text, out durationDays);
-                                            if (durationDays < 1)
-                                            {
-                                                durationDays = 1;
-                                            }
-                                        }
-                                    }
+                                    Id = Guid.NewGuid().ToString()
+                                };
 
-                                    // 提取开始日期
-                                    DateTime startDate = DateTime.Now;
-                                    if (timePlanPanel.Children[1] is StackPanel startDatePanel)
-                                    {
-                                        if (startDatePanel.Children[1] is DatePicker startDatePicker)
-                                        {
-                                            if (startDatePicker.SelectedDate.HasValue)
-                                            {
-                                                startDate = startDatePicker.SelectedDate.Value;
-                                            }
-                                        }
-                                    }
-
-                                    // 提取结束日期
-                                    DateTime endDate = startDate.AddDays(durationDays - 1);
-                                    if (timePlanPanel.Children[2] is StackPanel endDatePanel)
-                                    {
-                                        if (endDatePanel.Children[1] is DatePicker endDatePicker)
-                                        {
-                                            if (endDatePicker.SelectedDate.HasValue)
-                                            {
-                                                endDate = endDatePicker.SelectedDate.Value;
-                                            }
-                                        }
-                                    }
-
-                                    subTasks.Add(new SubTask
-                                    {
-                                        Id = Guid.NewGuid().ToString(),
-                                        Title = textBox.Text,
-                                        IsCompleted = checkBox.IsChecked ?? false,
-                                        CreatedAt = DateTime.Now,
-                                        DurationDays = durationDays,
-                                        StartDate = startDate,
-                                        EndDate = endDate
-                                    });
-                                }
-                                else
+                                // 解析子任务面板
+                                if (subTaskPanel.Children[0] is StackPanel firstRowPanel)
                                 {
-                                    // 兼容没有时间计划的旧格式
-                                    subTasks.Add(new SubTask
+                                    if (firstRowPanel.Children[0] is DatePicker timePicker)
                                     {
-                                        Id = Guid.NewGuid().ToString(),
-                                        Title = textBox.Text,
-                                        IsCompleted = checkBox.IsChecked ?? false,
-                                        CreatedAt = DateTime.Now,
-                                        DurationDays = 1,
-                                        StartDate = DateTime.Now,
-                                        EndDate = DateTime.Now
-                                    });
+                                        subTask.ScheduledTime = timePicker.SelectedDate;
+                                    }
+                                    if (firstRowPanel.Children[1] is TextBox nameTextBox)
+                                    {
+                                        subTask.Title = nameTextBox.Text;
+                                    }
+                                    if (firstRowPanel.Children[2] is CheckBox completedCheckBox)
+                                    {
+                                        subTask.IsCompleted = completedCheckBox.IsChecked ?? false;
+                                    }
                                 }
+
+                                if (subTaskPanel.Children[1] is TextBox contentTextBox)
+                                {
+                                    subTask.Content = contentTextBox.Text;
+                                }
+
+                                if (subTaskPanel.Children[3] is TextBox notesTextBox)
+                                {
+                                    subTask.Notes = notesTextBox.Text;
+                                }
+
+                                subTask.CreatedAt = DateTime.Now;
+                                chapter.SubTasks.Add(subTask);
                             }
                         }
                     }
-                }
-            }
 
-            // 保存文本样式属性
-            double fontSize = 14;
-            if (FontSizeComboBox.SelectedValue != null)
-            {
-                fontSize = Convert.ToDouble(FontSizeComboBox.SelectedValue);
-            }
-
-            string textColor = "#000000";
-            if (TextColorButton.Background is SolidColorBrush textColorBrush)
-            {
-                // 转换为简单的十六进制格式 (#RRGGBB)
-                Color color = textColorBrush.Color;
-                textColor = string.Format("#{0:X2}{1:X2}{2:X2}", color.R, color.G, color.B);
-            }
-
-            string backgroundColor = "#FFFFFF";
-            if (BackgroundColorButton.Background is SolidColorBrush backgroundColorBrush)
-            {
-                // 转换为简单的十六进制格式 (#RRGGBB)
-                Color color = backgroundColorBrush.Color;
-                backgroundColor = string.Format("#{0:X2}{1:X2}{2:X2}", color.R, color.G, color.B);
-            }
-
-            // 保存时间计划属性
-            int totalDays = 1;
-            if (!string.IsNullOrWhiteSpace(TotalDaysTextBox.Text))
-            {
-                int.TryParse(TotalDaysTextBox.Text, out totalDays);
-                if (totalDays < 1)
-                {
-                    totalDays = 1;
+                    chapter.CreatedAt = DateTime.Now;
+                    chapter.OrderIndex = chapters.Count;
+                    chapters.Add(chapter);
                 }
             }
 
@@ -503,47 +421,21 @@ namespace DiaryApp
                 {
                     Id = Guid.NewGuid().ToString(),
                     Title = TitleTextBox.Text,
-                    Content = ContentTextBox.Text,
                     Priority = PriorityComboBox.SelectedIndex + 1,
-                    Level = LevelComboBox.SelectedIndex + 1,
                     Status = (TaskStatus)StatusComboBox.SelectedIndex,
                     CompletedAt = CompletedDatePicker.SelectedDate,
-                    SubTasks = subTasks,
-                    CreatedAt = DateTime.Now,
-                    
-                    // 文本样式属性
-                    FontSize = fontSize,
-                    TextColor = textColor,
-                    BackgroundColor = backgroundColor,
-                    IsUnderline = UnderlineCheckBox.IsChecked ?? false,
-                    
-                    // 时间计划属性
-                    TotalDays = totalDays,
-                    StartDate = DateTime.Now,
-                    EndDate = DateTime.Now.AddDays(totalDays - 1)
+                    Chapters = chapters,
+                    CreatedAt = DateTime.Now
                 };
             }
             else
             {
                 // 更新现有任务
                 TaskEntry.Title = TitleTextBox.Text;
-                TaskEntry.Content = ContentTextBox.Text;
                 TaskEntry.Priority = PriorityComboBox.SelectedIndex + 1;
-                TaskEntry.Level = LevelComboBox.SelectedIndex + 1;
                 TaskEntry.Status = (TaskStatus)StatusComboBox.SelectedIndex;
                 TaskEntry.CompletedAt = CompletedDatePicker.SelectedDate;
-                TaskEntry.SubTasks = subTasks;
-                
-                // 文本样式属性
-                TaskEntry.FontSize = fontSize;
-                TaskEntry.TextColor = textColor;
-                TaskEntry.BackgroundColor = backgroundColor;
-                TaskEntry.IsUnderline = UnderlineCheckBox.IsChecked ?? false;
-                
-                // 时间计划属性
-                TaskEntry.TotalDays = totalDays;
-                TaskEntry.StartDate = DateTime.Now;
-                TaskEntry.EndDate = DateTime.Now.AddDays(totalDays - 1);
+                TaskEntry.Chapters = chapters;
             }
 
             DialogResult = true;
