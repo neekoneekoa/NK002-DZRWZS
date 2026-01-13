@@ -123,6 +123,7 @@
                 <TextBlock x:Name="DateLabel" Text="" FontSize="14" Foreground="#636E72" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Content="⚙" Style="{StaticResource WindowControlButtonStyle}" Click="SettingsButton_Click" Foreground="#0984E3" FontSize="14" ToolTip="设置"/>
+                    <Button Content="🔙" Style="{StaticResource WindowControlButtonStyle}" Click="BackgroundButton_Click" Foreground="#20B2AA" FontSize="14" ToolTip="后台运行"/>
                     <Button Content="—" Style="{StaticResource WindowControlButtonStyle}" Click="MinimizeButton_Click" Foreground="#2D3436" FontSize="18" ToolTip="最小化"/>
                     <Button Content="□" Style="{StaticResource WindowControlButtonStyle}" Click="MaximizeButton_Click" Foreground="#2D3436" FontSize="14" ToolTip="全屏"/>
                     <Button Content="✕" Style="{StaticResource WindowControlButtonStyle}" Click="CloseButton_Click" Foreground="#D63031" FontSize="16" ToolTip="关闭"/>
@@ -737,7 +738,7 @@
                                                    Foreground="#2D3436" Margin="0,0,10,0"/>
                                         <TextBox x:Name="PersonalNameTextBox" Grid.Column="1" BorderThickness="0" 
                                                  Background="Transparent" FontSize="14" Padding="5,2"
-                                                 TextChanged="PersonalNameTextBox_TextChanged"/>
+                                                 TextChanged="PersonalNameTextBox_TextChanged" IsEnabled="False"/>
                                     </Grid>
                                 </Border>
 
@@ -752,7 +753,7 @@
                                                    Foreground="#2D3436" Margin="0,0,10,0"/>
                                         <TextBox x:Name="PersonalPhoneTextBox" Grid.Column="1" BorderThickness="0" 
                                                  Background="Transparent" FontSize="14" Padding="5,2"
-                                                 TextChanged="PersonalPhoneTextBox_TextChanged"/>
+                                                 TextChanged="PersonalPhoneTextBox_TextChanged" IsEnabled="False"/>
                                     </Grid>
                                 </Border>
 
@@ -767,7 +768,7 @@
                                                    Foreground="#2D3436" Margin="0,0,10,0"/>
                                         <DatePicker x:Name="PersonalBirthdayPicker" Grid.Column="1" BorderThickness="0" 
                                                     Background="Transparent" FontSize="14"
-                                                    SelectedDateChanged="PersonalBirthdayPicker_SelectedDateChanged"/>
+                                                    SelectedDateChanged="PersonalBirthdayPicker_SelectedDateChanged" IsEnabled="False"/>
                                     </Grid>
                                 </Border>
 
@@ -782,15 +783,21 @@
                                                    Foreground="#2D3436" Margin="0,0,10,0"/>
                                         <TextBox x:Name="PersonalSavingsTextBox" Grid.Column="1" BorderThickness="0" 
                                                  Background="Transparent" FontSize="14" Padding="5,2"
-                                                 TextChanged="PersonalSavingsTextBox_TextChanged"/>
+                                                 TextChanged="PersonalSavingsTextBox_TextChanged" IsEnabled="False"/>
                                     </Grid>
                                 </Border>
 
-                                <!-- 保存按钮 -->
-                                <Button Grid.Row="6" Content="💾 保存个人信息" Height="45" 
-                                        Background="#00B894" Foreground="White" BorderThickness="0"
-                                        FontSize="16" FontWeight="Bold" Margin="0,10,0,0"
-                                        Click="SavePersonalInfoButton_Click"/>
+                                <!-- 修改/保存按钮 -->
+                                <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                                    <Button x:Name="EditPersonalInfoButton" Content="✏️ 修改个人信息" Height="45" 
+                                            Background="#FFB74D" Foreground="White" BorderThickness="0"
+                                            FontSize="16" FontWeight="Bold" Margin="0,0,10,0"
+                                            Click="EditPersonalInfoButton_Click"/>
+                                    <Button x:Name="SavePersonalInfoButton" Content="💾 保存个人信息" Height="45" 
+                                            Background="#00B894" Foreground="White" BorderThickness="0"
+                                            FontSize="16" FontWeight="Bold"
+                                            Click="SavePersonalInfoButton_Click" IsEnabled="False"/>
+                                </StackPanel>
 
                                 <!-- 最后更新时间 -->
                                 <TextBlock x:Name="PersonalLastUpdatedText" Grid.Row="7" 

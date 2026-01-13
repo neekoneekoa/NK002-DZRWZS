@@ -101,6 +101,20 @@ public enum TaskStatus
         };
     }
 
+    // ===== 参数数据模型 =====
+    public class DiaryParam
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Name { get; set; } = "";
+        public string Value { get; set; } = "";
+        public string Unit { get; set; } = "";
+        
+        public override string ToString()
+        {
+            return string.IsNullOrEmpty(Unit) ? $"{Name}: {Value}" : $"{Name}: {Value}{Unit}";
+        }
+    }
+
     // ===== 日记数据模型 =====
     public class DiaryEntry
     {
@@ -109,6 +123,7 @@ public enum TaskStatus
         public string Content { get; set; } = "";
         public List<string> Photos { get; set; } = new List<string>();
         public List<string> Tags { get; set; } = new List<string>();
+        public List<DiaryParam> Parameters { get; set; } = new List<DiaryParam>();
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DiaryPeriodType PeriodType { get; set; } = DiaryPeriodType.Daily;
         
@@ -203,6 +218,15 @@ public enum TaskStatus
         public DateTime LastCheckIn { get; set; }
     }
 
+    // ===== 提醒数据模型 =====
+    public class ReminderSetting
+    {
+        public bool IsEnabled { get; set; } = false;
+        public TimeSpan ReminderTime { get; set; } = new TimeSpan(20, 0, 0); // 默认晚上8点
+        public string ReminderMessage { get; set; } = "该写日记了哦！";
+        public bool IsMinimizedToTray { get; set; } = true; // 是否最小化到系统托盘
+    }
+
     // ===== 应用统一数据模型 =====
     public class AppData
     {
@@ -211,7 +235,8 @@ public enum TaskStatus
         public List<TimeRecordEntry> TimeRecords { get; set; } = new List<TimeRecordEntry>();
         public List<CheckInEntry> CheckIns { get; set; } = new List<CheckInEntry>();
         public PersonalInfo PersonalInfo { get; set; } = new PersonalInfo();
+        public ReminderSetting ReminderSetting { get; set; } = new ReminderSetting();
         public DateTime LastSaved { get; set; } = DateTime.Now;
-        public string Version { get; set; } = "1.0";
+        public string Version { get; set; } = "0.2.0";
     }
 }

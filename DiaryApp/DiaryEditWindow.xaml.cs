@@ -19,34 +19,45 @@ namespace DiaryApp
         private readonly string _originalTitle = "输入日记标题...";
         private readonly string _originalContent = "";
         private readonly string _originalTagsPlaceholder = "输入标签后按回车添加";
+        private readonly string _originalParamNamePlaceholder = "参数名";
+        private readonly string _originalParamValuePlaceholder = "值";
+        private readonly string _originalParamUnitPlaceholder = "单位";
         private readonly List<string> _photoPaths = new();
         private readonly List<string> _tags = new();
+        private readonly List<DiaryParam> _parameters = new();
         private SolidColorBrush _currentTextColor = Brushes.Black;
         private SolidColorBrush _currentBackgroundColor = Brushes.Transparent;
         private double _currentFontSize = 16;
         private bool _isUnderline = false;
+        private readonly PersonalInfo _personalInfo;
+        private readonly HashSet<string> _boundParamNames = new HashSet<string> { "金钱", "savings", "Savings" }; // 绑定参数名集合
+        private readonly Dictionary<string, decimal> _originalParamValues = new Dictionary<string, decimal>(); // 存储原始参数值，用于计算差值
 
         public DiaryEntry? ResultEntry { get; private set; }
         public bool IsSaved { get; private set; }
 
-        public DiaryEditWindow(bool isNewEntry = true)
+        public DiaryEditWindow(PersonalInfo personalInfo, bool isNewEntry = true)
         {
             InitializeComponent();
             _isNewEntry = isNewEntry;
+            _personalInfo = personalInfo;
             this.Title = isNewEntry ? "新增日记" : "编辑日记";
             
             if (isNewEntry)
             {
                 DatePicker.SelectedDate = DateTime.Today;
+                // 显示初始星期信息
+                UpdateWeekDayDisplay();
             }
             
             InitializeRichTextBox();
         }
 
-        public DiaryEditWindow(DiaryEntry entry)
+        public DiaryEditWindow(PersonalInfo personalInfo, DiaryEntry entry)
         {
             InitializeComponent();
             _isNewEntry = false;
+            _personalInfo = personalInfo;
             _originalTitle = entry.Title;
             _originalContent = entry.Content;
             this.Title = "编辑日记";
@@ -67,6 +78,36 @@ namespace DiaryApp
             DiaryContentRichTextBox.Document = flowDoc;
             
             UpdateFontSizeComboBox();
+        }
+
+        private void DatePicker_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateWeekDayDisplay();
+        }
+
+        private void UpdateWeekDayDisplay()
+        {
+            if (DatePicker.SelectedDate.HasValue && WeekDayTextBlock != null)
+            {
+                var selectedDate = DatePicker.SelectedDate.Value;
+                string weekDay = GetChineseWeekDay(selectedDate.DayOfWeek);
+                WeekDayTextBlock.Text = $"({weekDay})";
+            }
+        }
+
+        private string GetChineseWeekDay(DayOfWeek dayOfWeek)
+        {
+            return dayOfWeek switch
+            {
+                DayOfWeek.Sunday => "星期日",
+                DayOfWeek.Monday => "星期一",
+                DayOfWeek.Tuesday => "星期二",
+                DayOfWeek.Wednesday => "星期三",
+                DayOfWeek.Thursday => "星期四",
+                DayOfWeek.Friday => "星期五",
+                DayOfWeek.Saturday => "星期六",
+                _ => ""
+            };
         }
 
         private void UpdateFontSizeComboBox()
@@ -104,7 +145,23 @@ namespace DiaryApp
             }
             RefreshPhotosPanel();
             
+            // 加载参数
+            foreach (var param in entry.Parameters)
+            {
+                _parameters.Add(param);
+                CreateParamRowUI(param);
+                
+                // 记录原始参数�?
+                if (IsBoundParameter(param.Name) && decimal.TryParse(param.Value, out decimal originalValue))
+                {
+                    _originalParamValues[param.Id] = originalValue;
+                }
+            }
+            
             LoadRichTextContent(entry.Content);
+            
+            // 显示星期信息
+            UpdateWeekDayDisplay();
         }
 
         private void LoadRichTextContent(string content)
@@ -181,6 +238,60 @@ namespace DiaryApp
             }
         }
 
+        private void ParamNameTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (ParamNameTextBox.Text == _originalParamNamePlaceholder)
+            {
+                ParamNameTextBox.Text = "";
+                ParamNameTextBox.Foreground = Brushes.Black;
+            }
+        }
+
+        private void ParamNameTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(ParamNameTextBox.Text))
+            {
+                ParamNameTextBox.Text = _originalParamNamePlaceholder;
+                ParamNameTextBox.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#B2BEC3");
+            }
+        }
+
+        private void ParamValueTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (ParamValueTextBox.Text == _originalParamValuePlaceholder)
+            {
+                ParamValueTextBox.Text = "";
+                ParamValueTextBox.Foreground = Brushes.Black;
+            }
+        }
+
+        private void ParamValueTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(ParamValueTextBox.Text))
+            {
+                ParamValueTextBox.Text = _originalParamValuePlaceholder;
+                ParamValueTextBox.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#B2BEC3");
+            }
+        }
+
+        private void ParamUnitTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (ParamUnitTextBox.Text == _originalParamUnitPlaceholder)
+            {
+                ParamUnitTextBox.Text = "";
+                ParamUnitTextBox.Foreground = Brushes.Black;
+            }
+        }
+
+        private void ParamUnitTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(ParamUnitTextBox.Text))
+            {
+                ParamUnitTextBox.Text = _originalParamUnitPlaceholder;
+                ParamUnitTextBox.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#B2BEC3");
+            }
+        }
+
         private void TagInputTextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == System.Windows.Input.Key.Enter)
@@ -217,6 +328,278 @@ namespace DiaryApp
         {
             _tags.Remove(tag);
             RefreshTagsPanel();
+        }
+
+        private void RemoveParam(DiaryParam param)
+        {
+            // 这个方法已经被DeleteParam替代，保留空实现以避免编译错误
+        }
+
+        private void AddParamButton_Click(object sender, RoutedEventArgs e)
+        {
+            var paramName = ParamNameTextBox.Text.Trim();
+            var paramValue = ParamValueTextBox.Text.Trim();
+            var paramUnit = ParamUnitTextBox.Text.Trim();
+
+            // 验证输入
+            if (paramName == _originalParamNamePlaceholder || string.IsNullOrWhiteSpace(paramName))
+            {
+                MessageBox.Show("请输入参数名", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                ParamNameTextBox.Focus();
+                return;
+            }
+
+            if (paramValue == _originalParamValuePlaceholder || string.IsNullOrWhiteSpace(paramValue))
+            {
+                MessageBox.Show("请输入参数值", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                ParamValueTextBox.Focus();
+                return;
+            }
+
+            // 创建新参数
+            var param = new DiaryParam
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = paramName,
+                Value = paramValue,
+                Unit = paramUnit
+            };
+
+            // 添加到参数列表
+            _parameters.Add(param);
+            
+            // 创建参数行UI
+            CreateParamRowUI(param);
+
+            // 保持输入框内容不变，不重新聚焦
+        }
+
+        private void CreateParamRowUI(DiaryParam param)
+        {
+            // 创建参数行容器
+            var paramRow = new Grid
+            {
+                Margin = new Thickness(0, 5, 0, 0)
+            };
+            
+            // 设置列定义
+            paramRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            paramRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(100) });
+            paramRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80) });
+            paramRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            
+            // 检查是否为绑定参数
+            bool isBoundParam = IsBoundParameter(param.Name);
+            
+            // 参数名（不可编辑）
+            var nameBorder = new Border
+            {
+                Background = isBoundParam ? (SolidColorBrush)new BrushConverter().ConvertFrom("#FFE0B2") : (SolidColorBrush)new BrushConverter().ConvertFrom("#E8F5E9"),
+                BorderThickness = new Thickness(1),
+                BorderBrush = isBoundParam ? (SolidColorBrush)new BrushConverter().ConvertFrom("#FFB74D") : (SolidColorBrush)new BrushConverter().ConvertFrom("#A5D6A7"),
+                CornerRadius = new CornerRadius(4),
+                Margin = new Thickness(0, 0, 5, 0)
+            };
+            
+            // 创建参数名和显示值的容器
+            var nameStackPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            
+            var nameTextBlock = new TextBlock
+            {
+                Text = param.Name,
+                FontSize = 13,
+                Foreground = isBoundParam ? Brushes.DarkRed : Brushes.Black,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(8, 0, 5, 0)
+            };
+            
+            // 显示修改后的值
+            var newValueTextBlock = new TextBlock
+            {
+                Text = GetNewValueDisplay(param),
+                FontSize = 11,
+                Foreground = isBoundParam ? Brushes.DarkRed : Brushes.Gray,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 8, 0)
+            };
+            
+            nameStackPanel.Children.Add(nameTextBlock);
+            nameStackPanel.Children.Add(newValueTextBlock);
+            nameBorder.Child = nameStackPanel;
+            Grid.SetColumn(nameBorder, 0);
+            
+            // 参数值（可编辑）
+            var valueBorder = new Border
+            {
+                Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#E3F2FD"),
+                BorderThickness = new Thickness(1),
+                BorderBrush = (SolidColorBrush)new BrushConverter().ConvertFrom("#64B5F6"),
+                CornerRadius = new CornerRadius(4),
+                Margin = new Thickness(5, 0, 5, 0)
+            };
+            var valueTextBox = new TextBox
+            {
+                Text = param.Value,
+                FontSize = 13,
+                Foreground = Brushes.Black,
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(8, 4, 8, 4)
+            };
+            // 绑定参数值变更
+            valueTextBox.TextChanged += (s, e) => 
+            {
+                param.Value = valueTextBox.Text;
+                if (isBoundParam)
+                {
+                    // 更新显示的新值
+                    newValueTextBlock.Text = GetNewValueDisplay(param);
+                }
+            };
+            valueBorder.Child = valueTextBox;
+            Grid.SetColumn(valueBorder, 1);
+            
+            // 参数单位（不可编辑）
+            var unitBorder = new Border
+            {
+                Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#E8F5E9"),
+                BorderThickness = new Thickness(1),
+                BorderBrush = (SolidColorBrush)new BrushConverter().ConvertFrom("#A5D6A7"),
+                CornerRadius = new CornerRadius(4),
+                Margin = new Thickness(5, 0, 5, 0)
+            };
+            var unitTextBlock = new TextBlock
+            {
+                Text = param.Unit,
+                FontSize = 13,
+                Foreground = Brushes.Black,
+                VerticalAlignment = VerticalAlignment.Center,
+                Padding = new Thickness(8, 4, 8, 4)
+            };
+            unitBorder.Child = unitTextBlock;
+            Grid.SetColumn(unitBorder, 2);
+            
+            // 删除按钮
+            var deleteButton = new Button
+            {
+                Content = "×",
+                Width = 30,
+                Height = 26,
+                Margin = new Thickness(5, 0, 0, 0),
+                Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#FF6B6B"),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                Tag = param
+            };
+            deleteButton.Click += (s, e) => DeleteParam(param, paramRow);
+            Grid.SetColumn(deleteButton, 3);
+            
+            // 添加所有控件到参数�?
+            paramRow.Children.Add(nameBorder);
+            paramRow.Children.Add(valueBorder);
+            paramRow.Children.Add(unitBorder);
+            paramRow.Children.Add(deleteButton);
+            
+            // 添加参数行到容器
+            ParamsContainer.Children.Add(paramRow);
+        }
+
+        private void DeleteParam(DiaryParam param, Grid paramRow)
+        {
+            // 从参数列表中移除
+            _parameters.Remove(param);
+            
+            // 从UI中移除
+            ParamsContainer.Children.Remove(paramRow);
+        }
+        
+        // 检查是否为绑定参数
+        private bool IsBoundParameter(string paramName)
+        {
+            return _boundParamNames.Contains(paramName.Trim());
+        }
+        
+        // 更新绑定参数到个人信息
+        private void UpdateBoundParameters()
+        {
+            try
+            {
+                decimal totalSavingsChange = 0;
+                
+                // 遍历所有参数
+                foreach (var param in _parameters)
+                {
+                    if (IsBoundParameter(param.Name))
+                    {
+                        if (decimal.TryParse(param.Value, out decimal paramValue))
+                        {
+                            string trimmedName = param.Name.Trim();
+                            if (trimmedName.Equals("金钱", StringComparison.OrdinalIgnoreCase) || 
+                                trimmedName.Equals("savings", StringComparison.OrdinalIgnoreCase) || 
+                                trimmedName.Equals("Savings", StringComparison.OrdinalIgnoreCase))
+                            {
+                                // 计算差值
+                                decimal originalValue = 0;
+                                _originalParamValues.TryGetValue(param.Id, out originalValue);
+                                
+                                // 差值 = 新值 - 原值
+                                decimal change = paramValue - originalValue;
+                                totalSavingsChange += change;
+                            }
+                        }
+                    }
+                }
+                
+                // 更新个人信息
+                if (totalSavingsChange != 0)
+                {
+                    _personalInfo.Savings += totalSavingsChange;
+                    _personalInfo.LastUpdated = DateTime.Now;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"更新绑定参数失败：{ex.Message}");
+            }
+        }
+
+        // 获取修改后的值显示
+        private string GetNewValueDisplay(DiaryParam param)
+        {
+            if (!IsBoundParameter(param.Name))
+            {
+                return string.Empty;
+            }
+            
+            try
+            {
+                // 获取参数值
+                if (!decimal.TryParse(param.Value, out decimal paramValue))
+                {
+                    return string.Empty;
+                }
+                
+                // 获取当前值
+                decimal currentValue = 0;
+                if (param.Name.Trim().Equals("金钱", StringComparison.OrdinalIgnoreCase))
+                {
+                    currentValue = _personalInfo.Savings;
+                }
+                
+                // 计算新值
+                decimal newValue = currentValue + paramValue;
+                
+                // 格式化显示
+                return $"({(paramValue >= 0 ? "+" : "")}{param.Value} → {newValue.ToString("N2")})";
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
 
         private void RefreshTagsPanel()
@@ -472,7 +855,7 @@ namespace DiaryApp
             {
                 var title = DiaryTitleTextBox.Text;
                 
-                if (title == _originalTitle || string.IsNullOrWhiteSpace(title))
+                if (string.IsNullOrWhiteSpace(title))
                 {
                     MessageBox.Show("请输入日记标题", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                     DiaryTitleTextBox.Focus();
@@ -506,6 +889,7 @@ namespace DiaryApp
                     Content = content,
                     Tags = _tags.ToList(),
                     Photos = _photoPaths.ToList(),
+                    Parameters = _parameters.ToList(),
                     CreatedAt = createdAt,
                     PeriodType = (DiaryPeriodType)PeriodTypeComboBox.SelectedIndex
                 };
@@ -514,6 +898,9 @@ namespace DiaryApp
                 {
                     ResultEntry.Id = Guid.NewGuid().ToString();
                 }
+                
+                // 更新绑定参数到个人信息
+                UpdateBoundParameters();
                 
                 IsSaved = true;
                 DialogResult = true;

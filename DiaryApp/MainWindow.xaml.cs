@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿/*===========================================
+﻿/*===========================================
  * 【AI友好型代码框架注释】
  * 文件名: MainWindow.xaml.cs
  * 框架类型: WPF桌面应用程序主窗口
@@ -59,6 +59,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Microsoft.Win32;
 
 namespace DiaryApp;
@@ -165,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.49";
+    public const string VERSION = "0.1.1.58";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -176,6 +177,10 @@ public partial class MainWindow : Window
     private AppData _appData = new AppData();
     private const string DATA_FILE = "app_data.json";
     private const string LOG_FILE = "app_crash_log.txt";
+    
+    // 提醒功能相关变量
+    private DispatcherTimer _reminderTimer;
+    private DateTime _lastReminderDate = DateTime.MinValue;
     
     // 获取应用数据文件的完整路径
     private string GetDataFilePath()
@@ -349,6 +354,10 @@ public partial class MainWindow : Window
             // 添加TabControl的SelectionChanged事件处理程序
             MainTabControl.SelectionChanged += MainTabControl_SelectionChanged;
             Log("TabControl SelectionChanged事件处理程序添加完成");
+            
+            // 初始化提醒功能
+            InitializeReminder();
+            Log("提醒功能初始化完成");
             
             Log("MainWindow构造函数成功完成 - 窗口应该已显示");
         }
@@ -549,6 +558,52 @@ public partial class MainWindow : Window
             }
             catch { /* 忽略加载错误 */ }
         }
+        
+        // 重新计算个人信息数值
+        RecalculatePersonalInfo();
+    }
+
+    // 重新计算个人信息数值
+    private void RecalculatePersonalInfo()
+    {
+        try
+        {
+            // 从所有日记中收集参数并重新计算
+            decimal totalSavings = 0;
+            
+            // 遍历所有日记
+            foreach (var diary in _appData.Diaries)
+            {
+                // 遍历日记中的所有参数
+                foreach (var param in diary.Parameters)
+                {
+                    string trimmedName = param.Name.Trim();
+                    if (trimmedName.Equals("金钱", StringComparison.OrdinalIgnoreCase) || 
+                        trimmedName.Equals("savings", StringComparison.OrdinalIgnoreCase) || 
+                        trimmedName.Equals("Savings", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (decimal.TryParse(param.Value, out decimal paramValue))
+                        {
+                            totalSavings += paramValue;
+                        }
+                    }
+                }
+            }
+            
+            // 更新个人信息
+            _appData.PersonalInfo.Savings = totalSavings;
+            _appData.PersonalInfo.LastUpdated = DateTime.Now;
+            
+            // 更新UI显示
+            PersonalSavingsTextBox.Text = totalSavings.ToString();
+            PersonalLastUpdatedText.Text = $"最后更新：{_appData.PersonalInfo.LastUpdated:yyyy-MM-dd HH:mm}";
+            
+            System.Diagnostics.Debug.WriteLine($"个人信息重新计算完成：存款 = {totalSavings}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"重新计算个人信息失败：{ex.Message}");
+        }
     }
 
     private void SaveAppData()
@@ -577,7 +632,15 @@ public partial class MainWindow : Window
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
-        Application.Current.Shutdown();
+        // 如果启用了后台运行，则隐藏窗口而不是关闭
+        if (_appData.ReminderSetting.IsEnabled && _appData.ReminderSetting.IsMinimizedToTray)
+        {
+            HideWindow();
+        }
+        else
+        {
+            ExitApplication();
+        }
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
@@ -599,9 +662,122 @@ public partial class MainWindow : Window
 
     private void SettingsButton_Click(object sender, RoutedEventArgs e)
     {
-        var settingsWindow = new SettingsWindow();
+        var settingsWindow = new SettingsWindow(_appData);
         settingsWindow.Owner = this;
         settingsWindow.ShowDialog();
+        
+        // 保存设置并更新提醒定时器
+        SaveAppData();
+        UpdateReminderTimer();
+    }
+    
+    // 后台运行按钮点击事件
+    private void BackgroundButton_Click(object sender, RoutedEventArgs e)
+    {
+        HideWindow();
+    }
+    
+    // 显示主窗口
+    private void ShowWindow()
+    {
+        this.Visibility = Visibility.Visible;
+        this.WindowState = WindowState.Normal;
+        this.Activate();
+    }
+    
+    // 隐藏主窗口（后台运行）
+    private void HideWindow()
+    {
+        this.Visibility = Visibility.Hidden;
+    }
+    
+    // 退出应用程序
+    private void ExitApplication()
+    {
+        // 停止定时器
+        if (_reminderTimer != null)
+        {
+            _reminderTimer.Stop();
+        }
+        
+        Application.Current.Shutdown();
+    }
+    
+    // 初始化提醒功能
+    private void InitializeReminder()
+    {
+        // 创建提醒定时器，每分钟检查一次
+        _reminderTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMinutes(1)
+        };
+        _reminderTimer.Tick += ReminderTimer_Tick;
+        
+        // 根据当前配置启动或停止定时器
+        UpdateReminderTimer();
+    }
+    
+    // 根据配置更新提醒定时器
+    private void UpdateReminderTimer()
+    {
+        if (_appData.ReminderSetting.IsEnabled)
+        {
+            if (!_reminderTimer.IsEnabled)
+            {
+                _reminderTimer.Start();
+            }
+        }
+        else
+        {
+            if (_reminderTimer.IsEnabled)
+            {
+                _reminderTimer.Stop();
+            }
+        }
+    }
+    
+    // 提醒定时器的Tick事件处理程序
+    private void ReminderTimer_Tick(object sender, EventArgs e)
+    {
+        // 检查是否应该显示提醒
+        if (ShouldShowReminder())
+        {
+            ShowReminder();
+            
+            // 更新最后提醒日期
+            _lastReminderDate = DateTime.Now.Date;
+        }
+    }
+    
+    // 检查是否应该显示提醒
+    private bool ShouldShowReminder()
+    {
+        if (!_appData.ReminderSetting.IsEnabled)
+        {
+            return false;
+        }
+        
+        // 检查是否是当天第一次提醒
+        if (_lastReminderDate == DateTime.Now.Date)
+        {
+            return false;
+        }
+        
+        // 检查当前时间是否达到提醒时间
+        var now = DateTime.Now;
+        var reminderTime = new DateTime(now.Year, now.Month, now.Day, 
+                                      _appData.ReminderSetting.ReminderTime.Hours, 
+                                      _appData.ReminderSetting.ReminderTime.Minutes, 
+                                      0);
+        
+        return now >= reminderTime;
+    }
+    
+    // 显示提醒消息
+    private void ShowReminder()
+    {
+        // 使用WPF消息框显示提醒
+        MessageBox.Show(_appData.ReminderSetting.ReminderMessage, "我的日记助手", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     #endregion
@@ -610,13 +786,15 @@ public partial class MainWindow : Window
 
     private void NewDiaryButton_Click(object sender, RoutedEventArgs e)
     {
-        var editWindow = new DiaryEditWindow();
+        var editWindow = new DiaryEditWindow(_appData.PersonalInfo);
         editWindow.Owner = this;
         if (editWindow.ShowDialog() == true && editWindow.ResultEntry != null)
         {
             _appData.Diaries.Add(editWindow.ResultEntry);
             SaveAppData();
             RefreshDiaryTimeline();
+            // 重新计算个人信息数值
+            RecalculatePersonalInfo();
         }
     }
 
@@ -1171,7 +1349,7 @@ public partial class MainWindow : Window
 
     private void EditDiaryEntry(DiaryEntry entry)
     {
-        var editWindow = new DiaryEditWindow(entry);
+        var editWindow = new DiaryEditWindow(_appData.PersonalInfo, entry);
         editWindow.Owner = this;
         if (editWindow.ShowDialog() == true && editWindow.ResultEntry != null)
         {
@@ -1181,6 +1359,8 @@ public partial class MainWindow : Window
                 _appData.Diaries[index] = editWindow.ResultEntry;
                 SaveAppData();
                 RefreshDiaryTimeline();
+                // 重新计算个人信息数值
+                RecalculatePersonalInfo();
             }
         }
     }
@@ -1194,6 +1374,8 @@ public partial class MainWindow : Window
             _appData.Diaries.RemoveAll(d => d.Id == entry.Id);
             SaveAppData();
             RefreshDiaryTimeline();
+            // 重新计算个人信息数值
+            RecalculatePersonalInfo();
         }
     }
 
@@ -2181,12 +2363,35 @@ public partial class MainWindow : Window
         }
     }
 
+    private void EditPersonalInfoButton_Click(object sender, RoutedEventArgs e)
+    {
+        // 启用所有输入控件
+        PersonalNameTextBox.IsEnabled = true;
+        PersonalPhoneTextBox.IsEnabled = true;
+        PersonalBirthdayPicker.IsEnabled = true;
+        PersonalSavingsTextBox.IsEnabled = true;
+        
+        // 禁用修改按钮，启用保存按钮
+        EditPersonalInfoButton.IsEnabled = false;
+        SavePersonalInfoButton.IsEnabled = true;
+    }
+
     private void SavePersonalInfoButton_Click(object sender, RoutedEventArgs e)
     {
         try
         {
             SaveAppData();
             MessageBox.Show("个人信息已保存！", "保存成功", MessageBoxButton.OK, MessageBoxImage.Information);
+            
+            // 禁用所有输入控件
+            PersonalNameTextBox.IsEnabled = false;
+            PersonalPhoneTextBox.IsEnabled = false;
+            PersonalBirthdayPicker.IsEnabled = false;
+            PersonalSavingsTextBox.IsEnabled = false;
+            
+            // 启用修改按钮，禁用保存按钮
+            EditPersonalInfoButton.IsEnabled = true;
+            SavePersonalInfoButton.IsEnabled = false;
         }
         catch (Exception ex)
         {

@@ -90,6 +90,10 @@ namespace DiaryApp
                 TitleTextBox.Foreground = Brushes.Black;
             }
         }
+        private void BackgroundColorButton_Click(object sender, RoutedEventArgs e)
+        {
+            // 背景颜色按钮点击事件 - 暂时留空
+        }
 
         private void TitleTextBox_LostFocus(object sender, RoutedEventArgs e)
         {
