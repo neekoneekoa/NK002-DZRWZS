@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DiaryApp"
         mc:Ignorable="d"
-        Title="编辑任务" Height="850" Width="800"
+        Title="编辑任务" Height="850" Width="1000"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize">
     
@@ -128,6 +128,7 @@
             <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                 <Button x:Name="SaveButton" Content="保存" Width="80" Height="35" Background="#6C5CE7" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="SaveButton_Click"/>
                 <Button x:Name="DeleteButton" Content="删除" Width="80" Height="35" Background="#FF7675" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="DeleteButton_Click"/>
+                <Button x:Name="ReminderButton" Content="提醒" Width="80" Height="35" Background="#00B894" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="ReminderButton_Click"/>
                 <Button x:Name="CancelButton" Content="取消" Width="80" Height="35" Background="#BDC3C7" Foreground="#2D3436" BorderThickness="0" Click="CancelButton_Click"/>
             </StackPanel>
         </Grid>

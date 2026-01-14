@@ -11,6 +11,7 @@ namespace DiaryApp
         public TaskEntry? TaskEntry { get; private set; }
         public bool IsDeleteRequested { get; private set; } = false;
         private List<string> _currentProjectTags = new List<string>();
+        private ReminderSettings? _tempReminderSettings = null;
 
         public TaskEditWindow(TaskEntry? taskEntry = null)
         {
@@ -715,6 +716,7 @@ namespace DiaryApp
                     TaskType = (TaskType)TaskTypeComboBox.SelectedIndex,
                     ProjectTags = new List<string>(_currentProjectTags),
                     Chapters = chapters,
+                    ReminderSettings = _tempReminderSettings,
                     CreatedAt = DateTime.Now
                 };
             }
@@ -829,6 +831,53 @@ namespace DiaryApp
             {
                 _currentProjectTags = new List<string>(TaskEntry.ProjectTags);
                 ProjectTagsItemsControl.ItemsSource = _currentProjectTags;
+            }
+        }
+
+        // 提醒按钮点击事件
+        private void ReminderButton_Click(object sender, RoutedEventArgs e)
+        {
+            // 创建一个临时任务对象用于显示
+            var displayTask = TaskEntry ?? new TaskEntry { Title = TitleTextBox.Text.Trim() }; 
+            
+            // 确定要使用的提醒设置（优先使用临时的，如果没有则使用任务的）
+            var reminderSettings = _tempReminderSettings ?? TaskEntry?.ReminderSettings;
+
+            // 打开提醒设置窗口
+            var reminderWindow = new ReminderSettingsWindow(displayTask, reminderSettings);
+            reminderWindow.Owner = this;
+            bool? result = reminderWindow.ShowDialog();
+
+            if (result == true)
+            {
+                // 如果用户点击了保存
+                if (reminderWindow.IsSaveRequested && reminderWindow.ReminderSettings != null)
+                {
+                    // 根据情况保存到临时变量或任务对象
+                    if (TaskEntry != null)
+                    {
+                        TaskEntry.ReminderSettings = reminderWindow.ReminderSettings;
+                    }
+                    else
+                    {
+                        _tempReminderSettings = reminderWindow.ReminderSettings;
+                    }
+                    MessageBox.Show("提醒设置已保存", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                // 如果用户点击了删除
+                else if (reminderWindow.IsDeleteRequested)
+                {
+                    // 根据情况删除临时变量或任务对象的设置
+                    if (TaskEntry != null)
+                    {
+                        TaskEntry.ReminderSettings = null;
+                    }
+                    else
+                    {
+                        _tempReminderSettings = null;
+                    }
+                    MessageBox.Show("提醒设置已删除", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
             }
         }
     }

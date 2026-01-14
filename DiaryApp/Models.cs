@@ -39,6 +39,19 @@ public enum TaskType
     Project = 1
 }
 
+    // ===== 提醒设置数据模型 =====
+    public class ReminderSettings
+    {
+        public string ReminderType { get; set; } = "Daily";
+        public int IntervalDays { get; set; } = 1;
+        public int ConsecutiveCount { get; set; } = 1;
+        public string ConsecutiveUnit { get; set; } = "Days";
+        public List<int> WeeklyDays { get; set; } = new List<int>();
+        public List<int> MonthlyDays { get; set; } = new List<int>();
+        public DateTime StartDate { get; set; } = DateTime.Now;
+        public bool IsActive { get; set; } = true;
+    }
+
     // ===== 任务数据模型 =====
     public class TaskChapter
     {
@@ -93,6 +106,9 @@ public enum TaskType
         public int TotalDays { get; set; } = 1; // 总天数
         public DateTime StartDate { get; set; } = DateTime.Now; // 开始日期
         public DateTime EndDate { get; set; } = DateTime.Now; // 结束日期
+        
+        // 提醒设置
+        public ReminderSettings? ReminderSettings { get; set; } // 提醒设置
         
         // 用于显示
         public string StatusDescription => Status switch
