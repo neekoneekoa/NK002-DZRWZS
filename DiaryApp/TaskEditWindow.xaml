@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DiaryApp"
         mc:Ignorable="d"
-        Title="编辑任务" Height="750" Width="650"
+        Title="编辑任务" Height="850" Width="800"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize">
     
@@ -19,16 +19,16 @@
     <Border CornerRadius="15" Background="#FDFDFD" Margin="10">
         <Grid Margin="20">
             <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
         
 
             
@@ -63,12 +63,15 @@
                     <TextBlock Text="完成时间：" FontSize="14" Foreground="#636E72" Width="80"/>
                     <DatePicker x:Name="CompletedDatePicker" Width="120" Height="30"/>
                 </StackPanel>
+                <Button x:Name="AddChapterButton" Content="+ 添加章节" Width="100" Height="30"
+                        Background="#6C5CE7" Foreground="White" BorderThickness="0"
+                        Click="AddChapterButton_Click" FontSize="12" Margin="20,0,0,0"/>
             </StackPanel>
             
 
             
             <!-- 章节和子任务 -->
-            <Grid Grid.Row="3" Grid.RowSpan="2" Margin="0,0,0,15">
+            <Grid Grid.Row="3" Margin="0,0,0,15">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -79,13 +82,8 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 
-                <!-- 章节标题和控制按钮 -->
-                <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10">
-                    <TextBlock Text="章节：" FontSize="14" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,10,0"/>
-                    <Button x:Name="AddChapterButton" Content="+ 添加章节" Width="100" Height="25"
-                            Background="#6C5CE7" Foreground="White" BorderThickness="0"
-                            Click="AddChapterButton_Click" FontSize="12"/>
-                </StackPanel>
+                <!-- 章节标题 -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="章节：" FontSize="14" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,10,10"/>
                 
                 <!-- 章节列表 -->
                 <ScrollViewer Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0">
@@ -94,7 +92,7 @@
             </Grid>
             
             <!-- 按钮 -->
-            <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                 <Button x:Name="SaveButton" Content="保存" Width="80" Height="35" Background="#6C5CE7" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="SaveButton_Click"/>
                 <Button x:Name="DeleteButton" Content="删除" Width="80" Height="35" Background="#FF7675" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="DeleteButton_Click"/>
                 <Button x:Name="CancelButton" Content="取消" Width="80" Height="35" Background="#BDC3C7" Foreground="#2D3436" BorderThickness="0" Click="CancelButton_Click"/>
