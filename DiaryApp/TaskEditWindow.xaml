@@ -41,8 +41,15 @@
             
 
             
-            <!-- 优先级、状态和完成时间 -->
+            <!-- 任务类型、优先级、状态和完成时间 -->
             <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,15" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
+                    <TextBlock Text="任务类型：" FontSize="14" Foreground="#636E72" Width="70"/>
+                    <ComboBox x:Name="TaskTypeComboBox" SelectedIndex="0" Width="100" Height="30" SelectionChanged="TaskTypeComboBox_SelectionChanged">
+                        <ComboBoxItem Content="临时任务"/>
+                        <ComboBoxItem Content="项目"/>
+                    </ComboBox>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
                     <TextBlock Text="优先级：" FontSize="14" Foreground="#636E72" Width="60"/>
                     <ComboBox x:Name="PriorityComboBox" SelectedIndex="1" Width="80" Height="30">
@@ -66,6 +73,32 @@
                 <Button x:Name="AddChapterButton" Content="+ 添加章节" Width="100" Height="30"
                         Background="#6C5CE7" Foreground="White" BorderThickness="0"
                         Click="AddChapterButton_Click" FontSize="12" Margin="20,0,0,0"/>
+            </StackPanel>
+            
+            <!-- 项目标签编辑框 -->
+            <StackPanel x:Name="ProjectTagsPanel" Grid.Row="2" Margin="0,50,0,15" Orientation="Horizontal" Visibility="Collapsed">
+                <TextBlock Text="项目标签：" FontSize="14" Foreground="#636E72" Width="70" VerticalAlignment="Center"/>
+                <TextBox x:Name="ProjectTagsTextBox" Width="400" Height="30" FontSize="14" Padding="8" Tag="请输入项目标签，用逗号分隔"/>
+                <Button x:Name="AddTagButton" Content="添加标签" Width="80" Height="30" Background="#6C5CE7" Foreground="White" BorderThickness="0" Margin="10,0,0,0" Click="AddTagButton_Click"/>
+            </StackPanel>
+            <StackPanel x:Name="ProjectTagsDisplayPanel" Grid.Row="2" Margin="75,80,0,15" Orientation="Horizontal" Visibility="Collapsed">
+                <ItemsControl x:Name="ProjectTagsItemsControl">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#E1E8ED" CornerRadius="15" Margin="0,0,5,0" Padding="8,4">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding}" FontSize="12" Foreground="#2D3436" VerticalAlignment="Center"/>
+                                    <Button Content="×" Width="16" Height="16" Background="Transparent" BorderThickness="0" Foreground="#636E72" FontSize="10" Margin="5,0,0,0" Click="RemoveTagButton_Click" Tag="{Binding}"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </StackPanel>
             
 

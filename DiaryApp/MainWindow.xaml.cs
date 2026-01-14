@@ -1,4 +1,4 @@
-﻿/*===========================================
+/*===========================================
  * 【AI友好型代码框架注释】
  * 文件名: MainWindow.xaml.cs
  * 框架类型: WPF桌面应用程序主窗口
@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.66";
+    public const string VERSION = "0.1.1.68";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -1443,19 +1443,19 @@ public partial class MainWindow : Window
 
     private void RefreshTaskLists()
     {
-        // 娓呯┖鐜版湁鍒楄〃
+        // 清空现有列表
         TempTaskListBox.Items.Clear();
         ProjectTaskListBox.Items.Clear();
         
-        // 灏嗕换鍔″垎绫绘坊鍔犲埌涓嶅悓鍒楄〃
+        // 将任务分类添加到不同列表
         foreach (var task in _appData.Tasks)
         {
-            // 绠€鍗曞垽鏂細娌℃湁瀛愪换鍔＄殑涓轰复鏃朵换鍔★紝鏈夊瓙浠诲姟鐨勪负椤圭洰浠诲姟
-            if (task.SubTasks.Count == 0)
+            // 根据任务类型分类
+            if (task.TaskType == TaskType.Temporary)
             {
                 TempTaskListBox.Items.Add(task);
             }
-            else
+            else if (task.TaskType == TaskType.Project)
             {
                 ProjectTaskListBox.Items.Add(task);
             }

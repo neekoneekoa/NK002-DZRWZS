@@ -426,6 +426,20 @@
                                                     </StackPanel>
                                                     <TextBlock Text="{Binding StatusDescription}" FontSize="12" Foreground="#636E72" Margin="0,4,0,0"/>
                                                     <TextBlock Text="{Binding SubTasks.Count, StringFormat='子任务数：{0}'}" FontSize="12" Foreground="#636E72" Margin="0,4,0,0"/>
+                                                    <ItemsControl ItemsSource="{Binding ProjectTags}" Margin="0,4,0,0">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <WrapPanel Orientation="Horizontal"/>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Background="#E1E8ED" CornerRadius="10" Margin="0,0,5,0" Padding="6,2">
+                                                                    <TextBlock Text="{Binding}" FontSize="10" Foreground="#2D3436"/>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>

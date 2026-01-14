@@ -30,6 +30,15 @@ public enum TaskStatus
     Completed = 2
 }
 
+// ===== 任务类型枚举 =====
+public enum TaskType
+{
+    [Description("临时任务")]
+    Temporary = 0,
+    [Description("项目")]
+    Project = 1
+}
+
     // ===== 任务数据模型 =====
     public class TaskChapter
     {
@@ -65,6 +74,8 @@ public enum TaskStatus
         public int Priority { get; set; } = 2; // 1-3级优先级
         public int Level { get; set; } = 1; // 1-3级标题
         public TaskStatus Status { get; set; } = TaskStatus.Pending;
+        public TaskType TaskType { get; set; } = TaskType.Temporary; // 任务类型
+        public List<string> ProjectTags { get; set; } = new List<string>(); // 项目标签
         public List<TaskChapter> Chapters { get; set; } = new List<TaskChapter>();
         [Obsolete("使用Chapters替代")]
         public List<SubTask> SubTasks { get; set; } = new List<SubTask>();

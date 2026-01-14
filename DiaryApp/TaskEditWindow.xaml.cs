@@ -10,6 +10,7 @@ namespace DiaryApp
     {
         public TaskEntry? TaskEntry { get; private set; }
         public bool IsDeleteRequested { get; private set; } = false;
+        private List<string> _currentProjectTags = new List<string>();
 
         public TaskEditWindow(TaskEntry? taskEntry = null)
         {
@@ -29,7 +30,8 @@ namespace DiaryApp
         {
             // 防止初始化时控件尚未完全初始化导致的空引用异常
             if (TitleTextBox == null || PriorityComboBox == null || 
-                StatusComboBox == null || CompletedDatePicker == null || ChaptersPanel == null)
+                StatusComboBox == null || CompletedDatePicker == null || ChaptersPanel == null ||
+                TaskTypeComboBox == null)
             {
                 return;
             }
@@ -45,10 +47,19 @@ namespace DiaryApp
                 {
                     InitializeTitlePlaceholder();
                 }
+                
+                // 加载任务类型
+                TaskTypeComboBox.SelectedIndex = (int)TaskEntry.TaskType;
+                
+                // 显示/隐藏项目标签相关控件
+                UpdateProjectTagsVisibility();
+                
+                // 加载项目标签
+                RefreshProjectTagsDisplay();
+                
                 PriorityComboBox.SelectedIndex = TaskEntry.Priority - 1;
                 StatusComboBox.SelectedIndex = (int)TaskEntry.Status;
                 CompletedDatePicker.SelectedDate = TaskEntry.CompletedAt;
-                // 使用新的章节结构，不再依赖任务类型
 
                 // 加载章节
                 ChaptersPanel.Children.Clear();
@@ -61,10 +72,14 @@ namespace DiaryApp
             {
                 // 默认值
                 TitleTextBox.Text = "";
+                TaskTypeComboBox.SelectedIndex = 0; // 默认临时任务
                 PriorityComboBox.SelectedIndex = 1;
                 StatusComboBox.SelectedIndex = 0;
                 CompletedDatePicker.SelectedDate = null;
 
+                // 显示/隐藏项目标签相关控件
+                UpdateProjectTagsVisibility();
+                
                 // 默认添加第一章
                 ChaptersPanel.Children.Clear();
                 AddDefaultChapter();
@@ -697,7 +712,8 @@ namespace DiaryApp
                     Title = TitleTextBox.Text,
                     Priority = PriorityComboBox.SelectedIndex + 1,
                     Status = (TaskStatus)StatusComboBox.SelectedIndex,
-                    CompletedAt = CompletedDatePicker.SelectedDate,
+                    TaskType = (TaskType)TaskTypeComboBox.SelectedIndex,
+                    ProjectTags = new List<string>(_currentProjectTags),
                     Chapters = chapters,
                     CreatedAt = DateTime.Now
                 };
@@ -708,6 +724,8 @@ namespace DiaryApp
                 TaskEntry.Title = TitleTextBox.Text;
                 TaskEntry.Priority = PriorityComboBox.SelectedIndex + 1;
                 TaskEntry.Status = (TaskStatus)StatusComboBox.SelectedIndex;
+                TaskEntry.TaskType = (TaskType)TaskTypeComboBox.SelectedIndex;
+                TaskEntry.ProjectTags = new List<string>(_currentProjectTags);
                 TaskEntry.CompletedAt = CompletedDatePicker.SelectedDate;
                 TaskEntry.Chapters = chapters;
             }
@@ -734,6 +752,84 @@ namespace DiaryApp
         {
             DialogResult = false;
             Close();
+        }
+
+        // 任务类型选择改变事件
+        private void TaskTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // 检查控件是否已经初始化，避免在XAML初始化过程中触发事件导致的空引用异常
+            if (ProjectTagsPanel == null || ProjectTagsDisplayPanel == null)
+            {
+                return;
+            }
+            UpdateProjectTagsVisibility();
+        }
+
+        // 更新项目标签控件的可见性
+        private void UpdateProjectTagsVisibility()
+        {
+            // 检查控件是否已经初始化，避免空引用异常
+            if (ProjectTagsPanel == null || ProjectTagsDisplayPanel == null || TaskTypeComboBox == null)
+            {
+                return;
+            }
+
+            if (TaskTypeComboBox.SelectedIndex == (int)TaskType.Project)
+            {
+                ProjectTagsPanel.Visibility = Visibility.Visible;
+                ProjectTagsDisplayPanel.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                ProjectTagsPanel.Visibility = Visibility.Collapsed;
+                ProjectTagsDisplayPanel.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        // 添加项目标签
+        private void AddTagButton_Click(object sender, RoutedEventArgs e)
+        {
+            var tagText = ProjectTagsTextBox.Text?.Trim();
+            if (!string.IsNullOrEmpty(tagText) && tagText != ProjectTagsTextBox.Tag?.ToString())
+            {
+                // 分割多个标签（用逗号分隔）
+                var tags = tagText.Split(new[] { ',', '，' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var tag in tags)
+                {
+                    var trimmedTag = tag.Trim();
+                    if (!string.IsNullOrEmpty(trimmedTag) && !_currentProjectTags.Contains(trimmedTag))
+                    {
+                        _currentProjectTags.Add(trimmedTag);
+                    }
+                }
+                
+                RefreshProjectTagsDisplay();
+                ProjectTagsTextBox.Text = "";
+            }
+        }
+
+        // 移除项目标签
+        private void RemoveTagButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is string tag)
+            {
+                _currentProjectTags.Remove(tag);
+                RefreshProjectTagsDisplay();
+            }
+        }
+
+        // 刷新项目标签显示
+        private void RefreshProjectTagsDisplay()
+        {
+            ProjectTagsItemsControl.ItemsSource = null;
+            ProjectTagsItemsControl.ItemsSource = _currentProjectTags;
+            
+            // 如果是编辑现有任务，初始化标签列表
+            if (TaskEntry != null && TaskEntry.ProjectTags != null)
+            {
+                _currentProjectTags = new List<string>(TaskEntry.ProjectTags);
+                ProjectTagsItemsControl.ItemsSource = _currentProjectTags;
+            }
         }
     }
 }
