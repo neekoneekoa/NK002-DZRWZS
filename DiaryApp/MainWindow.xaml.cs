@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.86";
+    public const string VERSION = "0.1.1.95";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -255,7 +255,7 @@ public partial class MainWindow : Window
         var ex = e.ExceptionObject as Exception;
         var msg = ex != null ? ex.Message : "未知错误";
         LogCrash("UnhandledException (AppDomain)", ex);
-        MessageBox.Show($"程序发生未处理的异常错误。\n错误信息: {msg}\n\n错误详情已保存到 crash_log.txt", 
+        MessageBox.Show($"程序发生未处理的异常错误。\n错误信息: {msg}\n\n错误详情已保存到 app_crash_log.txt", 
             "程序崩溃", MessageBoxButton.OK, MessageBoxImage.Error);
     }
     
@@ -264,7 +264,7 @@ public partial class MainWindow : Window
     {
         LogCrash("DispatcherUnhandledException (UI Thread)", e.Exception);
         e.Handled = true; // 标记为已处理，防止程序退出
-        MessageBox.Show($"程序发生未处理的异常错误。\n错误信息: {e.Exception.Message}\n\n错误详情已保存到 crash_log.txt", 
+        MessageBox.Show($"程序发生未处理的异常错误。\n错误信息: {e.Exception.Message}\n\n错误详情已保存到 app_crash_log.txt", 
             "程序崩溃", MessageBoxButton.OK, MessageBoxImage.Error);
     }
     

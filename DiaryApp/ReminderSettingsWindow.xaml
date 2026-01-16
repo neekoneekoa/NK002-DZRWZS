@@ -40,7 +40,7 @@
             </Grid.ColumnDefinitions>
             
             <!-- 标题 -->
-            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="提醒设置" FontSize="20" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,0,0,20" HorizontalAlignment="Center"/>
+            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="提醒设置" FontSize="20" FontWeight="Bold" Foreground="#6C5CE7" Margin="0,0,0,20" HorizontalAlignment="Center"/>
             
             <!-- 开始日期 -->
             <TextBlock Grid.Row="1" Grid.Column="0" Text="开始日期：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>

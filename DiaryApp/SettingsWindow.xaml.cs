@@ -88,11 +88,18 @@ public partial class SettingsWindow : Window
         if (HourComboBox.SelectedItem != null && MinuteComboBox.SelectedItem != null)
         {
             // 获取选择的小时和分钟
-            int hour = int.Parse((HourComboBox.SelectedItem as ComboBoxItem).Content.ToString());
-            int minute = int.Parse((MinuteComboBox.SelectedItem as ComboBoxItem).Content.ToString());
+            int hour = 0;
+            int minute = 0;
             
-            // 更新提醒设置
-            _appData.ReminderSetting.ReminderTime = new TimeSpan(hour, minute, 0);
+            ComboBoxItem hourItem = HourComboBox.SelectedItem as ComboBoxItem;
+            ComboBoxItem minuteItem = MinuteComboBox.SelectedItem as ComboBoxItem;
+            
+            if (hourItem != null && int.TryParse(hourItem.Content.ToString(), out hour) &&
+                minuteItem != null && int.TryParse(minuteItem.Content.ToString(), out minute))
+            {
+                // 更新提醒设置
+                _appData.ReminderSetting.ReminderTime = new TimeSpan(hour, minute, 0);
+            }
         }
     }
 }

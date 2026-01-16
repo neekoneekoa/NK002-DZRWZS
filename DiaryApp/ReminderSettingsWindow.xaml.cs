@@ -44,7 +44,10 @@ namespace DiaryApp
             // 设置提醒时间
             if (ReminderSettings.ReminderTime.HasValue)
             {
-                ReminderTimeTextBox.Text = ReminderSettings.ReminderTime.Value.ToString("HH:mm");
+                // 确保TimeSpan是有效的时间格式
+                var time = ReminderSettings.ReminderTime.Value;
+                // 只提取小时和分钟部分，确保格式正确
+                ReminderTimeTextBox.Text = $"{time.Hours:D2}:{time.Minutes:D2}";
             }
             else
             {
@@ -101,7 +104,7 @@ namespace DiaryApp
                 int dayNumber = ReminderSettings.MonthlyDayNumber.Value;
                 // 确保dayNumber在1-5之间
                 dayNumber = Math.Max(1, Math.Min(5, dayNumber));
-                MonthlyDayNumberComboBox.SelectedItem = MonthlyDayNumberComboBox.Items[dayNumber - 1];
+                MonthlyDayNumberComboBox.SelectedIndex = dayNumber - 1;
             }
             else
             {
@@ -148,6 +151,9 @@ namespace DiaryApp
         private void UpdateSettingsVisibility()
         {
             int selectedIndex = ReminderTypeComboBox.SelectedIndex;
+            
+            // 确保selectedIndex有效（0-4，对应5个提醒类型）
+            selectedIndex = Math.Max(0, Math.Min(4, selectedIndex));
             
             WeeklySettingsGrid.Visibility = selectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
             MonthlySettingsGrid.Visibility = selectedIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
@@ -269,14 +275,21 @@ namespace DiaryApp
             // 设置每月设置
             if (ReminderSettings.ReminderType == ReminderType.Monthly)
             {
-                if (MonthlyDayNumberComboBox.SelectedItem is ComboBoxItem dayNumberItem)
+                if (MonthlyDayNumberComboBox.SelectedItem is ComboBoxItem dayNumberItem && dayNumberItem.Tag != null)
                 {
-                    ReminderSettings.MonthlyDayNumber = int.Parse(dayNumberItem.Tag.ToString());
+                    if (int.TryParse(dayNumberItem.Tag.ToString(), out int dayNumber))
+                    {
+                        ReminderSettings.MonthlyDayNumber = dayNumber;
+                    }
                 }
                 
-                if (MonthlyDayOfWeekComboBox.SelectedItem is ComboBoxItem dayOfWeekItem)
+                if (MonthlyDayOfWeekComboBox.SelectedItem is ComboBoxItem dayOfWeekItem && dayOfWeekItem.Tag != null)
                 {
-                    ReminderSettings.MonthlyDayOfWeek = (DayOfWeek)Enum.Parse(typeof(DayOfWeek), dayOfWeekItem.Tag.ToString());
+                    string dayOfWeekStr = dayOfWeekItem.Tag.ToString();
+                    if (Enum.TryParse(typeof(DayOfWeek), dayOfWeekStr, out object dayOfWeekObj))
+                    {
+                        ReminderSettings.MonthlyDayOfWeek = (DayOfWeek)dayOfWeekObj;
+                    }
                 }
             }
             
@@ -319,11 +332,13 @@ namespace DiaryApp
                     case ReminderType.Weekly:
                         if (ReminderSettings.WeekDays != null && ReminderSettings.WeekDays.Count > 0)
                         {
-                            // 找到下一个符合条件的星期几
+                            // 找到下一个符合条件的星期几，最多尝试365天
                             bool found = false;
                             int daysToAdd = 1;
+                            int maxAttempts = 365;
+                            int attempts = 0;
                             
-                            while (!found)
+                            while (!found && attempts < maxAttempts)
                             {
                                 nextDate = nextDate.AddDays(daysToAdd);
                                 if (ReminderSettings.WeekDays.Contains(nextDate.DayOfWeek))
@@ -331,19 +346,34 @@ namespace DiaryApp
                                     found = true;
                                 }
                                 daysToAdd++;
+                                attempts++;
                             }
+                            
+                            // 如果在一年内没有找到，默认加7天
+                            if (!found)
+                            {
+                                nextDate = nextDate.AddDays(7);
+                            }
+                        }
+                        else
+                        {
+                            // 如果没有选择星期几，默认加7天
+                            nextDate = nextDate.AddDays(7);
                         }
                         break;
                     
                     case ReminderType.Monthly:
                         if (ReminderSettings.MonthlyDayNumber.HasValue && ReminderSettings.MonthlyDayOfWeek.HasValue)
                         {
-                            // 找到下一个符合条件的日期
+                            // 找到下一个符合条件的日期，最多尝试365天
                             int daysToAdd = 1;
-                            while (nextDate <= today)
+                            int maxAttempts = 365;
+                            int attempts = 0;
+                            while (nextDate <= today && attempts < maxAttempts)
                             {
                                 nextDate = nextDate.AddDays(daysToAdd);
                                 daysToAdd++;
+                                attempts++;
                                 
                                 // 检查是否是当月的第N个星期几
                                 int weekNumber = (nextDate.Day - 1) / 7 + 1;
@@ -352,6 +382,17 @@ namespace DiaryApp
                                     break;
                                 }
                             }
+                            
+                            // 如果在一年内没有找到，默认加30天
+                            if (attempts >= maxAttempts)
+                            {
+                                nextDate = nextDate.AddDays(30);
+                            }
+                        }
+                        else
+                        {
+                            // 如果缺少必要的每月设置，默认加30天
+                            nextDate = nextDate.AddDays(30);
                         }
                         break;
                     
@@ -363,13 +404,23 @@ namespace DiaryApp
                         break;
                     
                     case ReminderType.Interval:
-                        if (ReminderSettings.IntervalDays.HasValue)
+                        if (ReminderSettings.IntervalDays.HasValue && ReminderSettings.IntervalDays.Value > 0)
                         {
                             while (nextDate <= today)
                             {
                                 nextDate = nextDate.AddDays(ReminderSettings.IntervalDays.Value);
                             }
                         }
+                        else
+                        {
+                            // 如果间隔天数无效，默认加1天
+                            nextDate = nextDate.AddDays(1);
+                        }
+                        break;
+                    
+                    default:
+                        // 默认情况下，加1天
+                        nextDate = nextDate.AddDays(1);
                         break;
                 }
             }

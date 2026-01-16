@@ -35,7 +35,7 @@ namespace DiaryApp
             // 防止初始化时控件尚未完全初始化导致的空引用异常
             if (TitleTextBox == null || PriorityComboBox == null || 
                 StatusComboBox == null || CompletedDatePicker == null || ChaptersPanel == null ||
-                TaskTypeComboBox == null)
+                TaskTypeComboBox == null || ReminderCalendar == null)
             {
                 return;
             }
@@ -887,9 +887,10 @@ namespace DiaryApp
                 {
                     startDateText = reminderSettings.StartDate.Value.ToString("yyyy-MM-dd");
                     if (reminderSettings.ReminderTime.HasValue)
-                    {
-                        startDateText += " " + reminderSettings.ReminderTime.Value.ToString("HH:mm");
-                    }
+                        {
+                            var time = reminderSettings.ReminderTime.Value;
+                            startDateText += $" {time.Hours:D2}:{time.Minutes:D2}";
+                        }
                 }
                 ReminderStartDateText.Text = startDateText;
                 
@@ -948,6 +949,21 @@ namespace DiaryApp
                 NextReminderDateText.Text = nextReminderText;
                 
                 ReminderStatusText.Text = reminderSettings.IsActive ? "已启用" : "已禁用";
+                
+                // 更新日历控件
+                if (ReminderCalendar != null)
+                {
+                    // 如果有下次提醒日期，选中该日期
+                    if (reminderSettings.NextReminderDate.HasValue)
+                    {
+                        ReminderCalendar.SelectedDate = reminderSettings.NextReminderDate.Value;
+                    }
+                    // 否则如果有开始日期，选中该日期
+                    else if (reminderSettings.StartDate.HasValue)
+                    {
+                        ReminderCalendar.SelectedDate = reminderSettings.StartDate.Value;
+                    }
+                }
                 
                 // 显示提醒信息面板
                 ReminderInfoPanel.Visibility = Visibility.Visible;

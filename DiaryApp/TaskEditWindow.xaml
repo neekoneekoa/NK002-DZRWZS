@@ -14,6 +14,22 @@
         <Color x:Key="PrimaryColor">#FF6C5CE7</Color>
         <Color x:Key="SecondaryColor">#FFA29BFE</Color>
         <Color x:Key="AccentColor">#FFFF7675</Color>
+        
+        <!-- 日历日期按钮样式，用于高亮显示提醒日期 -->
+        <Style x:Key="HighlightedCalendarDayButtonStyle" TargetType="CalendarDayButton">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsToday}" Value="True">
+                    <Setter Property="Background" Value="#FFF0F0F0"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsSelected}" Value="True">
+                    <Setter Property="Background" Value="#00CEC9"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsInactive}" Value="True">
+                    <Setter Property="Foreground" Value="#CCCCCC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
     
     <Border CornerRadius="15" Background="#FDFDFD" Margin="10">
@@ -34,10 +50,23 @@
             
     
             
-            <!-- 任务标题 -->
-            <StackPanel Grid.Row="1" Margin="0,0,0,15">
-                <TextBox x:Name="TitleTextBox" Width="300" FontSize="16" Padding="10" Tag="请输入任务标题"/>
-            </StackPanel>
+            <!-- 任务标题和日历 -->
+            <Grid Grid.Row="1" Margin="0,0,0,15">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBox x:Name="TitleTextBox" Width="300" FontSize="16" Padding="10" Tag="请输入任务标题"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                    <!-- 日历控件 -->
+                    <Calendar x:Name="ReminderCalendar" Width="200" Height="200" Margin="0,0,20,0"
+                              Background="White" BorderBrush="#E1E8ED" BorderThickness="1"
+                              SelectionMode="SingleDate"
+                              CalendarDayButtonStyle="{StaticResource HighlightedCalendarDayButtonStyle}"/>
+                </StackPanel>
+            </Grid>
             
 
             
