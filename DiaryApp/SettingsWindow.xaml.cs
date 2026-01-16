@@ -73,11 +73,11 @@ public partial class SettingsWindow : Window
     private void InitializeTimePickers()
     {
         // 设置小时选择器
-        int hour = _appData.ReminderSetting.ReminderTime.Hours;
+        int hour = _appData.ReminderSetting.ReminderTime.HasValue ? _appData.ReminderSetting.ReminderTime.Value.Hours : 20;
         HourComboBox.SelectedIndex = hour;
         
         // 设置分钟选择器
-        int minute = _appData.ReminderSetting.ReminderTime.Minutes;
+        int minute = _appData.ReminderSetting.ReminderTime.HasValue ? _appData.ReminderSetting.ReminderTime.Value.Minutes : 0;
         int minuteIndex = Array.IndexOf(new int[] { 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55 }, minute);
         MinuteComboBox.SelectedIndex = minuteIndex >= 0 ? minuteIndex : 0;
     }

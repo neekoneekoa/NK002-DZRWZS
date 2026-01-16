@@ -337,18 +337,12 @@
                                     <!-- 删除任务按钮 -->
                                     <Button Content="- 删除任务" Height="40" Background="#FF7675" 
                                             Foreground="White" BorderThickness="0" FontWeight="Bold"
-                                            Margin="0,0,0,10" Click="DeleteTaskButton_Click"/>
-                                    
-                                    <!-- 编辑任务按钮 -->
-                                    <Button Content="✏ 编辑任务" Height="40" Background="#00B894" 
-                                            Foreground="White" BorderThickness="0" FontWeight="Bold"
-                                            Margin="0,0,0,15" Click="EditTaskButton_Click"/>
+                                            Margin="0,0,0,15" Click="DeleteTaskButton_Click"/>
                                     
                                     <!-- 功能区其他信息 -->
                                     <TextBlock Text="📝 任务管理" FontSize="12" Foreground="#636E72" Margin="0,10,0,0"/>
                                     <TextBlock Text="• 添加新任务" FontSize="12" Foreground="#636E72" Margin="10,5,0,0"/>
                                     <TextBlock Text="• 删除选中任务" FontSize="12" Foreground="#636E72" Margin="10,5,0,0"/>
-                                    <TextBlock Text="• 编辑选中任务" FontSize="12" Foreground="#636E72" Margin="10,5,0,0"/>
                                 </StackPanel>
                             </Border>
 

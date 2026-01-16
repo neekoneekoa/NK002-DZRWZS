@@ -11,7 +11,7 @@ namespace DiaryApp
         public TaskEntry? TaskEntry { get; private set; }
         public bool IsDeleteRequested { get; private set; } = false;
         private List<string> _currentProjectTags = new List<string>();
-        private ReminderSettings? _tempReminderSettings = null;
+        private ReminderSetting? _tempReminderSettings = null;
 
         public TaskEditWindow(TaskEntry? taskEntry = null)
         {
@@ -25,6 +25,9 @@ namespace DiaryApp
             
             // 初始化提示文字
             InitializeTitlePlaceholder();
+            
+            // 初始化提醒信息显示
+            UpdateReminderInfoDisplay();
         }
 
         private void LoadTaskData()
@@ -409,7 +412,7 @@ namespace DiaryApp
             // 开始时间和结束时间选择器
             var startTimePicker = new DatePicker
             {
-                SelectedDate = subTask.ScheduledTime, // 暂时使用ScheduledTime
+                SelectedDate = subTask.StartDate, // 使用子任务的开始日期
                 Width = 120,
                 FontSize = 12,
                 Margin = new Thickness(0, 0, 5, 0)
@@ -424,7 +427,7 @@ namespace DiaryApp
 
             var endTimePicker = new DatePicker
             {
-                SelectedDate = subTask.ScheduledTime?.AddHours(1), // 默认结束时间为开始时间加1小时
+                SelectedDate = subTask.EndDate, // 使用子任务的结束日期
                 Width = 120,
                 FontSize = 12,
                 Margin = new Thickness(0, 0, 10, 0)
@@ -863,21 +866,91 @@ namespace DiaryApp
                         _tempReminderSettings = reminderWindow.ReminderSettings;
                     }
                     MessageBox.Show("提醒设置已保存", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                    UpdateReminderInfoDisplay();
                 }
-                // 如果用户点击了删除
-                else if (reminderWindow.IsDeleteRequested)
+            }
+        }
+        
+        /// <summary>
+        /// 更新提醒信息显示
+        /// </summary>
+        private void UpdateReminderInfoDisplay()
+        {
+            // 获取当前的提醒设置
+            var reminderSettings = _tempReminderSettings ?? TaskEntry?.ReminderSettings;
+            
+            if (reminderSettings != null)
+            {
+                // 更新显示内容
+                string startDateText = "";
+                if (reminderSettings.StartDate.HasValue)
                 {
-                    // 根据情况删除临时变量或任务对象的设置
-                    if (TaskEntry != null)
+                    startDateText = reminderSettings.StartDate.Value.ToString("yyyy-MM-dd");
+                    if (reminderSettings.ReminderTime.HasValue)
                     {
-                        TaskEntry.ReminderSettings = null;
+                        startDateText += " " + reminderSettings.ReminderTime.Value.ToString("HH:mm");
                     }
-                    else
-                    {
-                        _tempReminderSettings = null;
-                    }
-                    MessageBox.Show("提醒设置已删除", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
+                ReminderStartDateText.Text = startDateText;
+                
+                // 处理不同的提醒方式
+                string reminderTypeText = "";
+                switch (reminderSettings.ReminderType)
+                {
+                    case ReminderType.Daily:
+                        reminderTypeText = "每日提醒";
+                        if (reminderSettings.IntervalDays.HasValue && reminderSettings.IntervalDays.Value > 1)
+                        {
+                            reminderTypeText += $"（每{reminderSettings.IntervalDays.Value}天）";
+                        }
+                        break;
+                    case ReminderType.Weekly:
+                        reminderTypeText = "每周提醒";
+                        if (reminderSettings.WeekDays != null && reminderSettings.WeekDays.Count > 0)
+                        {
+                            reminderTypeText += "（";
+                            var dayNames = new[] { "日", "一", "二", "三", "四", "五", "六" };
+                            foreach (var day in reminderSettings.WeekDays)
+                            {
+                                reminderTypeText += $"{dayNames[(int)day]}、";
+                            }
+                            reminderTypeText = reminderTypeText.TrimEnd('、') + "）";
+                        }
+                        break;
+                    case ReminderType.Monthly:
+                        reminderTypeText = "每月提醒";
+                        if (reminderSettings.MonthlyDayNumber.HasValue && reminderSettings.MonthlyDayOfWeek.HasValue)
+                        {
+                            var dayNames = new[] { "日", "一", "二", "三", "四", "五", "六" };
+                            reminderTypeText += $"（每月第{reminderSettings.MonthlyDayNumber.Value}个{dayNames[(int)reminderSettings.MonthlyDayOfWeek.Value]}）";
+                        }
+                        break;
+                    case ReminderType.Yearly:
+                        reminderTypeText = "每年提醒";
+                        break;
+                    case ReminderType.Interval:
+                        reminderTypeText = "间隔提醒";
+                        if (reminderSettings.IntervalDays.HasValue)
+                        {
+                            reminderTypeText += $"（每{reminderSettings.IntervalDays.Value}天）";
+                        }
+                        break;
+                }
+                
+                ReminderTypeText.Text = reminderTypeText;
+                
+                // 显示下次提醒时间
+                string nextReminderText = "";
+                if (reminderSettings.NextReminderDate.HasValue)
+                {
+                    nextReminderText = reminderSettings.NextReminderDate.Value.ToString("yyyy-MM-dd HH:mm");
+                }
+                NextReminderDateText.Text = nextReminderText;
+                
+                ReminderStatusText.Text = reminderSettings.IsActive ? "已启用" : "已禁用";
+                
+                // 显示提醒信息面板
+                ReminderInfoPanel.Visibility = Visibility.Visible;
             }
         }
     }

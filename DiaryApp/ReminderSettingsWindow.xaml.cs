@@ -1,440 +1,398 @@
 using System;
-using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace DiaryApp
 {
-
-
     public partial class ReminderSettingsWindow : Window
     {
+        // 公共属性
         public TaskEntry TaskEntry { get; private set; }
-        public ReminderSettings? ReminderSettings { get; set; }
-        public bool IsSaveRequested { get; private set; } = false;
-        public bool IsDeleteRequested { get; private set; } = false;
-
-        public ReminderSettingsWindow(TaskEntry taskEntry, ReminderSettings? reminderSettings = null)
+        public ReminderSetting? ReminderSettings { get; private set; }
+        public bool IsSaveRequested { get; private set; }
+        
+        // 构造函数
+        public ReminderSettingsWindow(TaskEntry taskEntry, ReminderSetting? reminderSettings)
         {
             InitializeComponent();
+            
             TaskEntry = taskEntry;
-            ReminderSettings = reminderSettings;
+            ReminderSettings = reminderSettings?.Clone() as ReminderSetting ?? new ReminderSetting();
+            
+            // 初始化UI元素
             InitializeUI();
-            LoadReminderSettings();
-            SetupEventHandlers();
+            
+            // 添加提醒类型变化事件
+            ReminderTypeComboBox.SelectionChanged += ReminderTypeComboBox_SelectionChanged;
         }
-
+        
+        // 初始化UI元素
         private void InitializeUI()
         {
-            // 显示任务标题
-            if (TaskEntry != null && !string.IsNullOrEmpty(TaskEntry.Title))
+            // 设置开始日期
+            if (ReminderSettings.StartDate.HasValue)
             {
-                TaskTitleTextBlock.Text = TaskEntry.Title;
+                StartDatePicker.SelectedDate = ReminderSettings.StartDate;
             }
             else
             {
-                TaskTitleTextBlock.Text = "未命名任务";
-            }
-
-            // 初始化每月日期选项
-            InitializeMonthlyDays();
-
-            // 只有在没有提醒设置的情况下才设置默认值
-            if (ReminderSettings == null)
-            {
-                // 初始化开始日期为当前日期
                 StartDatePicker.SelectedDate = DateTime.Now;
-
-                // 默认选择每天
-                ReminderTypeComboBox.SelectedIndex = 0;
             }
-        }
-
-        private void InitializeMonthlyDays()
-        {
-            // 创建1-31的日期列表
-            var days = new List<int>();
-            for (int i = 1; i <= 31; i++)
+            
+            // 设置提醒时间
+            if (ReminderSettings.ReminderTime.HasValue)
             {
-                days.Add(i);
+                ReminderTimeTextBox.Text = ReminderSettings.ReminderTime.Value.ToString("HH:mm");
             }
-            MonthlyDaysItemsControl.ItemsSource = days;
-        }
-
-        private void SetupEventHandlers()
-        {
-            // 提醒类型选择事件
-            ReminderTypeComboBox.SelectionChanged += ReminderTypeComboBox_SelectionChanged;
-            // 日期变化事件
-            StartDatePicker.SelectedDateChanged += StartDatePicker_SelectedDateChanged;
-            // 文本框变化事件
-            IntervalDaysTextBox.TextChanged += IntervalDaysTextBox_TextChanged;
-            ConsecutiveCountTextBox.TextChanged += ConsecutiveCountTextBox_TextChanged;
-            // 连续单位变化事件
-            ConsecutiveUnitComboBox.SelectionChanged += ConsecutiveUnitComboBox_SelectionChanged;
-        }
-
-        private void LoadReminderSettings()
-        {
-            if (ReminderSettings == null) return;
-
+            else
+            {
+                ReminderTimeTextBox.Text = DateTime.Now.ToString("HH:mm");
+            }
+            
             // 设置提醒类型
-            for (int i = 0; i < ReminderTypeComboBox.Items.Count; i++)
+            switch (ReminderSettings.ReminderType)
             {
-                var item = ReminderTypeComboBox.Items[i] as ComboBoxItem;
-                if (item != null && item.Tag as string == ReminderSettings.ReminderType)
-                {
-                    ReminderTypeComboBox.SelectedIndex = i;
+                case ReminderType.Daily:
+                    ReminderTypeComboBox.SelectedIndex = 0;
                     break;
-                }
-            }
-
-            // 设置间隔天数
-            IntervalDaysTextBox.Text = ReminderSettings.IntervalDays.ToString();
-
-            // 设置连续时间
-            ConsecutiveCountTextBox.Text = ReminderSettings.ConsecutiveCount.ToString();
-            for (int i = 0; i < ConsecutiveUnitComboBox.Items.Count; i++)
-            {
-                var item = ConsecutiveUnitComboBox.Items[i] as ComboBoxItem;
-                if (item != null && item.Tag as string == ReminderSettings.ConsecutiveUnit)
-                {
-                    ConsecutiveUnitComboBox.SelectedIndex = i;
+                case ReminderType.Weekly:
+                    ReminderTypeComboBox.SelectedIndex = 1;
                     break;
-                }
+                case ReminderType.Monthly:
+                    ReminderTypeComboBox.SelectedIndex = 2;
+                    break;
+                case ReminderType.Yearly:
+                    ReminderTypeComboBox.SelectedIndex = 3;
+                    break;
+                case ReminderType.Interval:
+                    ReminderTypeComboBox.SelectedIndex = 4;
+                    break;
+                default:
+                    ReminderTypeComboBox.SelectedIndex = 0;
+                    break;
             }
-
-            // 设置每周特定天数
-            foreach (var checkBox in FindChildren<CheckBox>(WeeklyDaysPanel))
+            
+            // 设置每周设置
+            if (ReminderSettings.WeekDays != null)
             {
-                if (checkBox.Tag is string dayStr && int.TryParse(dayStr, out int day))
-                {
-                    checkBox.IsChecked = ReminderSettings.WeeklyDays.Contains(day);
-                }
+                MondayCheckBox.IsChecked = ReminderSettings.WeekDays.Contains(DayOfWeek.Monday);
+                TuesdayCheckBox.IsChecked = ReminderSettings.WeekDays.Contains(DayOfWeek.Tuesday);
+                WednesdayCheckBox.IsChecked = ReminderSettings.WeekDays.Contains(DayOfWeek.Wednesday);
+                ThursdayCheckBox.IsChecked = ReminderSettings.WeekDays.Contains(DayOfWeek.Thursday);
+                FridayCheckBox.IsChecked = ReminderSettings.WeekDays.Contains(DayOfWeek.Friday);
+                SaturdayCheckBox.IsChecked = ReminderSettings.WeekDays.Contains(DayOfWeek.Saturday);
+                SundayCheckBox.IsChecked = ReminderSettings.WeekDays.Contains(DayOfWeek.Sunday);
             }
-
-            // 设置每月特定天数
-            foreach (var checkBox in FindChildren<CheckBox>(MonthlyDaysItemsControl))
+            else
             {
-                if (checkBox.Tag is int day)
-                {
-                    checkBox.IsChecked = ReminderSettings.MonthlyDays.Contains(day);
-                }
+                // 默认选择周一到周五
+                MondayCheckBox.IsChecked = true;
+                TuesdayCheckBox.IsChecked = true;
+                WednesdayCheckBox.IsChecked = true;
+                ThursdayCheckBox.IsChecked = true;
+                FridayCheckBox.IsChecked = true;
             }
-
-            // 设置开始日期
-            StartDatePicker.SelectedDate = ReminderSettings.StartDate;
+            
+            // 设置每月设置
+            if (ReminderSettings.MonthlyDayNumber.HasValue)
+            {
+                int dayNumber = ReminderSettings.MonthlyDayNumber.Value;
+                // 确保dayNumber在1-5之间
+                dayNumber = Math.Max(1, Math.Min(5, dayNumber));
+                MonthlyDayNumberComboBox.SelectedItem = MonthlyDayNumberComboBox.Items[dayNumber - 1];
+            }
+            else
+            {
+                MonthlyDayNumberComboBox.SelectedIndex = 0;
+            }
+            
+            if (ReminderSettings.MonthlyDayOfWeek.HasValue)
+            {
+                int index = (int)ReminderSettings.MonthlyDayOfWeek.Value;
+                // 确保index在0-6之间（对应DayOfWeek枚举）
+                index = Math.Max(0, Math.Min(6, index));
+                MonthlyDayOfWeekComboBox.SelectedIndex = index;
+            }
+            else
+            {
+                MonthlyDayOfWeekComboBox.SelectedIndex = 0;
+            }
+            
+            // 设置间隔设置
+            if (ReminderSettings.IntervalDays.HasValue)
+            {
+                IntervalDaysTextBox.Text = ReminderSettings.IntervalDays.Value.ToString();
+            }
+            else
+            {
+                IntervalDaysTextBox.Text = "1";
+            }
+            
+            // 设置状态
+            StatusActiveRadio.IsChecked = ReminderSettings.IsActive;
+            StatusInactiveRadio.IsChecked = !ReminderSettings.IsActive;
+            
+            // 更新可见性
+            UpdateSettingsVisibility();
         }
-
+        
+        // 提醒类型变化事件
         private void ReminderTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // 隐藏所有设置面板
-            IntervalSettingsPanel.Visibility = Visibility.Collapsed;
-            ConsecutiveSettingsPanel.Visibility = Visibility.Collapsed;
-            WeeklyDaysPanel.Visibility = Visibility.Collapsed;
-            MonthlyDaysPanel.Visibility = Visibility.Collapsed;
-
-            // 根据选择的提醒类型显示对应的设置面板
-            if (ReminderTypeComboBox.SelectedItem is ComboBoxItem selectedItem)
-            {
-                string reminderType = selectedItem.Tag as string ?? "Daily";
-
-                switch (reminderType)
-                {
-                    case "IntervalDays":
-                        IntervalSettingsPanel.Visibility = Visibility.Visible;
-                        break;
-                    case "ConsecutiveDays":
-                    case "ConsecutiveWeeks":
-                    case "ConsecutiveMonths":
-                        ConsecutiveSettingsPanel.Visibility = Visibility.Visible;
-                        // 只有在没有提醒设置的情况下才设置默认单位
-                        // 如果有保存的提醒设置，应该已经在LoadReminderSettings中设置了单位
-                        break;
-                    case "WeeklySpecific":
-                        WeeklyDaysPanel.Visibility = Visibility.Visible;
-                        break;
-                    case "MonthlySpecific":
-                        MonthlyDaysPanel.Visibility = Visibility.Visible;
-                        break;
-                }
-            }
-
-            // 更新日历和预览
-            UpdateCalendarAndPreview();
+            UpdateSettingsVisibility();
         }
-
-        private void StartDatePicker_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
+        
+        // 更新设置区域的可见性
+        private void UpdateSettingsVisibility()
         {
-            UpdateCalendarAndPreview();
+            int selectedIndex = ReminderTypeComboBox.SelectedIndex;
+            
+            WeeklySettingsGrid.Visibility = selectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+            MonthlySettingsGrid.Visibility = selectedIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
+            IntervalSettingsGrid.Visibility = selectedIndex == 4 ? Visibility.Visible : Visibility.Collapsed;
         }
-
-        private void IntervalDaysTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            UpdateCalendarAndPreview();
-        }
-
-        private void ConsecutiveCountTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            UpdateCalendarAndPreview();
-        }
-
-        private void ConsecutiveUnitComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            UpdateCalendarAndPreview();
-        }
-
-        private void UpdateCalendarAndPreview()
-        {
-            // 清除之前的标记
-            ReminderCalendar.SelectedDates.Clear();
-            ReminderDatesListBox.Items.Clear();
-
-            // 获取当前设置
-            string reminderType = "Daily";
-            if (ReminderTypeComboBox.SelectedItem is ComboBoxItem selectedItem)
-            {
-                reminderType = selectedItem.Tag as string ?? "Daily";
-            }
-
-            DateTime startDate = StartDatePicker.SelectedDate ?? DateTime.Now;
-
-            // 生成预览日期
-            var previewDates = GeneratePreviewDates(reminderType, startDate);
-
-            // 清空现有的日期标记和列表
-            ReminderCalendar.SelectedDates.Clear();
-            ReminderDatesListBox.Items.Clear();
-
-            // 在日历上标记日期
-            foreach (var date in previewDates)
-            {
-                ReminderCalendar.SelectedDates.Add(date);
-                ReminderDatesListBox.Items.Add(date.ToString("yyyy-MM-dd"));
-            }
-        }
-
-        private List<DateTime> GeneratePreviewDates(string reminderType, DateTime startDate)
-        {
-            var dates = new List<DateTime>();
-            int maxPreviewDays = 90; // 预览未来90天
-
-            switch (reminderType)
-            {
-                case "Daily":
-                    // 每天
-                    for (int i = 0; i < maxPreviewDays; i++)
-                    {
-                        dates.Add(startDate.AddDays(i));
-                    }
-                    break;
-
-                case "IntervalDays":
-                    // 间隔几天
-                    if (int.TryParse(IntervalDaysTextBox.Text, out int intervalDays) && intervalDays > 0)
-                    {
-                        for (int i = 0; i < maxPreviewDays; i += intervalDays)
-                        {
-                            dates.Add(startDate.AddDays(i));
-                        }
-                    }
-                    break;
-
-                case "WeeklySpecific":
-                    // 每周特定几天
-                    var weeklyDays = new List<int>();
-                    foreach (var checkBox in FindChildren<CheckBox>(WeeklyDaysPanel))
-                    {
-                        if (checkBox.IsChecked == true && checkBox.Tag is string dayStr && int.TryParse(dayStr, out int day))
-                        {
-                            weeklyDays.Add(day);
-                        }
-                    }
-
-                    if (weeklyDays.Count > 0)
-                    {
-                        DateTime currentDate = startDate;
-                        while (currentDate <= startDate.AddDays(maxPreviewDays))
-                        {
-                            if (weeklyDays.Contains((int)currentDate.DayOfWeek + 1)) // 1=周一, 7=周日
-                            {
-                                dates.Add(currentDate);
-                            }
-                            currentDate = currentDate.AddDays(1);
-                        }
-                    }
-                    break;
-
-                case "MonthlySpecific":
-                    // 每月特定几天
-                    var monthlyDays = new List<int>();
-                    foreach (var checkBox in FindChildren<CheckBox>(MonthlyDaysItemsControl))
-                    {
-                        if (checkBox.IsChecked == true && checkBox.Tag is int day)
-                        {
-                            monthlyDays.Add(day);
-                        }
-                    }
-
-                    if (monthlyDays.Count > 0)
-                    {
-                        DateTime currentDate = startDate;
-                        while (currentDate <= startDate.AddDays(maxPreviewDays))
-                        {
-                            if (monthlyDays.Contains(currentDate.Day))
-                            {
-                                dates.Add(currentDate);
-                            }
-                            currentDate = currentDate.AddDays(1);
-                        }
-                    }
-                    break;
-
-                case "ConsecutiveDays":
-                case "ConsecutiveWeeks":
-                case "ConsecutiveMonths":
-                    // 连续几天/几周/几个月
-                    if (int.TryParse(ConsecutiveCountTextBox.Text, out int consecutiveCount) && consecutiveCount > 0)
-                    {
-                        string unit = "Days";
-                        if (ConsecutiveUnitComboBox.SelectedItem is ComboBoxItem unitItem)
-                        {
-                            unit = unitItem.Tag as string ?? "Days";
-                        }
-
-                        for (int i = 0; i < consecutiveCount; i++)
-                        {
-                            DateTime date;
-                            switch (unit)
-                            {
-                                case "Days":
-                                    date = startDate.AddDays(i);
-                                    break;
-                                case "Weeks":
-                                    date = startDate.AddDays(i * 7);
-                                    break;
-                                case "Months":
-                                    date = startDate.AddMonths(i);
-                                    break;
-                                default:
-                                    date = startDate.AddDays(i);
-                                    break;
-                            }
-                            dates.Add(date);
-                        }
-                    }
-                    break;
-
-                case "ForgettingCurve":
-                    // 记忆遗忘曲线：1, 2, 4, 7, 15, 30天
-                    var curveIntervals = new[] { 0, 1, 3, 6, 14, 29 };
-                    foreach (var interval in curveIntervals)
-                    {
-                        dates.Add(startDate.AddDays(interval));
-                    }
-                    break;
-            }
-
-            return dates;
-        }
-
+        
+        // 保存按钮点击事件
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            // 创建或更新提醒设置
-            ReminderSettings = new ReminderSettings
+            // 验证数据
+            if (!ValidateData())
             {
-                ReminderType = "Daily",
-                IntervalDays = 1,
-                ConsecutiveCount = 1,
-                ConsecutiveUnit = "Days",
-                WeeklyDays = new List<int>(),
-                MonthlyDays = new List<int>(),
-                StartDate = StartDatePicker.SelectedDate ?? DateTime.Now,
-                IsActive = true
-            };
-
-            // 获取提醒类型
-            if (ReminderTypeComboBox.SelectedItem is ComboBoxItem selectedItem)
-            {
-                ReminderSettings.ReminderType = selectedItem.Tag as string ?? "Daily";
+                return;
             }
-
-            // 获取间隔天数
-            if (int.TryParse(IntervalDaysTextBox.Text, out int intervalDays) && intervalDays > 0)
-            {
-                ReminderSettings.IntervalDays = intervalDays;
-            }
-
-            // 获取连续设置
-            if (int.TryParse(ConsecutiveCountTextBox.Text, out int consecutiveCount) && consecutiveCount > 0)
-            {
-                ReminderSettings.ConsecutiveCount = consecutiveCount;
-            }
-            if (ConsecutiveUnitComboBox.SelectedItem is ComboBoxItem unitItem)
-            {
-                ReminderSettings.ConsecutiveUnit = unitItem.Tag as string ?? "Days";
-            }
-
-            // 获取每周选择的天数
-            foreach (var checkBox in FindChildren<CheckBox>(WeeklyDaysPanel))
-            {
-                if (checkBox.IsChecked == true && checkBox.Tag is string dayStr && int.TryParse(dayStr, out int day))
-                {
-                    ReminderSettings.WeeklyDays.Add(day);
-                }
-            }
-
-            // 获取每月选择的天数
-            foreach (var checkBox in FindChildren<CheckBox>(MonthlyDaysItemsControl))
-            {
-                if (checkBox.IsChecked == true && checkBox.Tag is int day)
-                {
-                    ReminderSettings.MonthlyDays.Add(day);
-                }
-            }
-
+            
+            // 保存设置
+            SaveReminderSettings();
+            
             IsSaveRequested = true;
+            DialogResult = true;
             Close();
         }
-
-        private void DeleteButton_Click(object sender, RoutedEventArgs e)
-        {
-            // 确认删除
-            MessageBoxResult result = MessageBox.Show(
-                "确定要删除这个任务的提醒设置吗？",
-                "确认删除",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                IsDeleteRequested = true;
-                Close();
-            }
-        }
-
+        
+        // 取消按钮点击事件
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
+            IsSaveRequested = false;
+            DialogResult = false;
             Close();
         }
-
-        // 辅助方法：查找所有子控件
-        private IEnumerable<T> FindChildren<T>(DependencyObject parent) where T : DependencyObject
+        
+        // 验证数据
+        private bool ValidateData()
         {
-            if (parent == null) yield break;
-
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            // 验证开始日期
+            if (!StartDatePicker.SelectedDate.HasValue)
             {
-                var child = VisualTreeHelper.GetChild(parent, i);
-                if (child is T tChild)
+                MessageBox.Show("请选择开始日期", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+            
+            // 验证提醒时间
+            TimeSpan reminderTime;
+            if (!TimeSpan.TryParse(ReminderTimeTextBox.Text, out reminderTime))
+            {
+                MessageBox.Show("请输入有效的提醒时间（格式：HH:mm）", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+            
+            // 验证间隔天数
+            if (ReminderTypeComboBox.SelectedIndex == 4) // 间隔类型
+            {
+                if (!int.TryParse(IntervalDaysTextBox.Text, out int intervalDays) || intervalDays < 1)
                 {
-                    yield return tChild;
+                    MessageBox.Show("请输入有效的间隔天数（至少1天）", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return false;
                 }
-
-                foreach (var grandChild in FindChildren<T>(child))
+            }
+            
+            return true;
+        }
+        
+        // 保存提醒设置
+        private void SaveReminderSettings()
+        {
+            // 设置基本属性
+            ReminderSettings.StartDate = StartDatePicker.SelectedDate;
+            
+            // 解析提醒时间
+            if (TimeSpan.TryParse(ReminderTimeTextBox.Text, out TimeSpan reminderTime))
+            {
+                ReminderSettings.ReminderTime = reminderTime;
+            }
+            
+            ReminderSettings.IsActive = StatusActiveRadio.IsChecked ?? false;
+            
+            // 设置提醒类型
+            switch (ReminderTypeComboBox.SelectedIndex)
+            {
+                case 0:
+                    ReminderSettings.ReminderType = ReminderType.Daily;
+                    break;
+                case 1:
+                    ReminderSettings.ReminderType = ReminderType.Weekly;
+                    break;
+                case 2:
+                    ReminderSettings.ReminderType = ReminderType.Monthly;
+                    break;
+                case 3:
+                    ReminderSettings.ReminderType = ReminderType.Yearly;
+                    break;
+                case 4:
+                    ReminderSettings.ReminderType = ReminderType.Interval;
+                    break;
+            }
+            
+            // 设置每周设置
+            if (ReminderSettings.ReminderType == ReminderType.Weekly)
+            {
+                var weekDays = new System.Collections.Generic.List<DayOfWeek>();
+                
+                if (MondayCheckBox.IsChecked ?? false) weekDays.Add(DayOfWeek.Monday);
+                if (TuesdayCheckBox.IsChecked ?? false) weekDays.Add(DayOfWeek.Tuesday);
+                if (WednesdayCheckBox.IsChecked ?? false) weekDays.Add(DayOfWeek.Wednesday);
+                if (ThursdayCheckBox.IsChecked ?? false) weekDays.Add(DayOfWeek.Thursday);
+                if (FridayCheckBox.IsChecked ?? false) weekDays.Add(DayOfWeek.Friday);
+                if (SaturdayCheckBox.IsChecked ?? false) weekDays.Add(DayOfWeek.Saturday);
+                if (SundayCheckBox.IsChecked ?? false) weekDays.Add(DayOfWeek.Sunday);
+                
+                if (weekDays.Count == 0)
                 {
-                    yield return grandChild;
+                    // 如果没有选择任何星期几，默认选择周一
+                    weekDays.Add(DayOfWeek.Monday);
+                }
+                
+                ReminderSettings.WeekDays = weekDays;
+            }
+            
+            // 设置每月设置
+            if (ReminderSettings.ReminderType == ReminderType.Monthly)
+            {
+                if (MonthlyDayNumberComboBox.SelectedItem is ComboBoxItem dayNumberItem)
+                {
+                    ReminderSettings.MonthlyDayNumber = int.Parse(dayNumberItem.Tag.ToString());
+                }
+                
+                if (MonthlyDayOfWeekComboBox.SelectedItem is ComboBoxItem dayOfWeekItem)
+                {
+                    ReminderSettings.MonthlyDayOfWeek = (DayOfWeek)Enum.Parse(typeof(DayOfWeek), dayOfWeekItem.Tag.ToString());
+                }
+            }
+            
+            // 设置间隔设置
+            if (ReminderSettings.ReminderType == ReminderType.Interval)
+            {
+                if (int.TryParse(IntervalDaysTextBox.Text, out int intervalDays))
+                {
+                    ReminderSettings.IntervalDays = intervalDays;
+                }
+            }
+            
+            // 计算下次提醒日期
+            ReminderSettings.NextReminderDate = CalculateNextReminderDate();
+        }
+        
+        // 计算下次提醒日期
+        private DateTime? CalculateNextReminderDate()
+        {
+            if (!ReminderSettings.StartDate.HasValue || !ReminderSettings.ReminderTime.HasValue)
+            {
+                return null;
+            }
+            
+            var nextDate = ReminderSettings.StartDate.Value.Date.Add(ReminderSettings.ReminderTime.Value);
+            var today = DateTime.Now;
+            
+            // 如果下次提醒日期已经过去，计算下一个
+            if (nextDate <= today)
+            {
+                switch (ReminderSettings.ReminderType)
+                {
+                    case ReminderType.Daily:
+                        while (nextDate <= today)
+                        {
+                            nextDate = nextDate.AddDays(1);
+                        }
+                        break;
+                    
+                    case ReminderType.Weekly:
+                        if (ReminderSettings.WeekDays != null && ReminderSettings.WeekDays.Count > 0)
+                        {
+                            // 找到下一个符合条件的星期几
+                            bool found = false;
+                            int daysToAdd = 1;
+                            
+                            while (!found)
+                            {
+                                nextDate = nextDate.AddDays(daysToAdd);
+                                if (ReminderSettings.WeekDays.Contains(nextDate.DayOfWeek))
+                                {
+                                    found = true;
+                                }
+                                daysToAdd++;
+                            }
+                        }
+                        break;
+                    
+                    case ReminderType.Monthly:
+                        if (ReminderSettings.MonthlyDayNumber.HasValue && ReminderSettings.MonthlyDayOfWeek.HasValue)
+                        {
+                            // 找到下一个符合条件的日期
+                            int daysToAdd = 1;
+                            while (nextDate <= today)
+                            {
+                                nextDate = nextDate.AddDays(daysToAdd);
+                                daysToAdd++;
+                                
+                                // 检查是否是当月的第N个星期几
+                                int weekNumber = (nextDate.Day - 1) / 7 + 1;
+                                if (weekNumber == ReminderSettings.MonthlyDayNumber.Value && nextDate.DayOfWeek == ReminderSettings.MonthlyDayOfWeek.Value)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    
+                    case ReminderType.Yearly:
+                        while (nextDate <= today)
+                        {
+                            nextDate = nextDate.AddYears(1);
+                        }
+                        break;
+                    
+                    case ReminderType.Interval:
+                        if (ReminderSettings.IntervalDays.HasValue)
+                        {
+                            while (nextDate <= today)
+                            {
+                                nextDate = nextDate.AddDays(ReminderSettings.IntervalDays.Value);
+                            }
+                        }
+                        break;
+                }
+            }
+            
+            return nextDate;
+        }
+        
+        // 选择时间按钮点击事件
+        private void SelectTimeButton_Click(object sender, RoutedEventArgs e)
+        {
+            // 使用InputBox来获取时间输入
+            string result = Microsoft.VisualBasic.Interaction.InputBox("请输入时间（格式：HH:mm）", "选择时间", ReminderTimeTextBox.Text);
+            
+            if (!string.IsNullOrEmpty(result))
+            {
+                // 验证时间格式
+                if (TimeSpan.TryParse(result, out TimeSpan time))
+                {
+                    ReminderTimeTextBox.Text = time.ToString("HH:mm");
+                }
+                else
+                {
+                    MessageBox.Show("时间格式不正确，请使用HH:mm格式", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }

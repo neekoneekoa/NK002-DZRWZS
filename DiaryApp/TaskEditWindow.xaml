@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DiaryApp"
         mc:Ignorable="d"
-        Title="编辑任务" Height="850" Width="1000"
+        Title="编辑任务" Height="850" Width="1100"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize">
     
@@ -101,7 +101,31 @@
                 </ItemsControl>
             </StackPanel>
             
-
+            <!-- 提醒设置区域 -->
+            <StackPanel Grid.Row="2" Margin="0,110,0,15" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button x:Name="ReminderButton" Content="设置提醒" Width="100" Height="30"
+                        Background="#00CEC9" Foreground="White" BorderThickness="0"
+                        Click="ReminderButton_Click" FontSize="12" Margin="0,0,20,0"/>
+                
+                <StackPanel x:Name="ReminderInfoPanel" Orientation="Horizontal" Margin="0,0,0,0">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
+                        <TextBlock Text="开始日期：" FontSize="12" Foreground="#636E72" Width="80" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ReminderStartDateText" FontSize="12" Foreground="#2D3436" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
+                        <TextBlock Text="提醒类型：" FontSize="12" Foreground="#636E72" Width="80" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ReminderTypeText" FontSize="12" Foreground="#2D3436" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
+                        <TextBlock Text="下次提醒：" FontSize="12" Foreground="#636E72" Width="80" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="NextReminderDateText" FontSize="12" Foreground="#2D3436" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
+                        <TextBlock Text="提醒状态：" FontSize="12" Foreground="#636E72" Width="80" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ReminderStatusText" FontSize="12" Foreground="#2D3436" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
             
             <!-- 章节和子任务 -->
             <Grid Grid.Row="3" Margin="0,0,0,15">
@@ -123,12 +147,11 @@
                     <StackPanel x:Name="ChaptersPanel"/>
                 </ScrollViewer>
             </Grid>
-            
-            <!-- 按钮 -->
+
+        <!-- 按钮 -->
             <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                 <Button x:Name="SaveButton" Content="保存" Width="80" Height="35" Background="#6C5CE7" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="SaveButton_Click"/>
                 <Button x:Name="DeleteButton" Content="删除" Width="80" Height="35" Background="#FF7675" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="DeleteButton_Click"/>
-                <Button x:Name="ReminderButton" Content="提醒" Width="80" Height="35" Background="#00B894" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="ReminderButton_Click"/>
                 <Button x:Name="CancelButton" Content="取消" Width="80" Height="35" Background="#BDC3C7" Foreground="#2D3436" BorderThickness="0" Click="CancelButton_Click"/>
             </StackPanel>
         </Grid>

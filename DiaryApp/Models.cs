@@ -39,19 +39,6 @@ public enum TaskType
     Project = 1
 }
 
-    // ===== 提醒设置数据模型 =====
-    public class ReminderSettings
-    {
-        public string ReminderType { get; set; } = "Daily";
-        public int IntervalDays { get; set; } = 1;
-        public int ConsecutiveCount { get; set; } = 1;
-        public string ConsecutiveUnit { get; set; } = "Days";
-        public List<int> WeeklyDays { get; set; } = new List<int>();
-        public List<int> MonthlyDays { get; set; } = new List<int>();
-        public DateTime StartDate { get; set; } = DateTime.Now;
-        public bool IsActive { get; set; } = true;
-    }
-
     // ===== 任务数据模型 =====
     public class TaskChapter
     {
@@ -95,6 +82,7 @@ public enum TaskType
         public string Content { get; set; } = "";
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? CompletedAt { get; set; }
+        public ReminderSetting? ReminderSettings { get; set; } = null;
         
         // 文本样式属性
         public double FontSize { get; set; } = 14; // 字号
@@ -106,9 +94,6 @@ public enum TaskType
         public int TotalDays { get; set; } = 1; // 总天数
         public DateTime StartDate { get; set; } = DateTime.Now; // 开始日期
         public DateTime EndDate { get; set; } = DateTime.Now; // 结束日期
-        
-        // 提醒设置
-        public ReminderSettings? ReminderSettings { get; set; } // 提醒设置
         
         // 用于显示
         public string StatusDescription => Status switch
@@ -246,12 +231,57 @@ public enum TaskType
     }
 
     // ===== 提醒数据模型 =====
+    // 提醒类型枚举
+    public enum ReminderType
+    {
+        Daily,     // 每日
+        Weekly,    // 每周
+        Monthly,   // 每月
+        Yearly,    // 每年
+        Interval   // 间隔
+    }
+    
     public class ReminderSetting
     {
         public bool IsEnabled { get; set; } = false;
-        public TimeSpan ReminderTime { get; set; } = new TimeSpan(20, 0, 0); // 默认晚上8点
+        public TimeSpan? ReminderTime { get; set; } = new TimeSpan(20, 0, 0); // 默认晚上8点
         public string ReminderMessage { get; set; } = "该写日记了哦！";
         public bool IsMinimizedToTray { get; set; } = true; // 是否最小化到系统托盘
+        public DateTime? StartDate { get; set; } = DateTime.Now;
+        public ReminderType ReminderType { get; set; } = ReminderType.Daily;
+        public int? IntervalDays { get; set; } = 1;
+        
+        // 每周设置
+        public List<DayOfWeek> WeekDays { get; set; } = new List<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday };
+        
+        // 每月设置
+        public int? MonthlyDayNumber { get; set; } = 1; // 第几个星期
+        public DayOfWeek? MonthlyDayOfWeek { get; set; } = DayOfWeek.Monday; // 星期几
+        
+        // 下次提醒日期
+        public DateTime? NextReminderDate { get; set; } = null;
+        
+        public bool IsActive { get; set; } = false;
+        
+        // 克隆方法
+        public object Clone()
+        {
+            return new ReminderSetting
+            {
+                IsEnabled = this.IsEnabled,
+                ReminderTime = this.ReminderTime,
+                ReminderMessage = this.ReminderMessage,
+                IsMinimizedToTray = this.IsMinimizedToTray,
+                StartDate = this.StartDate,
+                ReminderType = this.ReminderType,
+                IntervalDays = this.IntervalDays,
+                WeekDays = new List<DayOfWeek>(this.WeekDays),
+                MonthlyDayNumber = this.MonthlyDayNumber,
+                MonthlyDayOfWeek = this.MonthlyDayOfWeek,
+                NextReminderDate = this.NextReminderDate,
+                IsActive = this.IsActive
+            };
+        }
     }
 
     // ===== 应用统一数据模型 =====

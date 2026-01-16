@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.76";
+    public const string VERSION = "0.1.1.86";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -765,10 +765,9 @@ public partial class MainWindow : Window
         
         // 检查当前时间是否达到提醒时间
         var now = DateTime.Now;
-        var reminderTime = new DateTime(now.Year, now.Month, now.Day, 
-                                      _appData.ReminderSetting.ReminderTime.Hours, 
-                                      _appData.ReminderSetting.ReminderTime.Minutes, 
-                                      0);
+        int hour = _appData.ReminderSetting.ReminderTime.HasValue ? _appData.ReminderSetting.ReminderTime.Value.Hours : 20;
+        int minute = _appData.ReminderSetting.ReminderTime.HasValue ? _appData.ReminderSetting.ReminderTime.Value.Minutes : 0;
+        var reminderTime = new DateTime(now.Year, now.Month, now.Day, hour, minute, 0);
         
         return now >= reminderTime;
     }
@@ -1418,7 +1417,7 @@ public partial class MainWindow : Window
         {
             DeleteTask(tempTask);
         }
-        // 检查是否有选中的项目任务
+        // 妫€鏌ユ槸鍚︽湁閫変腑鐨勯」鐩换鍔?
         else if (ProjectTaskListBox.SelectedItem is TaskEntry projectTask)
         {
             DeleteTask(projectTask);
@@ -1426,47 +1425,6 @@ public partial class MainWindow : Window
         else
         {
             MessageBox.Show("请先选中要删除的任务", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-    }
-
-    private void EditTaskButton_Click(object sender, RoutedEventArgs e)
-    {
-        TaskEntry selectedTask = null;
-        
-        // 检查是否有选中的临时任务
-        if (TempTaskListBox.SelectedItem is TaskEntry tempTask)
-        {
-            selectedTask = tempTask;
-        }
-        // 检查是否有选中的项目任务
-        else if (ProjectTaskListBox.SelectedItem is TaskEntry projectTask)
-        {
-            selectedTask = projectTask;
-        }
-        
-        if (selectedTask == null)
-        {
-            MessageBox.Show("请先选中要编辑的任务", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
-        
-        // 创建编辑窗口并传递选中的任务
-        var taskEditWindow = new TaskEditWindow(selectedTask);
-        if (taskEditWindow.ShowDialog() == true)
-        {
-            // 如果用户保存了编辑，更新数据源中的任务
-            if (taskEditWindow.TaskEntry != null)
-            {
-                // 找到并更新任务
-                var index = _appData.Tasks.FindIndex(t => t.Id == taskEditWindow.TaskEntry.Id);
-                if (index != -1)
-                {
-                    _appData.Tasks[index] = taskEditWindow.TaskEntry;
-                    SaveAppData();
-                }
-            }
-            // 刷新任务列表
-            RefreshTaskLists();
         }
     }
 
