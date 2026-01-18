@@ -43,15 +43,17 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="10" Margin="0,0,0,8" Padding="10">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="10" Margin="0,0,0,8" Padding="10" BorderThickness="2" BorderBrush="Transparent">
                             <ContentPresenter/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#336C5CE7"/>
+                                <Setter TargetName="border" Property="Background" Value="#4D6C5CE7"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#FF6C5CE7"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#1A6C5CE7"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#806C5CE7"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -339,6 +341,11 @@
                                             Foreground="White" BorderThickness="0" FontWeight="Bold"
                                             Margin="0,0,0,15" Click="DeleteTaskButton_Click"/>
                                     
+                                    <!-- 编辑任务按钮 -->
+                                    <Button Content="✏️ 编辑任务" Height="40" Background="#6C5CE7" 
+                                            Foreground="White" BorderThickness="0" FontWeight="Bold"
+                                            Margin="0,0,0,10" Click="EditTaskButton_Click"/>
+                                    
                                     <!-- 功能区其他信息 -->
                                     <TextBlock Text="📝 任务管理" FontSize="12" Foreground="#636E72" Margin="0,10,0,0"/>
                                     <TextBlock Text="• 添加新任务" FontSize="12" Foreground="#636E72" Margin="10,5,0,0"/>
@@ -367,7 +374,8 @@
                                     <ListBox Grid.Row="1" x:Name="TempTaskListBox" 
                                              Background="Transparent" BorderThickness="0" 
                                              ItemContainerStyle="{StaticResource DiaryItemStyle}"
-                                             SelectionChanged="TempTaskListBox_SelectionChanged">
+                                             SelectionChanged="TempTaskListBox_SelectionChanged"
+                                             MouseDoubleClick="TempTaskListBox_MouseDoubleClick">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
                                                 <StackPanel Margin="{Binding Level, Converter={StaticResource LevelToMarginConverter}}">
@@ -410,7 +418,8 @@
                                     <ListBox Grid.Row="1" x:Name="ProjectTaskListBox" 
                                              Background="Transparent" BorderThickness="0" 
                                              ItemContainerStyle="{StaticResource DiaryItemStyle}"
-                                             SelectionChanged="ProjectTaskListBox_SelectionChanged">
+                                             SelectionChanged="ProjectTaskListBox_SelectionChanged"
+                                             MouseDoubleClick="ProjectTaskListBox_MouseDoubleClick">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
                                                 <StackPanel Margin="{Binding Level, Converter={StaticResource LevelToMarginConverter}}">

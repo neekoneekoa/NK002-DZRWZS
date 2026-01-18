@@ -17,6 +17,8 @@
         
         <!-- 日历日期按钮样式，用于高亮显示提醒日期 -->
         <Style x:Key="HighlightedCalendarDayButtonStyle" TargetType="CalendarDayButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#2D3436"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsToday}" Value="True">
                     <Setter Property="Background" Value="#FFF0F0F0"/>
@@ -27,6 +29,14 @@
                 </DataTrigger>
                 <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsInactive}" Value="True">
                     <Setter Property="Foreground" Value="#CCCCCC"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="ReminderDate">
+                    <Setter Property="Background" Value="#6C5CE7"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="ToolTip" Value="提醒日期"/>
+                    <Setter Property="BorderBrush" Value="#A29BFE"/>
+                    <Setter Property="BorderThickness" Value="2"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -70,6 +80,7 @@
                     
                     <!-- 任务标题 -->
                     <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                        <TextBlock Text="任务标题：" FontSize="14" Foreground="#636E72" Margin="0,0,0,5" IsHitTestVisible="False" Focusable="False"/>
                         <TextBox x:Name="TitleTextBox" Width="300" FontSize="16" Padding="10" Tag="请输入任务标题"/>
                     </StackPanel>
                     
@@ -184,7 +195,12 @@
                     <Calendar x:Name="ReminderCalendar" Width="200" Height="200"
                               Background="White" BorderBrush="#E1E8ED" BorderThickness="1"
                               SelectionMode="SingleDate"
-                              CalendarDayButtonStyle="{StaticResource HighlightedCalendarDayButtonStyle}"/>
+                              CalendarDayButtonStyle="{StaticResource HighlightedCalendarDayButtonStyle}"
+                              Loaded="ReminderCalendar_Loaded"
+                              DisplayModeChanged="ReminderCalendar_DisplayModeChanged"
+                              SelectedDatesChanged="ReminderCalendar_SelectedDatesChanged"/>
+                    <Button x:Name="TestCalendarButton" Content="测试日历更新" Width="120" Height="30" Margin="0,10,0,0"
+                            Click="TestCalendarButton_Click"/>
                 </StackPanel>
             </Grid>
             

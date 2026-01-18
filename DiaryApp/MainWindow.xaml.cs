@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.101";
+    public const string VERSION = "0.1.1.120";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -399,6 +399,9 @@ public partial class MainWindow : Window
         
         // 初始化时间记录显示（确保时间记录模块在启动时就正确初始化）
         UpdateTimeRecordDisplay();
+        
+        // 初始化任务列表（确保任务数据在启动时就正确加载）
+        RefreshTaskLists();
         
         // 初始化打卡统计
         UpdateCheckInStats();
@@ -777,6 +780,223 @@ public partial class MainWindow : Window
     {
         // 使用WPF消息框显示提醒
         MessageBox.Show(_appData.ReminderSetting.ReminderMessage, "我的日记助手", MessageBoxButton.OK, MessageBoxImage.Information);
+        
+        // 自动生成任务
+        AutoGenerateTasksFromReminders();
+    }
+
+    // 根据提醒设置自动生成任务
+    private void AutoGenerateTasksFromReminders()
+    {
+        try
+        {
+            var today = DateTime.Now.Date;
+            var tasksToGenerate = new List<TaskEntry>();
+
+            // 检查所有现有任务，找出需要生成新任务的那些
+            foreach (var existingTask in _appData.Tasks)
+            {
+                if (existingTask.ReminderSettings != null && 
+                    existingTask.ReminderSettings.IsEnabled && 
+                    existingTask.ReminderSettings.IsActive)
+                {
+                    var reminderSettings = existingTask.ReminderSettings;
+                    
+                    // 检查今天是否需要生成任务
+                    if (ShouldGenerateTaskToday(reminderSettings, today))
+                    {
+                        // 创建新任务
+                        var newTask = CreateTaskFromReminder(existingTask, today);
+                        if (newTask != null)
+                        {
+                            tasksToGenerate.Add(newTask);
+                        }
+                    }
+                }
+            }
+
+            // 添加生成的任务
+            if (tasksToGenerate.Count > 0)
+            {
+                foreach (var task in tasksToGenerate)
+                {
+                    _appData.Tasks.Add(task);
+                }
+                
+                SaveAppData();
+                RefreshTaskLists();
+                
+                // 显示生成任务的通知
+                if (tasksToGenerate.Count == 1)
+                {
+                    MessageBox.Show($"已自动生成任务：{tasksToGenerate[0].Title}", "任务生成", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show($"已自动生成 {tasksToGenerate.Count} 个任务", "任务生成", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"自动生成任务时出错: {ex.Message}");
+        }
+    }
+
+    // 检查今天是否应该生成任务
+    private bool ShouldGenerateTaskToday(ReminderSetting reminderSettings, DateTime today)
+    {
+        if (!reminderSettings.StartDate.HasValue)
+            return false;
+
+        var startDate = reminderSettings.StartDate.Value.Date;
+        
+        // 如果今天早于开始日期，不生成任务
+        if (today < startDate)
+            return false;
+
+        switch (reminderSettings.ReminderType)
+        {
+            case ReminderType.Daily:
+                // 每日提醒 - 每天都生成
+                return true;
+
+            case ReminderType.Weekly:
+                // 每周提醒 - 检查今天是否在指定的星期几中
+                if (reminderSettings.WeekDays != null && reminderSettings.WeekDays.Count > 0)
+                {
+                    return reminderSettings.WeekDays.Contains(today.DayOfWeek);
+                }
+                return false;
+
+            case ReminderType.Monthly:
+                // 每月提醒 - 检查今天是否是每月的同一天或指定的星期几
+                if (reminderSettings.MonthlyDayNumber.HasValue && reminderSettings.MonthlyDayOfWeek.HasValue)
+                {
+                    // 检查是否是每月的第几个星期几
+                    var monthlyDate = GetMonthlyWeekDayDate(today.Year, today.Month, 
+                        reminderSettings.MonthlyDayNumber.Value, reminderSettings.MonthlyDayOfWeek.Value);
+                    return monthlyDate.HasValue && monthlyDate.Value.Date == today.Date;
+                }
+                else
+                {
+                    // 默认检查是否是每月的同一天
+                    return today.Day == startDate.Day;
+                }
+
+            case ReminderType.Yearly:
+                // 每年提醒 - 检查今天是否是每年的同一天
+                return today.Month == startDate.Month && today.Day == startDate.Day;
+
+            case ReminderType.Interval:
+                // 间隔提醒 - 检查今天是否在间隔周期内
+                if (reminderSettings.IntervalDays.HasValue && reminderSettings.IntervalDays.Value > 0)
+                {
+                    var daysSinceStart = (today - startDate).Days;
+                    return daysSinceStart >= 0 && daysSinceStart % reminderSettings.IntervalDays.Value == 0;
+                }
+                return false;
+
+            default:
+                return false;
+        }
+    }
+
+    // 根据提醒设置创建新任务
+    private TaskEntry? CreateTaskFromReminder(TaskEntry originalTask, DateTime taskDate)
+    {
+        try
+        {
+            var newTask = new TaskEntry
+            {
+                Id = Guid.NewGuid().ToString(),
+                Title = $"{originalTask.Title} - {taskDate:MM月dd日}",
+                Content = originalTask.Content,
+                TaskType = originalTask.TaskType,
+                ProjectTags = new List<string>(originalTask.ProjectTags ?? new List<string>()),
+                Status = TaskStatus.Pending,
+                Priority = originalTask.Priority,
+                Chapters = new List<TaskChapter>(),
+                CreatedAt = DateTime.Now,
+                StartDate = taskDate,
+                EndDate = taskDate.AddDays(1),
+                ReminderSettings = null // 新生成的任务不复制提醒设置，避免循环生成
+            };
+
+            // 复制章节结构（但不复制具体内容）
+            if (originalTask.Chapters != null && originalTask.Chapters.Count > 0)
+            {
+                foreach (var originalChapter in originalTask.Chapters)
+                {
+                    var newChapter = new TaskChapter
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Title = originalChapter.Title,
+                        Content = "", // 清空内容，等待用户填写
+                        SubTasks = new List<SubTask>(),
+                        Notes = "",
+                        CreatedAt = DateTime.Now
+                    };
+
+                    // 复制子任务结构
+                    if (originalChapter.SubTasks != null && originalChapter.SubTasks.Count > 0)
+                    {
+                        foreach (var originalSubTask in originalChapter.SubTasks)
+                        {
+                            var newSubTask = new SubTask
+                            {
+                                Id = Guid.NewGuid().ToString(),
+                                Title = originalSubTask.Title,
+                                Content = "", // 清空内容
+                                IsCompleted = false,
+                                StartDate = taskDate,
+                                EndDate = taskDate.AddDays(1)
+                            };
+                            newChapter.SubTasks.Add(newSubTask);
+                        }
+                    }
+
+                    newTask.Chapters.Add(newChapter);
+                }
+            }
+
+            return newTask;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"创建任务时出错: {ex.Message}");
+            return null;
+        }
+    }
+
+    // 获取每月第几个星期几的日期（复制自TaskEditWindow）
+    private DateTime? GetMonthlyWeekDayDate(int year, int month, int weekNumber, DayOfWeek dayOfWeek)
+    {
+        try
+        {
+            var firstDayOfMonth = new DateTime(year, month, 1);
+            var firstDayOfWeek = (int)firstDayOfMonth.DayOfWeek;
+            var targetDayOfWeek = (int)dayOfWeek;
+
+            // 计算第一个目标星期几的日期
+            var daysUntilTarget = (targetDayOfWeek - firstDayOfWeek + 7) % 7;
+            var firstTargetDate = firstDayOfMonth.AddDays(daysUntilTarget);
+
+            // 计算第几个星期几的日期
+            var targetDate = firstTargetDate.AddDays((weekNumber - 1) * 7);
+
+            // 确保日期在当月范围内
+            if (targetDate.Month == month)
+            {
+                return targetDate;
+            }
+
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     #endregion
@@ -1440,8 +1660,57 @@ public partial class MainWindow : Window
         }
     }
 
+    private void EditTaskButton_Click(object sender, RoutedEventArgs e)
+    {
+        TaskEntry? selectedTask = null;
+        
+        // 添加日志记录当前选中状态
+        Log($"编辑任务按钮点击 - 临时任务选中: {TempTaskListBox.SelectedItem != null}, 项目任务选中: {ProjectTaskListBox.SelectedItem != null}");
+        
+        if (TempTaskListBox.SelectedItem is TaskEntry tempTask)
+        {
+            selectedTask = tempTask;
+            Log($"选中了临时任务: {tempTask.Title}");
+        }
+        else if (ProjectTaskListBox.SelectedItem is TaskEntry projectTask)
+        {
+            selectedTask = projectTask;
+            Log($"选中了项目任务: {projectTask.Title}");
+        }
+
+        if (selectedTask == null)
+        {
+            MessageBox.Show("请先选中要编辑的任务", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            Log("没有选中任何任务，显示提示信息");
+            return;
+        }
+
+        try
+        {
+            var editWindow = new TaskEditWindow(selectedTask);
+            if (editWindow.ShowDialog() == true)
+            {
+                if (editWindow.IsDeleteRequested)
+                {
+                    _appData.Tasks.RemoveAll(t => t.Id == selectedTask.Id);
+                }
+                SaveAppData();
+                RefreshTaskLists();
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"打开任务编辑窗口时发生异常: {ex.Message}");
+            Log($"异常堆栈: {ex.StackTrace}");
+            MessageBox.Show($"打开任务编辑窗口时发生错误: {ex.Message}\n\n详细信息: {ex.StackTrace}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
     private void RefreshTaskLists()
     {
+        // 保存当前选中状态
+        var selectedTempTaskId = (TempTaskListBox.SelectedItem as TaskEntry)?.Id;
+        var selectedProjectTaskId = (ProjectTaskListBox.SelectedItem as TaskEntry)?.Id;
+        
         // 清空现有列表
         TempTaskListBox.Items.Clear();
         ProjectTaskListBox.Items.Clear();
@@ -1459,18 +1728,120 @@ public partial class MainWindow : Window
                 ProjectTaskListBox.Items.Add(task);
             }
         }
+        
+        // 恢复选中状态
+        if (selectedTempTaskId != null)
+        {
+            var taskToSelect = _appData.Tasks.FirstOrDefault(t => t.Id == selectedTempTaskId && t.TaskType == TaskType.Temporary);
+            if (taskToSelect != null)
+            {
+                TempTaskListBox.SelectedItem = taskToSelect;
+            }
+        }
+        
+        if (selectedProjectTaskId != null)
+        {
+            var taskToSelect = _appData.Tasks.FirstOrDefault(t => t.Id == selectedProjectTaskId && t.TaskType == TaskType.Project);
+            if (taskToSelect != null)
+            {
+                ProjectTaskListBox.SelectedItem = taskToSelect;
+            }
+        }
     }
 
     private void TempTaskListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        // 鍙栨秷椤圭洰浠诲姟鍒楄〃鐨勯€夋嫨
+        // 取消项目任务列表的选择
         ProjectTaskListBox.SelectedItem = null;
     }
 
     private void ProjectTaskListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        // 鍙栨秷涓存椂浠诲姟鍒楄〃鐨勯€夋嫨
+        // 取消临时任务列表的选择
         TempTaskListBox.SelectedItem = null;
+    }
+
+    private void TempTaskListBox_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        try
+        {
+            if (TempTaskListBox.SelectedItem is TaskEntry task)
+            {
+                Log($"双击临时任务: {task.Title}");
+                EditSelectedTask();
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"双击临时任务时发生异常: {ex.Message}");
+            Log($"异常堆栈: {ex.StackTrace}");
+            MessageBox.Show($"双击临时任务时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void ProjectTaskListBox_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        try
+        {
+            if (ProjectTaskListBox.SelectedItem is TaskEntry task)
+            {
+                Log($"双击项目任务: {task.Title}");
+                EditSelectedTask();
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"双击项目任务时发生异常: {ex.Message}");
+            Log($"异常堆栈: {ex.StackTrace}");
+            MessageBox.Show($"双击项目任务时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void EditSelectedTask()
+    {
+        try
+        {
+            TaskEntry? selectedTask = null;
+            
+            if (TempTaskListBox.SelectedItem is TaskEntry tempTask)
+            {
+                selectedTask = tempTask;
+            }
+            else if (ProjectTaskListBox.SelectedItem is TaskEntry projectTask)
+            {
+                selectedTask = projectTask;
+            }
+
+            if (selectedTask == null)
+            {
+                MessageBox.Show("请先选中要编辑的任务", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            Log($"开始编辑任务: {selectedTask.Title}");
+            var editWindow = new TaskEditWindow(selectedTask);
+            if (editWindow.ShowDialog() == true)
+            {
+                if (editWindow.IsDeleteRequested)
+                {
+                    _appData.Tasks.RemoveAll(t => t.Id == selectedTask.Id);
+                    Log($"任务已删除: {selectedTask.Title}");
+                }
+                else
+                {
+                    Log($"任务已更新: {selectedTask.Title}");
+                }
+                SaveAppData();
+                RefreshTaskLists();
+            }
+            Log("任务编辑完成");
+        }
+        catch (Exception ex)
+        {
+            Log($"编辑任务时发生异常: {ex.Message}");
+            Log($"异常堆栈: {ex.StackTrace}");
+            MessageBox.Show($"编辑任务时发生错误: {ex.Message}\n\n详细信息: {ex.StackTrace}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     #endregion
@@ -1483,8 +1854,18 @@ public partial class MainWindow : Window
         {
             Log("MainTabControl_SelectionChanged事件触发，当前索引: " + MainTabControl.SelectedIndex);
             
+            // 如果切换到任务模块（索引为1），刷新任务列表
+            if (MainTabControl.SelectedIndex == 1)
+            {
+                Log("切换到任务模块，开始刷新任务列表");
+                
+                // 刷新任务列表
+                RefreshTaskLists();
+                
+                Log("任务列表刷新完成");
+            }
             // 如果切换到时间记录模块（索引为2），初始化时间记录显示
-            if (MainTabControl.SelectedIndex == 2)
+            else if (MainTabControl.SelectedIndex == 2)
             {
                 Log("切换到时间记录模块，开始初始化时间记录显示");
                 
