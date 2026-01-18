@@ -24,6 +24,7 @@ public class BackupData
     public List<DiaryEntry> Diaries { get; set; } = new();
     public List<TaskEntry> Tasks { get; set; } = new();
     public List<TimeRecordEntry> TimeRecords { get; set; } = new();
+    public List<CheckInProject> CheckInProjects { get; set; } = new();
     public List<CheckInEntry> CheckIns { get; set; } = new();
 }
 
@@ -73,6 +74,7 @@ public static class BackupManager
             Diaries = appData.Diaries,
             Tasks = appData.Tasks,
             TimeRecords = appData.TimeRecords,
+            CheckInProjects = appData.CheckInProjects,
             CheckIns = appData.CheckIns
         };
 
@@ -148,6 +150,7 @@ public static class BackupManager
                     Diaries = backupData.Diaries ?? new List<DiaryEntry>(),
                     Tasks = backupData.Tasks ?? new List<TaskEntry>(),
                     TimeRecords = backupData.TimeRecords ?? new List<TimeRecordEntry>(),
+                    CheckInProjects = backupData.CheckInProjects ?? new List<CheckInProject>(),
                     CheckIns = backupData.CheckIns ?? new List<CheckInEntry>(),
                     Version = backupData.Info.Version,
                     LastSaved = DateTime.Now
@@ -244,6 +247,7 @@ public static class BackupManager
             Diaries = appData.Diaries,
             Tasks = appData.Tasks,
             TimeRecords = appData.TimeRecords,
+            CheckInProjects = appData.CheckInProjects,
             CheckIns = appData.CheckIns
         };
 
