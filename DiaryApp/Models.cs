@@ -207,9 +207,20 @@ public enum TaskType
     }
 
     // ===== 打卡数据模型 =====
+    public class CheckInProject
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = ""; // 项目名称
+        public string Type { get; set; } = ""; // 项目类型：习惯、运动、学习等
+        public DateTime? DeadlineDate { get; set; } // 到期日期（可选）
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+    }
+
     public class CheckInEntry
     {
         public string Id { get; set; } = "";
+        public string ProjectId { get; set; } = ""; // 所属项目ID
         public string Type { get; set; } = ""; // 打卡类型：习惯、运动、学习等
         public DateTime Date { get; set; } = DateTime.Today;
         public string Value { get; set; } = ""; // 打卡值或状态
@@ -290,6 +301,7 @@ public enum TaskType
         public List<DiaryEntry> Diaries { get; set; } = new List<DiaryEntry>();
         public List<TaskEntry> Tasks { get; set; } = new List<TaskEntry>();
         public List<TimeRecordEntry> TimeRecords { get; set; } = new List<TimeRecordEntry>();
+        public List<CheckInProject> CheckInProjects { get; set; } = new List<CheckInProject>();
         public List<CheckInEntry> CheckIns { get; set; } = new List<CheckInEntry>();
         public PersonalInfo PersonalInfo { get; set; } = new PersonalInfo();
         public ReminderSetting ReminderSetting { get; set; } = new ReminderSetting();

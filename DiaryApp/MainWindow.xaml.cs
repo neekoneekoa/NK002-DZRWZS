@@ -1,4 +1,4 @@
-/*===========================================
+﻿/*===========================================
  * 【AI友好型代码框架注释】
  * 文件名: MainWindow.xaml.cs
  * 框架类型: WPF桌面应用程序主窗口
@@ -403,8 +403,8 @@ public partial class MainWindow : Window
         // 初始化任务列表（确保任务数据在启动时就正确加载）
         RefreshTaskLists();
         
-        // 初始化打卡统计
-        UpdateCheckInStats();
+        // 初始化打卡项目列表
+        RefreshCheckInProjectList();
         
         // 初始化个人数据
         LoadPersonalInfo();
@@ -2419,200 +2419,6 @@ public partial class MainWindow : Window
 
     #endregion
 
-    #region 打卡模块事件
-
-    private void CheckInListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (CheckInListBox.SelectedItem is CheckInEntry entry)
-        {
-            _currentCheckInEntry = entry;
-            CheckInValueTextBox.Text = entry.Value;
-            // 鍙互娣诲姞鏇村缂栬緫瀛楁
-        }
-    }
-
-    private void CheckInTypeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        UpdateCheckInList();
-        UpdateCheckInStats();
-    }
-
-    private void CheckInButton_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            var selectedType = (CheckInTypeCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "杩愬姩";
-            var value = CheckInValueTextBox.Text.Trim();
-            
-            // 鍒涘缓鏂扮殑鎵撳崱璁板綍
-            var newCheckIn = new CheckInEntry
-            {
-                Id = Guid.NewGuid().ToString(),
-                Type = selectedType,
-                Value = string.IsNullOrEmpty(value) ? "完成" : value,
-                Date = DateTime.Today,
-                CreatedAt = DateTime.Now
-            };
-            
-            _appData.CheckIns.Add(newCheckIn);
-            _appData.CheckIns = _appData.CheckIns.OrderByDescending(c => c.Date).ToList();
-            
-            SaveAppData();
-            UpdateCheckInList();
-            UpdateCheckInStats();
-            
-            MessageBox.Show("打卡成功！", "成功");
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"打卡失败：{ex.Message}", "错误");
-        }
-    }
-
-    private void SaveCheckInButton_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            if (_currentCheckInEntry != null)
-            {
-                // 鏇存柊褰撳墠閫変腑鐨勬墦鍗¤褰?
-                _currentCheckInEntry.Value = CheckInValueTextBox.Text.Trim();
-                _currentCheckInEntry.UpdatedAt = DateTime.Now;
-                
-                SaveAppData();
-                UpdateCheckInList();
-                UpdateCheckInStats();
-                
-                MessageBox.Show("打卡记录已更新！", "成功");
-            }
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"更新打卡记录失败：{ex.Message}", "错误");
-        }
-    }
-
-    private int CalculateStreak(string type, DateTime date)
-    {
-        var checkIns = _appData.CheckIns
-            .Where(c => c.Type == type)
-            .OrderByDescending(c => c.Date)
-            .ToList();
-
-        var streak = 0;
-        var currentDate = date;
-        
-        // 检查今天是否有打卡记录
-        var todayCheckIn = checkIns.FirstOrDefault(c => c.Date.Date == date.Date);
-        if (todayCheckIn == null)
-        {
-            return 0; // 如果今天没打卡，连续天数为0
-        }
-        
-        streak = 1; // 今天打卡了，连续天数至少为1
-        currentDate = currentDate.AddDays(-1);
-        
-        foreach (var checkIn in checkIns.Skip(1)) // 跳过今天的记录
-        {
-            if (checkIn.Date.Date == currentDate.Date)
-            {
-                streak++;
-                currentDate = currentDate.AddDays(-1);
-            }
-            else if (checkIn.Date.Date < currentDate.Date)
-            {
-                break;
-            }
-        }
-        
-        return streak;
-    }
-
-    private int CalculateLongestStreak(List<CheckInEntry> checkIns)
-    {
-        if (!checkIns.Any()) return 0;
-        
-        var sortedCheckIns = checkIns.OrderBy(c => c.Date).ToList();
-        var maxStreak = 0;
-        var currentStreak = 0;
-        var previousDate = DateTime.MinValue;
-        
-        foreach (var checkIn in sortedCheckIns)
-        {
-            if (previousDate == DateTime.MinValue || (checkIn.Date - previousDate).Days == 1)
-            {
-                currentStreak++;
-            }
-            else
-            {
-                maxStreak = Math.Max(maxStreak, currentStreak);
-                currentStreak = 1;
-            }
-            previousDate = checkIn.Date;
-        }
-        
-        return Math.Max(maxStreak, currentStreak);
-    }
-
-    private double CalculateSuccessRate(List<CheckInEntry> checkIns)
-    {
-        if (!checkIns.Any()) return 0;
-        
-        // 只计算最近30天的成功率，避免历史数据影响
-        var thirtyDaysAgo = DateTime.Today.AddDays(-29); // 包括今天共30天
-        var recentCheckIns = checkIns.Where(c => c.Date >= thirtyDaysAgo).ToList();
-        
-        if (!recentCheckIns.Any()) return 0;
-        
-        var totalDaysInPeriod = (DateTime.Today - thirtyDaysAgo).Days + 1;
-        var successDays = recentCheckIns.Count;
-        
-        return (double)successDays / totalDaysInPeriod * 100;
-    }
-
-    private void UpdateCheckInList()
-    {
-        // 娣诲姞绌哄€兼鏌ワ紝闃叉鍒濆鍖栨湡闂村嚭鐜扮┖寮曠敤寮傚父
-        if (CheckInTypeCombo == null || CheckInListBox == null) return;
-        
-        var selectedType = (CheckInTypeCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "杩愬姩";
-        var filteredCheckIns = _appData.CheckIns
-            .Where(c => c.Type == selectedType)
-            .OrderByDescending(c => c.Date)
-            .ToList();
-        CheckInListBox.ItemsSource = filteredCheckIns;
-    }
-
-    private void UpdateCheckInStats()
-    {
-        // 添加空值检查，防止初始化期间出现空引用异常
-        if (CheckInTypeCombo == null || CurrentStreakText == null || LongestStreakText == null || SuccessRateText == null) return;
-        
-        var selectedType = (CheckInTypeCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "运动";
-        var typeCheckIns = _appData.CheckIns.Where(c => c.Type == selectedType).ToList();
-        
-        if (typeCheckIns.Any())
-        {
-            var currentStreak = CalculateStreak(selectedType, DateTime.Today);
-            var longestStreak = CalculateLongestStreak(typeCheckIns);
-            var successRate = CalculateSuccessRate(typeCheckIns);
-            
-            // 更新UI显示
-            CurrentStreakText.Text = currentStreak.ToString();
-            LongestStreakText.Text = longestStreak.ToString();
-            SuccessRateText.Text = $"{successRate:F0}%";
-        }
-        else
-        {
-            // 如果没有该类型的打卡记录，显示0
-            CurrentStreakText.Text = "0";
-            LongestStreakText.Text = "0";
-            SuccessRateText.Text = "0%";
-        }
-    }
-
-    #endregion
-
     #region 统一保存和备份事件
 
     private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -2880,6 +2686,344 @@ public partial class MainWindow : Window
         var firstWeek = cal.GetWeekOfYear(firstThursday, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
         var weekNum = cal.GetWeekOfYear(date, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
         return weekNum;
+    }
+
+    #endregion
+
+    #region 打卡项目管理
+
+    private void CheckInProjectListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        try
+        {
+            if (CheckInProjectListBox != null && CheckInProjectListBox.SelectedItem is CheckInProject project)
+            {
+                UpdateSelectedProjectData(project);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"打卡项目选择变更异常: {ex.Message}");
+        }
+    }
+
+    private void AddCheckInProjectButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var newProject = new CheckInProject
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = "新项目",
+                Type = "习惯",
+                CreatedAt = DateTime.Now
+            };
+
+            _appData.CheckInProjects.Add(newProject);
+            SaveAppData();
+            RefreshCheckInProjectList();
+            if (CheckInProjectListBox != null)
+                CheckInProjectListBox.SelectedItem = newProject;
+            MessageBox.Show("已添加新的打卡项目！", "成功");
+        }
+        catch (Exception ex)
+        {
+            Log($"添加打卡项目失败: {ex.Message}");
+            MessageBox.Show($"添加失败：{ex.Message}", "错误");
+        }
+    }
+
+    private void EditCheckInProjectButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (CheckInProjectListBox != null && CheckInProjectListBox.SelectedItem is CheckInProject project)
+            {
+                var newName = Microsoft.VisualBasic.Interaction.InputBox("输入项目名称：", "编辑项目", project.Name);
+                if (!string.IsNullOrWhiteSpace(newName))
+                {
+                    project.Name = newName;
+                    project.UpdatedAt = DateTime.Now;
+                    SaveAppData();
+                    RefreshCheckInProjectList();
+                }
+            }
+            else
+            {
+                MessageBox.Show("请先选择一个项目", "提示");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"编辑打卡项目失败: {ex.Message}");
+            MessageBox.Show($"编辑失败：{ex.Message}", "错误");
+        }
+    }
+
+    private void CheckInTodayButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (CheckInProjectListBox != null && CheckInProjectListBox.SelectedItem is CheckInProject project)
+            {
+                var todayCheckIn = _appData.CheckIns.FirstOrDefault(c => 
+                    c.ProjectId == project.Id && c.Date.Date == DateTime.Today);
+
+                if (todayCheckIn != null)
+                {
+                    MessageBox.Show("今天已经打过卡了！", "提示");
+                    return;
+                }
+
+                var newCheckIn = new CheckInEntry
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    ProjectId = project.Id,
+                    Type = project.Type,
+                    Value = "完成",
+                    Date = DateTime.Today,
+                    CreatedAt = DateTime.Now
+                };
+
+                _appData.CheckIns.Add(newCheckIn);
+                SaveAppData();
+                UpdateSelectedProjectData(project);
+
+                MessageBox.Show("打卡成功！", "成功");
+            }
+            else
+            {
+                MessageBox.Show("请先选择一个项目", "提示");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"今日打卡失败: {ex.Message}");
+            MessageBox.Show($"打卡失败：{ex.Message}", "错误");
+        }
+    }
+
+    private void RefreshCheckInProjectList()
+    {
+        try
+        {
+            if (CheckInProjectListBox == null) return;
+
+            CheckInProjectListBox.ItemsSource = null;
+            CheckInProjectListBox.ItemsSource = _appData.CheckInProjects;
+        }
+        catch (Exception ex)
+        {
+            Log($"刷新打卡项目列表失败: {ex.Message}");
+        }
+    }
+
+    private void UpdateSelectedProjectData(CheckInProject project)
+    {
+        try
+        {
+            if (SelectedProjectTitleText != null)
+                SelectedProjectTitleText.Text = $"📌 {project.Name}";
+
+            var projectCheckIns = _appData.CheckIns
+                .Where(c => c.ProjectId == project.Id)
+                .OrderByDescending(c => c.Date)
+                .ToList();
+
+            if (ProjectTotalCountText != null)
+                ProjectTotalCountText.Text = projectCheckIns.Count.ToString();
+
+            var currentStreak = CalculateCheckInCurrentStreak(projectCheckIns);
+            if (ProjectCurrentStreakText != null)
+                ProjectCurrentStreakText.Text = currentStreak.ToString();
+
+            UpdateProjectCheckInCalendar(projectCheckIns);
+            UpdateCountdownDisplay(project);
+            UpdateMonthlyStats(project);
+        }
+        catch (Exception ex)
+        {
+            Log($"更新项目数据显示失败: {ex.Message}");
+        }
+    }
+
+    private int CalculateCheckInCurrentStreak(List<CheckInEntry> checkIns)
+    {
+        if (!checkIns.Any()) return 0;
+
+        var orderedCheckIns = checkIns.OrderByDescending(c => c.Date).ToList();
+        var streak = 0;
+        var currentDate = DateTime.Today;
+
+        foreach (var checkIn in orderedCheckIns)
+        {
+            if (checkIn.Date.Date == currentDate.Date)
+            {
+                streak++;
+                currentDate = currentDate.AddDays(-1);
+            }
+            else if (checkIn.Date.Date < currentDate.Date)
+            {
+                break;
+            }
+        }
+
+        return streak;
+    }
+
+    private void UpdateCountdownDisplay(CheckInProject project)
+    {
+        try
+        {
+            if (!project.DeadlineDate.HasValue)
+            {
+                if (CountdownTitleText != null) CountdownTitleText.Text = "未设置";
+                if (CountdownDeadlineText != null) CountdownDeadlineText.Text = "未设置";
+                if (CountdownRemainText != null) CountdownRemainText.Text = "未知";
+                return;
+            }
+
+            if (CountdownTitleText != null) CountdownTitleText.Text = project.Name;
+            if (CountdownDeadlineText != null) CountdownDeadlineText.Text = project.DeadlineDate?.ToString("yyyy年MM月dd日") ?? "未知";
+
+            var remainDays = (project.DeadlineDate?.Date - DateTime.Today)?.Days ?? 0;
+            if (CountdownRemainText != null)
+            {
+                if (remainDays > 0)
+                    CountdownRemainText.Text = $"还有 {remainDays} 天";
+                else if (remainDays == 0)
+                    CountdownRemainText.Text = "就在今天!";
+                else
+                    CountdownRemainText.Text = $"已过期 {Math.Abs(remainDays)} 天";
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"更新倒数日显示失败: {ex.Message}");
+        }
+    }
+
+    private void UpdateMonthlyStats(CheckInProject project)
+    {
+        try
+        {
+            var projectCheckIns = _appData.CheckIns
+                .Where(c => c.ProjectId == project.Id)
+                .ToList();
+
+            var monthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var monthCheckIns = projectCheckIns
+                .Where(c => c.Date >= monthStart && c.Date <= monthEnd)
+                .ToList();
+
+            var longestMonthStreak = CalculateCheckInLongestStreak(monthCheckIns);
+            if (MonthLongestStreakText != null)
+                MonthLongestStreakText.Text = $"{longestMonthStreak}天";
+
+            if (MonthCheckInCountText != null)
+                MonthCheckInCountText.Text = $"{monthCheckIns.Count}次";
+
+            var daysInMonth = (int)(monthEnd - monthStart).TotalDays + 1;
+            var completionRate = daysInMonth > 0 ? (monthCheckIns.Count * 100.0 / daysInMonth) : 0;
+            if (MonthSuccessRateText != null)
+                MonthSuccessRateText.Text = $"{completionRate:F0}%";
+        }
+        catch (Exception ex)
+        {
+            Log($"更新月度统计失败: {ex.Message}");
+        }
+    }
+
+    private void UpdateProjectCheckInCalendar(List<CheckInEntry> projectCheckIns)
+    {
+        try
+        {
+            if (ProjectCheckInCalendarGrid == null) return;
+
+            ProjectCheckInCalendarGrid.Children.Clear();
+
+            var now = DateTime.Now;
+            var monthStart = new DateTime(now.Year, now.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            var dayNames = new[] { "日", "一", "二", "三", "四", "五", "六" };
+            foreach (var dayName in dayNames)
+            {
+                var dayLabel = new TextBlock
+                {
+                    Text = dayName,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    FontSize = 11,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = Brushes.Gray,
+                    Margin = new Thickness(2)
+                };
+                ProjectCheckInCalendarGrid.Children.Add(dayLabel);
+            }
+
+            var firstDayOfWeek = (int)monthStart.DayOfWeek;
+            for (int i = 0; i < firstDayOfWeek; i++)
+            {
+                var emptyBlock = new TextBlock { Margin = new Thickness(2) };
+                ProjectCheckInCalendarGrid.Children.Add(emptyBlock);
+            }
+
+            for (int day = 1; day <= monthEnd.Day; day++)
+            {
+                var currentDate = new DateTime(now.Year, now.Month, day);
+                var hasCheckIn = projectCheckIns.Any(c => c.Date.Date == currentDate.Date);
+
+                var dayBlock = new Border
+                {
+                    Width = 24,
+                    Height = 24,
+                    CornerRadius = new CornerRadius(4),
+                    Background = hasCheckIn ? new SolidColorBrush(Color.FromArgb(255, 108, 92, 231)) : new SolidColorBrush(Color.FromArgb(255, 240, 243, 248)),
+                    Margin = new Thickness(2),
+                    Child = new TextBlock
+                    {
+                        Text = day.ToString(),
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        FontSize = 10,
+                        Foreground = hasCheckIn ? Brushes.White : Brushes.Black
+                    }
+                };
+                ProjectCheckInCalendarGrid.Children.Add(dayBlock);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"更新项目打卡日历失败: {ex.Message}");
+        }
+    }
+
+    private int CalculateCheckInLongestStreak(List<CheckInEntry> checkIns)
+    {
+        if (!checkIns.Any()) return 0;
+
+        var sortedCheckIns = checkIns.OrderBy(c => c.Date).ToList();
+        var maxStreak = 0;
+        var currentStreak = 0;
+        var previousDate = DateTime.MinValue;
+
+        foreach (var checkIn in sortedCheckIns)
+        {
+            if (previousDate == DateTime.MinValue || (checkIn.Date - previousDate).Days == 1)
+            {
+                currentStreak++;
+            }
+            else
+            {
+                maxStreak = Math.Max(maxStreak, currentStreak);
+                currentStreak = 1;
+            }
+            previousDate = checkIn.Date;
+        }
+
+        return Math.Max(maxStreak, currentStreak);
     }
 
     #endregion

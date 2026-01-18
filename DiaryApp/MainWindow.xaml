@@ -434,7 +434,7 @@
                                                                    FontSize="12" FontWeight="Bold"/>
                                                     </StackPanel>
                                                     <TextBlock Text="{Binding StatusDescription}" FontSize="12" Foreground="#636E72" Margin="0,4,0,0"/>
-                                                    <TextBlock Text="{Binding SubTasks.Count, StringFormat='子任务数：{0}'}" FontSize="12" Foreground="#636E72" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="{Binding Chapters.Count, StringFormat='章节数：{0}'}" FontSize="12" Foreground="#636E72" Margin="0,4,0,0"/>
                                                     <ItemsControl ItemsSource="{Binding ProjectTags}" Margin="0,4,0,0">
                                                         <ItemsControl.ItemsPanel>
                                                             <ItemsPanelTemplate>
@@ -579,151 +579,171 @@
                     <TabItem Header="🎯 打卡统计">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="250"/>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="6"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- 打卡记录列表 -->
-                            <Border Grid.Column="0" CornerRadius="15" Background="#F0F3F8" Margin="0,0,10,0">
+                            <!-- 左侧：打卡项目列表 -->
+                            <Border Grid.Column="0" CornerRadius="15" Background="#F0F3F8" Margin="0,0,0,0">
                                 <Grid Margin="15">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
-                                    <!-- 打卡类型选择 -->
-                                    <StackPanel Grid.Row="0" Margin="0,0,0,15">
-                                        <TextBlock Text="打卡类型：" FontSize="14" Foreground="#636E72" Margin="0,0,0,5"/>
-                                        <ComboBox x:Name="CheckInTypeCombo" SelectedIndex="0" Height="30" SelectionChanged="CheckInTypeCombo_SelectionChanged">
-                                            <ComboBoxItem Content="运动"/>
-                                            <ComboBoxItem Content="学习"/>
-                                            <ComboBoxItem Content="阅读"/>
-                                            <ComboBoxItem Content="早睡"/>
-                                            <ComboBoxItem Content="早起"/>
-                                        </ComboBox>
-                                    </StackPanel>
+                                    <!-- 标题 -->
+                                    <TextBlock Grid.Row="0" Text="打卡项目" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,15"/>
 
-                                    <!-- 模块标题 -->
-                                    <TextBlock Grid.Row="1" Text="打卡记录" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
-
-                                    <!-- 打卡列表 -->
-                                    <ListBox Grid.Row="2" x:Name="CheckInListBox" 
+                                    <!-- 打卡项目列表 -->
+                                    <ListBox Grid.Row="1" x:Name="CheckInProjectListBox" 
                                              Background="Transparent" BorderThickness="0" 
                                              ItemContainerStyle="{StaticResource DiaryItemStyle}"
-                                             SelectionChanged="CheckInListBox_SelectionChanged">
+                                             SelectionChanged="CheckInProjectListBox_SelectionChanged">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
                                                 <StackPanel>
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="{Binding Date, StringFormat={}{0:MM-dd}}" FontWeight="SemiBold" Foreground="#2D3436"/>
-                                                        <TextBlock Text="{Binding Value}" Margin="5,0,0,0" FontSize="12" Foreground="#636E72"/>
-                                                    </StackPanel>
-                                                    <TextBlock Text="{Binding Streak, StringFormat={}连续{0}天}" FontSize="12" Foreground="#A29BFE" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="#2D3436" FontSize="14"/>
+                                                    <TextBlock Text="{Binding Type}" Margin="0,4,0,0" FontSize="11" Foreground="#636E72"/>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                     </ListBox>
-                                    
-                                    <!-- 打卡按钮 -->
-                                    <Button Grid.Row="2" Width="50" Height="50" HorizontalAlignment="Right" VerticalAlignment="Bottom" 
-                                            Style="{StaticResource RoundButtonStyle}" Click="CheckInButton_Click" Margin="0,0,5,5">
-                                        <TextBlock Text="✓" FontSize="24"/>
+
+                                    <!-- 添加打卡项目按钮（圆形） -->
+                                    <Button Grid.Row="2" Width="60" Height="60" 
+                                            HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                            Style="{StaticResource RoundButtonStyle}" 
+                                            Click="AddCheckInProjectButton_Click"
+                                            Margin="0,15,0,0">
+                                        <TextBlock Text="+" FontSize="32" FontWeight="Bold"/>
                                     </Button>
                                 </Grid>
                             </Border>
 
-                            <!-- 打卡统计和编辑面板 -->
-                            <Border Grid.Column="1" CornerRadius="15" Background="#FFFFFF" Padding="25">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/> <!-- 统计图表 -->
-                                        <RowDefinition Height="Auto"/> <!-- 连续天数 -->
-                                        <RowDefinition Height="Auto"/> <!-- 打卡记录 -->
-                                        <RowDefinition Height="Auto"/> <!-- 打卡编辑 -->
-                                    </Grid.RowDefinitions>
+                            <!-- 中间分隔线 -->
+                            <GridSplitter Grid.Column="1" Width="6" Background="#DFE6E9" 
+                                         HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                                         ResizeBehavior="PreviousAndNext" ResizeDirection="Columns"
+                                         Cursor="SizeWE" Margin="0"/>
 
-                                    <!-- 统计图表区域 -->
-                                    <Border Grid.Row="0" CornerRadius="10" Background="#F8F9FA" Padding="20" Margin="0,0,0,20">
-                                        <Grid>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="100"/>
-                                            </Grid.RowDefinitions>
-                                            <TextBlock Grid.Row="0" Text="本月打卡统计" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
-                                            <!-- 简单的柱状图占位符 -->
-                                            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom">
-                                                <StackPanel Orientation="Vertical" Margin="2">
-                                                    <Rectangle Width="20" Height="60" Fill="#A29BFE"/>
-                                                    <TextBlock Text="60" FontSize="10" Foreground="#2D3436" HorizontalAlignment="Center"/>
-                                                </StackPanel>
-                                                <StackPanel Orientation="Vertical" Margin="2">
-                                                    <Rectangle Width="20" Height="80" Fill="#6C5CE7"/>
-                                                    <TextBlock Text="80" FontSize="10" Foreground="#2D3436" HorizontalAlignment="Center"/>
-                                                </StackPanel>
-                                                <StackPanel Orientation="Vertical" Margin="2">
-                                                    <Rectangle Width="20" Height="40" Fill="#A29BFE"/>
-                                                    <TextBlock Text="40" FontSize="10" Foreground="#2D3436" HorizontalAlignment="Center"/>
-                                                </StackPanel>
-                                                <StackPanel Orientation="Vertical" Margin="2">
-                                                    <Rectangle Width="20" Height="90" Fill="#6C5CE7"/>
-                                                    <TextBlock Text="90" FontSize="10" Foreground="#2D3436" HorizontalAlignment="Center"/>
-                                                </StackPanel>
-                                                <StackPanel Orientation="Vertical" Margin="2">
-                                                    <Rectangle Width="20" Height="70" Fill="#A29BFE"/>
-                                                    <TextBlock Text="70" FontSize="10" Foreground="#2D3436" HorizontalAlignment="Center"/>
-                                                </StackPanel>
-                                                <StackPanel Orientation="Vertical" Margin="2">
-                                                    <Rectangle Width="20" Height="85" Fill="#6C5CE7"/>
-                                                    <TextBlock Text="85" FontSize="10" Foreground="#2D3436" HorizontalAlignment="Center"/>
-                                                </StackPanel>
-                                                <StackPanel Orientation="Vertical" Margin="2">
-                                                    <Rectangle Width="20" Height="50" Fill="#A29BFE"/>
-                                                    <TextBlock Text="50" FontSize="10" Foreground="#2D3436" HorizontalAlignment="Center"/>
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
+                            <!-- 右侧：数据展示区 -->
+                            <Border Grid.Column="2" CornerRadius="15" Background="#FFFFFF" Padding="20" Margin="0,0,0,0">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <!-- 第一块：倒数日功能 -->
+                                        <Border CornerRadius="12" Background="#F8F9FA" Padding="20" Margin="0,0,0,20">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
 
-                                    <!-- 连续天数统计 -->
-                                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,20">
-                                        <Border CornerRadius="10" Background="#6C5CE7" Padding="15,10" Margin="0,0,10,0">
-                                            <StackPanel>
-                                                <TextBlock Text="当前连续" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-                                                <TextBlock x:Name="CurrentStreakText" Text="0" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                                            </StackPanel>
+                                                <TextBlock Grid.Row="0" Text="⏰ 倒数日" FontSize="14" FontWeight="Bold" Foreground="#636E72" Margin="0,0,0,10"/>
+                                                
+                                                <StackPanel Grid.Row="1" Margin="0,0,0,8">
+                                                    <TextBlock Text="标题：" FontSize="12" Foreground="#636E72" Margin="0,0,0,3"/>
+                                                    <TextBlock x:Name="CountdownTitleText" Text="未设置" FontSize="13" Foreground="#2D3436" FontWeight="SemiBold"/>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Row="2" Margin="0,0,0,8">
+                                                    <TextBlock Text="到期时间：" FontSize="12" Foreground="#636E72" Margin="0,0,0,3"/>
+                                                    <TextBlock x:Name="CountdownDeadlineText" Text="未设置" FontSize="13" Foreground="#2D3436" FontWeight="SemiBold"/>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Row="3">
+                                                    <TextBlock Text="剩余时间：" FontSize="12" Foreground="#636E72" Margin="0,0,0,3"/>
+                                                    <TextBlock x:Name="CountdownRemainText" Text="未知" FontSize="14" Foreground="#6C5CE7" FontWeight="Bold"/>
+                                                </StackPanel>
+                                            </Grid>
                                         </Border>
-                                        <Border CornerRadius="10" Background="#A29BFE" Padding="15,10" Margin="0,0,10,0">
-                                            <StackPanel>
-                                                <TextBlock Text="最长连续" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-                                                <TextBlock x:Name="LongestStreakText" Text="0" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                                            </StackPanel>
+
+                                        <!-- 第二块：打卡总体展示 -->
+                                        <Border CornerRadius="12" Background="#F8F9FA" Padding="20" Margin="0,0,0,20">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+
+                                                <TextBlock Grid.Row="0" Text="📊 本月统计" FontSize="14" FontWeight="Bold" Foreground="#636E72" Margin="0,0,0,15"/>
+
+                                                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                                    <Border CornerRadius="8" Background="#6C5CE7" Padding="15,12" Margin="0,0,10,0" MinWidth="100">
+                                                        <StackPanel>
+                                                            <TextBlock Text="最长记录" FontSize="11" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                                                            <TextBlock x:Name="MonthLongestStreakText" Text="0天" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                    <Border CornerRadius="8" Background="#A29BFE" Padding="15,12" Margin="0,0,10,0" MinWidth="100">
+                                                        <StackPanel>
+                                                            <TextBlock Text="打卡次数" FontSize="11" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                                                            <TextBlock x:Name="MonthCheckInCountText" Text="0次" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                    <Border CornerRadius="8" Background="#FD79A8" Padding="15,12" MinWidth="100">
+                                                        <StackPanel>
+                                                            <TextBlock Text="完成率" FontSize="11" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                                                            <TextBlock x:Name="MonthSuccessRateText" Text="0%" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
                                         </Border>
-                                        <Border CornerRadius="10" Background="#FD79A8" Padding="15,10">
-                                            <StackPanel>
-                                                <TextBlock Text="成功率" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-                                                <TextBlock x:Name="SuccessRateText" Text="0%" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                                            </StackPanel>
+
+                                        <!-- 第三块：选中项目的数据 -->
+                                        <Border CornerRadius="12" Background="#F8F9FA" Padding="20" Margin="0,0,0,0">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+
+                                                <TextBlock Grid.Row="0" x:Name="SelectedProjectTitleText" Text="📌 项目数据" FontSize="14" FontWeight="Bold" Foreground="#636E72" Margin="0,0,0,15"/>
+
+                                                <!-- 数据统计 -->
+                                                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,15">
+                                                    <Border CornerRadius="8" Background="#00B894" Padding="12,10" Margin="0,0,10,0" MinWidth="90">
+                                                        <StackPanel>
+                                                            <TextBlock Text="总打卡数" FontSize="10" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                                                            <TextBlock x:Name="ProjectTotalCountText" Text="0" FontSize="16" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                    <Border CornerRadius="8" Background="#0984E3" Padding="12,10" MinWidth="90">
+                                                        <StackPanel>
+                                                            <TextBlock Text="连续天数" FontSize="10" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                                                            <TextBlock x:Name="ProjectCurrentStreakText" Text="0" FontSize="16" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </StackPanel>
+
+                                                <!-- 日历表示 -->
+                                                <StackPanel Grid.Row="2" Margin="0,0,0,12">
+                                                    <TextBlock Text="本月打卡日历" FontSize="12" FontWeight="Bold" Foreground="#636E72" Margin="0,0,0,10"/>
+                                                    <UniformGrid x:Name="ProjectCheckInCalendarGrid" Columns="7" Background="Transparent">
+                                                        <!-- 日历将通过代码动态生成 -->
+                                                    </UniformGrid>
+                                                </StackPanel>
+
+                                                <!-- 快速打卡按钮 -->
+                                                <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
+                                                    <Button Content="✓ 今天打卡" Width="120" Height="40" 
+                                                            Background="#6C5CE7" Foreground="White" BorderThickness="0"
+                                                            FontWeight="Bold" Click="CheckInTodayButton_Click"
+                                                            Margin="0,0,10,0"/>
+                                                    <Button Content="✏️ 编辑项目" Width="120" Height="40" 
+                                                            Background="#A29BFE" Foreground="White" BorderThickness="0"
+                                                            FontWeight="Bold" Click="EditCheckInProjectButton_Click"/>
+                                                </StackPanel>
+                                            </Grid>
                                         </Border>
                                     </StackPanel>
-
-                                    <!-- 打卡记录编辑 -->
-                                    <Grid Grid.Row="3">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <TextBlock Grid.Row="0" Text="打卡记录" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
-                                        <StackPanel Grid.Row="1" Orientation="Horizontal">
-                                            <TextBox x:Name="CheckInValueTextBox" Text="完成" Width="150" Height="35" 
-                                                     BorderThickness="0" Background="#F8F9FA"
-                                                     Padding="10,8" VerticalContentAlignment="Center" Margin="0,0,10,0"/>
-                                            <Button Content="💾 保存记录" Width="100" Height="35" 
-                                                    Background="#6C5CE7" Foreground="White" BorderThickness="0"
-                                                    Click="SaveCheckInButton_Click"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </Grid>
+                                </ScrollViewer>
                             </Border>
                         </Grid>
                     </TabItem>
