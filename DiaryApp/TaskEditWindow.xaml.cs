@@ -187,64 +187,67 @@ namespace DiaryApp
                 {
                     System.Diagnostics.Debug.WriteLine("LoadTaskData: 创建新任务");
                 }
+
+                if (TaskEntry != null)
+                {
+                    if (!string.IsNullOrEmpty(TaskEntry.Title))
+                    {
+                        TitleTextBox.Text = TaskEntry.Title;
+                        TitleTextBox.Foreground = Brushes.Black;
+                    }
+                    else
+                    {
+                        InitializeTitlePlaceholder();
+                    }
+                    
+                    // 加载任务类型
+                    TaskTypeComboBox.SelectedIndex = (int)TaskEntry.TaskType;
+                    
+                    // 显示/隐藏项目标签相关控件
+                    UpdateProjectTagsVisibility();
+                    
+                    // 加载项目标签
+                    RefreshProjectTagsDisplay();
+                    
+                    PriorityComboBox.SelectedIndex = TaskEntry.Priority - 1;
+                    StatusComboBox.SelectedIndex = (int)TaskEntry.Status;
+                    CompletedDatePicker.SelectedDate = TaskEntry.CompletedAt;
+
+                    // 加载章节
+                    ChaptersPanel.Children.Clear();
+                    if (TaskEntry.Chapters != null)
+                    {
+                        foreach (var chapter in TaskEntry.Chapters)
+                        {
+                            AddChapterToPanel(chapter);
+                        }
+                    }
+                }
+                else
+                {
+                    // 默认值
+                    TitleTextBox.Text = "";
+                    TaskTypeComboBox.SelectedIndex = 0; // 默认临时任务
+                    PriorityComboBox.SelectedIndex = 1;
+                    StatusComboBox.SelectedIndex = 0;
+                    CompletedDatePicker.SelectedDate = null;
+
+                    // 显示/隐藏项目标签相关控件
+                    UpdateProjectTagsVisibility();
+                    
+                    // 默认添加第一章
+                    ChaptersPanel.Children.Clear();
+                    AddDefaultChapter();
+                }
+
+                TitleTextBox.Focus();
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"LoadTaskData异常: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
-                throw; // 重新抛出异常，让调用者处理
+                MessageBox.Show($"加载任务数据时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        
-            if (TaskEntry != null)
-            {
-                if (!string.IsNullOrEmpty(TaskEntry.Title))
-                {
-                    TitleTextBox.Text = TaskEntry.Title;
-                    TitleTextBox.Foreground = Brushes.Black;
-                }
-                else
-                {
-                    InitializeTitlePlaceholder();
-                }
-                
-                // 加载任务类型
-                TaskTypeComboBox.SelectedIndex = (int)TaskEntry.TaskType;
-                
-                // 显示/隐藏项目标签相关控件
-                UpdateProjectTagsVisibility();
-                
-                // 加载项目标签
-                RefreshProjectTagsDisplay();
-                
-                PriorityComboBox.SelectedIndex = TaskEntry.Priority - 1;
-                StatusComboBox.SelectedIndex = (int)TaskEntry.Status;
-                CompletedDatePicker.SelectedDate = TaskEntry.CompletedAt;
-
-                // 加载章节
-                ChaptersPanel.Children.Clear();
-                foreach (var chapter in TaskEntry.Chapters)
-                {
-                    AddChapterToPanel(chapter);
-                }
-            }
-            else
-            {
-                // 默认值
-                TitleTextBox.Text = "";
-                TaskTypeComboBox.SelectedIndex = 0; // 默认临时任务
-                PriorityComboBox.SelectedIndex = 1;
-                StatusComboBox.SelectedIndex = 0;
-                CompletedDatePicker.SelectedDate = null;
-
-                // 显示/隐藏项目标签相关控件
-                UpdateProjectTagsVisibility();
-                
-                // 默认添加第一章
-                ChaptersPanel.Children.Clear();
-                AddDefaultChapter();
-            }
-
-            TitleTextBox.Focus();
         }
 
         private void InitializeTitlePlaceholder()
@@ -470,9 +473,12 @@ namespace DiaryApp
             };
 
             // 加载现有子任务
-            foreach (var subTask in chapter.SubTasks)
+            if (chapter.SubTasks != null)
             {
-                AddSubTaskToChapterPanel(subTask, subTasksPanel);
+                foreach (var subTask in chapter.SubTasks)
+                {
+                    AddSubTaskToChapterPanel(subTask, subTasksPanel);
+                }
             }
 
             // 添加到章节内容面板
@@ -567,7 +573,7 @@ namespace DiaryApp
             // 开始时间和结束时间选择器
             var startTimePicker = new DatePicker
             {
-                SelectedDate = subTask.StartDate, // 使用子任务的开始日期
+                SelectedDate = subTask.StartDate, // 使用子任务的开始日期（有默认值）
                 Width = 120,
                 FontSize = 12,
                 Margin = new Thickness(0, 0, 5, 0)
@@ -582,7 +588,7 @@ namespace DiaryApp
 
             var endTimePicker = new DatePicker
             {
-                SelectedDate = subTask.EndDate, // 使用子任务的结束日期
+                SelectedDate = subTask.EndDate, // 使用子任务的结束日期（有默认值）
                 Width = 120,
                 FontSize = 12,
                 Margin = new Thickness(0, 0, 10, 0)

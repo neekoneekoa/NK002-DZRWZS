@@ -360,7 +360,7 @@
                                          Cursor="SizeWE" Margin="0"/>
 
                             <!-- 中间临时任务区 -->
-                            <Border Grid.Column="2" CornerRadius="15" Background="#F0F3F8" Margin="0,0,10,0">
+                            <Border Grid.Column="2" CornerRadius="15" Background="#E3F2FD" Margin="0,0,10,0">
                                 <Grid Margin="15">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -373,26 +373,28 @@
                                     <!-- 临时任务列表 -->
                                     <ListBox Grid.Row="1" x:Name="TempTaskListBox" 
                                              Background="Transparent" BorderThickness="0" 
-                                             ItemContainerStyle="{StaticResource DiaryItemStyle}"
-                                             SelectionChanged="TempTaskListBox_SelectionChanged"
-                                             MouseDoubleClick="TempTaskListBox_MouseDoubleClick">
+                                             SelectionMode="Single">
                                         <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Margin="{Binding Level, Converter={StaticResource LevelToMarginConverter}}">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="{Binding Title}" FontWeight="{Binding Level, Converter={StaticResource LevelToFontWeightConverter}}" 
-                                                                   FontSize="{Binding FontSize}" 
-                                                                   Foreground="{Binding TextColor}"
-                                                                   Background="{Binding BackgroundColor}"
-                                                                   TextDecorations="{Binding IsUnderline, Converter={StaticResource BooleanToUnderlineConverter}}"/>
-                                                        <TextBlock Text="{Binding PriorityDescription}" Margin="5,0,0,0" 
-                                                                   Foreground="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}"
-                                                                   FontSize="12" FontWeight="Bold"/>
-                                                    </StackPanel>
-                                                    <TextBlock Text="{Binding StatusDescription}" FontSize="12" Foreground="#636E72" Margin="0,4,0,0"/>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,0,0,5">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Title}" 
+                                                               FontSize="14" 
+                                                               Foreground="Black">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Completed">
+                                                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </StackPanel>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
                                     </ListBox>
                                 </Grid>
                             </Border>
@@ -404,7 +406,7 @@
                                          Cursor="SizeWE" Margin="0"/>
                             
                             <!-- 右侧项目任务区 -->
-                            <Border Grid.Column="4" CornerRadius="15" Background="#FFFFFF" Padding="15">
+                            <Border Grid.Column="4" CornerRadius="15" Background="#E8F5E9" Padding="15">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -417,38 +419,25 @@
                                     <!-- 项目任务列表 -->
                                     <ListBox Grid.Row="1" x:Name="ProjectTaskListBox" 
                                              Background="Transparent" BorderThickness="0" 
-                                             ItemContainerStyle="{StaticResource DiaryItemStyle}"
-                                             SelectionChanged="ProjectTaskListBox_SelectionChanged"
-                                             MouseDoubleClick="ProjectTaskListBox_MouseDoubleClick">
+                                             SelectionMode="Single">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <StackPanel Margin="{Binding Level, Converter={StaticResource LevelToMarginConverter}}">
+                                                <StackPanel Margin="0,0,0,5">
                                                     <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="{Binding Title}" FontWeight="{Binding Level, Converter={StaticResource LevelToFontWeightConverter}}" 
-                                                                   FontSize="{Binding FontSize}" 
-                                                                   Foreground="{Binding TextColor}"
-                                                                   Background="{Binding BackgroundColor}"
-                                                                   TextDecorations="{Binding IsUnderline, Converter={StaticResource BooleanToUnderlineConverter}}"/>
-                                                        <TextBlock Text="{Binding PriorityDescription}" Margin="5,0,0,0" 
-                                                                   Foreground="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}"
-                                                                   FontSize="12" FontWeight="Bold"/>
+                                                        <TextBlock Text="{Binding Title}" 
+                                                                   FontSize="14" 
+                                                                   Foreground="Black">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Completed">
+                                                                            <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
                                                     </StackPanel>
-                                                    <TextBlock Text="{Binding StatusDescription}" FontSize="12" Foreground="#636E72" Margin="0,4,0,0"/>
-                                                    <TextBlock Text="{Binding Chapters.Count, StringFormat='章节数：{0}'}" FontSize="12" Foreground="#636E72" Margin="0,4,0,0"/>
-                                                    <ItemsControl ItemsSource="{Binding ProjectTags}" Margin="0,4,0,0">
-                                                        <ItemsControl.ItemsPanel>
-                                                            <ItemsPanelTemplate>
-                                                                <WrapPanel Orientation="Horizontal"/>
-                                                            </ItemsPanelTemplate>
-                                                        </ItemsControl.ItemsPanel>
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <Border Background="#E1E8ED" CornerRadius="10" Margin="0,0,5,0" Padding="6,2">
-                                                                    <TextBlock Text="{Binding}" FontSize="10" Foreground="#2D3436"/>
-                                                                </Border>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>

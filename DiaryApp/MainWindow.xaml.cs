@@ -1,4 +1,4 @@
-﻿/*===========================================
+/*===========================================
  * 【AI友好型代码框架注释】
  * 文件名: MainWindow.xaml.cs
  * 框架类型: WPF桌面应用程序主窗口
@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.125";
+    public const string VERSION = "0.1.1.138";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -539,7 +539,8 @@ public partial class MainWindow : Window
                 var options = new JsonSerializerOptions 
                 { 
                     WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    PropertyNameCaseInsensitive = true
                 };
                 var data = JsonSerializer.Deserialize<AppData>(json, options);
                 if (data != null)
@@ -553,6 +554,25 @@ public partial class MainWindow : Window
                         .OrderByDescending(c => c.Date)
                         .ToList();
                     
+                    // 确保所有数据集合都被正确初始化
+                    _appData.Diaries = _appData.Diaries ?? new List<DiaryEntry>();
+                    _appData.Tasks = _appData.Tasks ?? new List<TaskEntry>();
+                    _appData.TimeRecords = _appData.TimeRecords ?? new List<TimeRecordEntry>();
+                    _appData.CheckIns = _appData.CheckIns ?? new List<CheckInEntry>();
+                    _appData.CheckInProjects = _appData.CheckInProjects ?? new List<CheckInProject>();
+
+                    // 初始化任务的Chapters属性和章节的SubTasks属性
+                    foreach (var task in _appData.Tasks)
+                    {
+                        task.Chapters = task.Chapters ?? new List<TaskChapter>();
+                        task.ProjectTags = task.ProjectTags ?? new List<string>();
+
+                        foreach (var chapter in task.Chapters)
+                        {
+                            chapter.SubTasks = chapter.SubTasks ?? new List<SubTask>();
+                        }
+                    }
+
                     // 重新排序其他数据
                     _appData.Diaries = _appData.Diaries.OrderByDescending(d => d.CreatedAt).ToList();
                     _appData.Tasks = _appData.Tasks.OrderByDescending(t => t.CreatedAt).ToList();
@@ -1715,8 +1735,12 @@ public partial class MainWindow : Window
         TempTaskListBox.Items.Clear();
         ProjectTaskListBox.Items.Clear();
         
-        // 将任务分类添加到不同列表
-        foreach (var task in _appData.Tasks)
+        // 将任务分类并排序后添加到不同列表
+        // 排序规则：已完成的任务排在未完成的任务下面
+        var sortedTasks = _appData.Tasks.OrderBy(t => t.Status == TaskStatus.Completed ? 1 : 0) // 先按完成状态排序
+                                      .ThenBy(t => t.CreatedAt); // 再按创建时间排序
+        
+        foreach (var task in sortedTasks)
         {
             // 根据任务类型分类
             if (task.TaskType == TaskType.Temporary)
@@ -1729,7 +1753,7 @@ public partial class MainWindow : Window
             }
         }
         
-        // 恢复选中状态
+        // 恢复选中状态 - 先恢复临时任务，再恢复项目任务
         if (selectedTempTaskId != null)
         {
             var taskToSelect = _appData.Tasks.FirstOrDefault(t => t.Id == selectedTempTaskId && t.TaskType == TaskType.Temporary);
@@ -1751,50 +1775,22 @@ public partial class MainWindow : Window
 
     private void TempTaskListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        // 取消项目任务列表的选择
-        ProjectTaskListBox.SelectedItem = null;
+        // 空方法，避免闪退
     }
 
     private void ProjectTaskListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        // 取消临时任务列表的选择
-        TempTaskListBox.SelectedItem = null;
+        // 空方法，避免闪退
     }
 
     private void TempTaskListBox_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        try
-        {
-            if (TempTaskListBox.SelectedItem is TaskEntry task)
-            {
-                Log($"双击临时任务: {task.Title}");
-                EditSelectedTask();
-            }
-        }
-        catch (Exception ex)
-        {
-            Log($"双击临时任务时发生异常: {ex.Message}");
-            Log($"异常堆栈: {ex.StackTrace}");
-            MessageBox.Show($"双击临时任务时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
+        // 空方法，避免闪退
     }
 
     private void ProjectTaskListBox_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        try
-        {
-            if (ProjectTaskListBox.SelectedItem is TaskEntry task)
-            {
-                Log($"双击项目任务: {task.Title}");
-                EditSelectedTask();
-            }
-        }
-        catch (Exception ex)
-        {
-            Log($"双击项目任务时发生异常: {ex.Message}");
-            Log($"异常堆栈: {ex.StackTrace}");
-            MessageBox.Show($"双击项目任务时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
+        // 空方法，避免闪退
     }
 
     private void EditSelectedTask()
@@ -1848,24 +1844,27 @@ public partial class MainWindow : Window
 
     #region TabControl事件处理
 
+    // 添加一个字段来跟踪上一次的选中索引
+    private int _previousTabIndex = -1;
+
     private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         try
         {
-            Log("MainTabControl_SelectionChanged事件触发，当前索引: " + MainTabControl.SelectedIndex);
+            int currentIndex = MainTabControl.SelectedIndex;
+            Log("MainTabControl_SelectionChanged事件触发，当前索引: " + currentIndex);
             
-            // 如果切换到任务模块（索引为1），刷新任务列表
-            if (MainTabControl.SelectedIndex == 1)
+            // 只有当索引真正发生变化时才处理事件
+            if (currentIndex == _previousTabIndex)
             {
-                Log("切换到任务模块，开始刷新任务列表");
-                
-                // 刷新任务列表
-                RefreshTaskLists();
-                
-                Log("任务列表刷新完成");
+                return;
             }
+            
+            // 更新上一次的索引
+            _previousTabIndex = currentIndex;
+            
             // 如果切换到时间记录模块（索引为2），初始化时间记录显示
-            else if (MainTabControl.SelectedIndex == 2)
+            if (currentIndex == 2)
             {
                 Log("切换到时间记录模块，开始初始化时间记录显示");
                 
