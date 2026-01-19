@@ -166,17 +166,54 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.138";
+    public const string VERSION = "0.1.1.139";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
 
-public partial class MainWindow : Window
+public partial class MainWindow : Window, INotifyPropertyChanged
 {
     // 统一应用数据
     private AppData _appData = new AppData();
     private const string DATA_FILE = "app_data.json";
     private const string LOG_FILE = "app_crash_log.txt";
+
+    // 任务计数属性
+    private string _tempTaskCount = "0/0";
+    public string TempTaskCount
+    {
+        get { return _tempTaskCount; }
+        set
+        {
+            if (_tempTaskCount != value)
+            {
+                _tempTaskCount = value;
+                OnPropertyChanged(nameof(TempTaskCount));
+            }
+        }
+    }
+
+    private string _projectTaskCount = "0/0";
+    public string ProjectTaskCount
+    {
+        get { return _projectTaskCount; }
+        set
+        {
+            if (_projectTaskCount != value)
+            {
+                _projectTaskCount = value;
+                OnPropertyChanged(nameof(ProjectTaskCount));
+            }
+        }
+    }
+
+    // INotifyPropertyChanged接口实现
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected virtual void OnPropertyChanged(string propertyName)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
     
     // 提醒功能相关变量
     private DispatcherTimer _reminderTimer;
@@ -1771,6 +1808,23 @@ public partial class MainWindow : Window
                 ProjectTaskListBox.SelectedItem = taskToSelect;
             }
         }
+
+        // 更新任务计数
+        UpdateTaskCounts();
+    }
+
+    // 更新任务计数
+    private void UpdateTaskCounts()
+    {
+        // 计算临时任务的未完成数量和总数
+        var tempTasks = _appData.Tasks.Where(t => t.TaskType == TaskType.Temporary).ToList();
+        var tempUncompletedCount = tempTasks.Count(t => t.Status != TaskStatus.Completed);
+        TempTaskCount = $"{tempUncompletedCount}/{tempTasks.Count}";
+
+        // 计算项目任务的未完成数量和总数
+        var projectTasks = _appData.Tasks.Where(t => t.TaskType == TaskType.Project).ToList();
+        var projectUncompletedCount = projectTasks.Count(t => t.Status != TaskStatus.Completed);
+        ProjectTaskCount = $"{projectUncompletedCount}/{projectTasks.Count}";
     }
 
     private void TempTaskListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

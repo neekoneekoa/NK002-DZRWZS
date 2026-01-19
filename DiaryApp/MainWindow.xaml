@@ -360,7 +360,7 @@
                                          Cursor="SizeWE" Margin="0"/>
 
                             <!-- 中间临时任务区 -->
-                            <Border Grid.Column="2" CornerRadius="15" Background="#E3F2FD" Margin="0,0,10,0">
+                            <Border Grid.Column="2" CornerRadius="15" Background="#F0F8FF" Margin="0,0,10,0">
                                 <Grid Margin="15">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -368,7 +368,10 @@
                                     </Grid.RowDefinitions>
 
                                     <!-- 临时任务区标题 -->
-                                    <TextBlock Grid.Row="0" Text="临时任务" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                                        <TextBlock Text="临时任务" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,5,0"/>
+                                        <TextBlock Text="{Binding TempTaskCount, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
+                                    </StackPanel>
 
                                     <!-- 临时任务列表 -->
                                     <ListBox Grid.Row="1" x:Name="TempTaskListBox" 
@@ -406,7 +409,7 @@
                                          Cursor="SizeWE" Margin="0"/>
                             
                             <!-- 右侧项目任务区 -->
-                            <Border Grid.Column="4" CornerRadius="15" Background="#E8F5E9" Padding="15">
+                            <Border Grid.Column="4" CornerRadius="15" Background="#F1F8E9" Padding="15">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -414,7 +417,10 @@
                                     </Grid.RowDefinitions>
 
                                     <!-- 项目任务区标题 -->
-                                    <TextBlock Grid.Row="0" Text="项目任务" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                                        <TextBlock Text="项目任务" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,5,0"/>
+                                        <TextBlock Text="{Binding ProjectTaskCount, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
+                                    </StackPanel>
 
                                     <!-- 项目任务列表 -->
                                     <ListBox Grid.Row="1" x:Name="ProjectTaskListBox" 
