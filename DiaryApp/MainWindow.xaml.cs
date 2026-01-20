@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.161";
+    public const string VERSION = "0.1.1.166";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -1936,12 +1936,156 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 
                 Log("时间记录显示初始化完成");
             }
+
+            // 如果切换到数据管理模块（索引为4），初始化数据统计
+            if (currentIndex == 4)
+            {
+                Log("切换到数据管理模块，开始计算统计数据");
+                UpdateDataManagementStats();
+            }
         }
         catch (Exception ex)
         {
             LogCrash("TabControl切换时发生错误", ex);
             MessageBox.Show($"TabControl切换时发生错误: {ex.Message}", "错误");
         }
+    }
+
+    private void UpdateDataManagementStats()
+    {
+        try
+        {
+            // 1. 基础统计
+            if (StatsTotalCheckInsText != null)
+                StatsTotalCheckInsText.Text = _appData.CheckIns.Count.ToString();
+            
+            if (StatsRecordedDaysText != null)
+                StatsRecordedDaysText.Text = _appData.TimeRecords.Select(t => t.Date.Date).Distinct().Count().ToString();
+            
+            if (StatsTotalTasksText != null)
+                StatsTotalTasksText.Text = _appData.Tasks.Count.ToString();
+            
+            if (StatsTotalDiariesText != null)
+                StatsTotalDiariesText.Text = _appData.Diaries.Count.ToString();
+
+            // 2. 详细统计
+            
+            // 最长连续打卡
+            if (StatsLongestStreakText != null)
+            {
+                if (_appData.CheckInProjects.Count > 0)
+                {
+                    // 计算每个项目的当前连续打卡
+                    var projectStreaks = new List<(string Name, int Streak)>();
+                    foreach (var project in _appData.CheckInProjects)
+                    {
+                        var projectCheckIns = _appData.CheckIns
+                            .Where(c => c.ProjectId == project.Id)
+                            .ToList();
+                        var streak = CalculateCheckInCurrentStreak(projectCheckIns);
+                        projectStreaks.Add((project.Name, streak));
+                    }
+                    
+                    var bestProject = projectStreaks.OrderByDescending(p => p.Streak).FirstOrDefault();
+                    if (bestProject.Streak > 0)
+                    {
+                        StatsLongestStreakText.Text = $"{bestProject.Name}: {bestProject.Streak} 天";
+                    }
+                    else
+                    {
+                        StatsLongestStreakText.Text = "暂无连续打卡";
+                    }
+                }
+                else
+                {
+                    StatsLongestStreakText.Text = "暂无打卡项目";
+                }
+            }
+
+            // 连续记日记
+            if (StatsDiaryStreakText != null)
+            {
+                var streak = CalculateDiaryStreak();
+                StatsDiaryStreakText.Text = $"{streak} 天";
+            }
+
+            // 最近完成的三个项目
+            if (StatsRecentProjectsList != null)
+            {
+                var recentProjects = _appData.Tasks
+                    .Where(t => t.TaskType == TaskType.Project && t.Status == TaskStatus.Completed && t.CompletedAt.HasValue)
+                    .OrderByDescending(t => t.CompletedAt)
+                    .Take(3)
+                    .Select(t => t.Title)
+                    .ToList();
+                
+                if (recentProjects.Count == 0) recentProjects.Add("暂无已完成项目");
+                StatsRecentProjectsList.ItemsSource = recentProjects;
+            }
+
+            // 活动时间最长的三个活动
+            if (StatsTopActivitiesList != null)
+            {
+                var topActivities = _appData.TimeRecords
+                    .GroupBy(t => t.Activity)
+                    .Select(g => new { Name = g.Key, TotalHours = g.Sum(t => t.DurationHours) })
+                    .OrderByDescending(x => x.TotalHours)
+                    .Take(3)
+                    .Select(x => new { Name = x.Name, Time = $"{x.TotalHours:F1} 小时" })
+                    .ToList();
+                
+                if (topActivities.Count == 0) 
+                {
+                    StatsTopActivitiesList.ItemsSource = new[] { new { Name = "暂无活动记录", Time = "" } };
+                }
+                else
+                {
+                    StatsTopActivitiesList.ItemsSource = topActivities;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"更新数据管理统计失败: {ex.Message}");
+        }
+    }
+
+    private int CalculateDiaryStreak()
+    {
+        if (!_appData.Diaries.Any()) return 0;
+        
+        var dates = _appData.Diaries
+            .Select(d => d.CreatedAt.Date)
+            .Distinct()
+            .OrderByDescending(d => d)
+            .ToList();
+            
+        if (!dates.Any()) return 0;
+
+        // 如果今天没有写日记，从昨天开始算
+        // 如果今天写了，从今天开始算
+        var checkDate = DateTime.Today;
+        if (!dates.Contains(checkDate))
+        {
+            checkDate = DateTime.Today.AddDays(-1);
+            if (!dates.Contains(checkDate)) return 0; // 昨天也没写，断了
+        }
+        
+        int streak = 0;
+        foreach (var date in dates)
+        {
+            if (date == checkDate)
+            {
+                streak++;
+                checkDate = checkDate.AddDays(-1);
+            }
+            else if (date < checkDate)
+            {
+                break;
+            }
+        }
+        
+        return streak;
     }
 
     #endregion
@@ -2950,21 +3094,29 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     return;
                 }
 
-                var newCheckIn = new CheckInEntry
+                // 弹出打卡日志窗口
+                var dialog = new CheckInDialog();
+                dialog.Owner = this;
+                if (dialog.ShowDialog() == true)
                 {
-                    Id = Guid.NewGuid().ToString(),
-                    ProjectId = project.Id,
-                    Type = project.Type,
-                    Value = "完成",
-                    Date = DateTime.Today,
-                    CreatedAt = DateTime.Now
-                };
+                    var newCheckIn = new CheckInEntry
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        ProjectId = project.Id,
+                        Type = project.Type,
+                        Value = "完成",
+                        Date = DateTime.Today,
+                        Notes = dialog.Notes,
+                        Photos = dialog.PhotoPaths,
+                        CreatedAt = DateTime.Now
+                    };
 
-                _appData.CheckIns.Add(newCheckIn);
-                SaveAppData();
-                UpdateSelectedProjectData(project);
+                    _appData.CheckIns.Add(newCheckIn);
+                    SaveAppData();
+                    UpdateSelectedProjectData(project);
 
-                MessageBox.Show("打卡成功！", "成功");
+                    MessageBox.Show("打卡成功！", "成功");
+                }
             }
             else
             {
@@ -2975,6 +3127,32 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             Log($"今日打卡失败: {ex.Message}");
             MessageBox.Show($"打卡失败：{ex.Message}", "错误");
+        }
+    }
+
+    private void ViewCheckInLogButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (CheckInProjectListBox != null && CheckInProjectListBox.SelectedItem is CheckInProject project)
+            {
+                var projectCheckIns = _appData.CheckIns
+                    .Where(c => c.ProjectId == project.Id)
+                    .ToList();
+
+                var logWindow = new CheckInLogWindow(project, projectCheckIns);
+                logWindow.Owner = this;
+                logWindow.ShowDialog();
+            }
+            else
+            {
+                MessageBox.Show("请先选择一个项目", "提示");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"查看打卡日志失败: {ex.Message}");
+            MessageBox.Show($"查看日志失败：{ex.Message}", "错误");
         }
     }
 

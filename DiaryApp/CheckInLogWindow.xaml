@@ -1,0 +1,70 @@
+<Window x:Class="DiaryApp.CheckInLogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="打卡日志" Height="600" Width="800"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
+    <Grid Background="#F5F6FA">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Background="White" Padding="20" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+            <StackPanel>
+                <TextBlock x:Name="ProjectTitleText" Text="项目名称" FontSize="20" FontWeight="Bold" Foreground="#2D3436"/>
+                <TextBlock x:Name="StatsText" Text="已打卡 0 天" FontSize="14" Foreground="#636E72" Margin="0,5,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Log List -->
+        <ScrollViewer Grid.Row="1" Padding="20">
+            <ItemsControl x:Name="LogItemsControl">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="White" CornerRadius="8" Margin="0,0,0,15" Padding="15">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#E0E0E0" BlurRadius="10" ShadowDepth="2" Opacity="0.5"/>
+                            </Border.Effect>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <!-- Header: Date -->
+                                <TextBlock Text="{Binding DateStr}" FontSize="14" Foreground="#6C5CE7" FontWeight="Bold"/>
+                                
+                                <!-- Content: Text -->
+                                <TextBlock Grid.Row="1" Text="{Binding Notes}" FontSize="15" Foreground="#2D3436" 
+                                           TextWrapping="Wrap" Margin="0,10,0,10"
+                                           Visibility="{Binding HasNotes, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                
+                                <!-- Content: Photos -->
+                                <ItemsControl Grid.Row="2" ItemsSource="{Binding Photos}"
+                                             Visibility="{Binding HasPhotos, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="4" ClipToBounds="True" Margin="0,0,10,10" Width="150" Height="150" Background="#F0F0F0">
+                                                <Image Source="{Binding}" Stretch="UniformToFill"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</Window>

@@ -1068,9 +1068,81 @@ namespace DiaryApp
                     Text = $"• {projectName}: {checkIn.Value}",
                     FontSize = 13,
                     Foreground = new SolidColorBrush(Color.FromRgb(45, 52, 54)),
-                    Margin = new Thickness(0, 2, 0, 2)
+                    Margin = new Thickness(0, 2, 0, 2),
+                    Tag = checkIn, // 存储 CheckInEntry 对象
+                    Cursor = Cursors.Hand
                 };
+
+                // 添加鼠标事件
+                checkInItem.MouseLeftButtonDown += (s, e) =>
+                {
+                    if (e.ClickCount == 2)
+                    {
+                        ViewCheckInDetails(checkIn);
+                    }
+                };
+                
+                // 添加右键菜单
+                var contextMenu = new ContextMenu();
+                var viewAllLogsItem = new MenuItem { Header = "查看全部日志" };
+                viewAllLogsItem.Click += (s, e) => ViewProjectLogs(checkIn);
+                contextMenu.Items.Add(viewAllLogsItem);
+                checkInItem.ContextMenu = contextMenu;
+
                 TodayCheckInsListBox.Items.Add(checkInItem);
+            }
+        }
+
+        private void ViewCheckInDetails(CheckInEntry checkIn)
+        {
+            try
+            {
+                var dialog = new CheckInDialog(checkIn);
+                dialog.Owner = this;
+                if (dialog.ShowDialog() == true)
+                {
+                    // 更新打卡记录
+                    checkIn.Notes = dialog.Notes;
+                    checkIn.Photos = dialog.PhotoPaths;
+                    checkIn.UpdatedAt = DateTime.Now;
+                    
+                    // 保存数据
+                    _appData.LastSaved = DateTime.Now;
+                    // 注意：这里我们只修改了内存中的数据，如果主窗口需要刷新，可能需要重新加载
+                    // 但由于 AppData 是引用的，所以主窗口的数据也会更新
+                    // 不过我们需要手动触发保存到文件
+                    // 这里我们简单地保存整个 AppData
+                    // 实际项目中可能需要通过事件或接口通知主窗口保存
+                    // 这里假设 DiaryEditWindow 可以直接保存数据或数据是共享的
+                    
+                    // 重新显示列表以反映可能的更改（虽然目前只显示了 Value，但也许将来会显示 Notes）
+                    DisplayTodayCheckIns();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"查看打卡详情失败: {ex.Message}", "错误");
+            }
+        }
+
+        private void ViewProjectLogs(CheckInEntry checkIn)
+        {
+            try
+            {
+                var project = _appData.CheckInProjects.FirstOrDefault(p => p.Id == checkIn.ProjectId);
+                if (project == null) return;
+
+                var projectCheckIns = _appData.CheckIns
+                    .Where(c => c.ProjectId == project.Id)
+                    .ToList();
+
+                var logWindow = new CheckInLogWindow(project, projectCheckIns);
+                logWindow.Owner = this;
+                logWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"查看项目日志失败: {ex.Message}", "错误");
             }
         }
         

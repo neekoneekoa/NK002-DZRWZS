@@ -780,6 +780,10 @@
                                                             Background="#6C5CE7" Foreground="White" BorderThickness="0"
                                                             FontWeight="Bold" Click="CheckInTodayButton_Click"
                                                             Margin="0,0,10,0"/>
+                                                    <Button Content="📄 查看日志" Width="120" Height="40" 
+                                                            Background="#74B9FF" Foreground="White" BorderThickness="0"
+                                                            FontWeight="Bold" Click="ViewCheckInLogButton_Click"
+                                                            Margin="0,0,10,0"/>
                                                     <Button Content="✏️ 编辑项目" Width="120" Height="40" 
                                                             Background="#A29BFE" Foreground="White" BorderThickness="0"
                                                             FontWeight="Bold" Click="EditCheckInProjectButton_Click"/>
@@ -903,6 +907,7 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- 标题 -->
@@ -910,10 +915,108 @@
 
                                 <!-- 说明文字 -->
                                 <TextBlock Grid.Row="1" Text="管理您的应用数据，包括保存、导出、导入和备份管理" 
-                                           FontSize="14" Foreground="#636E72" Margin="0,0,0,30"/>
+                                           FontSize="14" Foreground="#636E72" Margin="0,0,0,20"/>
+
+                                <!-- 统计数据区域 -->
+                                <StackPanel Grid.Row="2" Margin="0,0,0,30">
+                                    <!-- 第一部分：基础统计 -->
+                                    <UniformGrid Columns="4" Margin="0,0,0,20">
+                                        <!-- 全部打卡数 -->
+                                        <Border Background="#F0F3F8" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                                            <StackPanel>
+                                                <TextBlock Text="全部打卡数" FontSize="12" Foreground="#636E72" Margin="0,0,0,5"/>
+                                                <TextBlock x:Name="StatsTotalCheckInsText" Text="0" FontSize="24" FontWeight="Bold" Foreground="#6C5CE7"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- 记录天数 -->
+                                        <Border Background="#F0F3F8" CornerRadius="8" Padding="15" Margin="5,0,5,0">
+                                            <StackPanel>
+                                                <TextBlock Text="记录天数" FontSize="12" Foreground="#636E72" Margin="0,0,0,5"/>
+                                                <TextBlock x:Name="StatsRecordedDaysText" Text="0" FontSize="24" FontWeight="Bold" Foreground="#0984E3"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- 全部任务数 -->
+                                        <Border Background="#F0F3F8" CornerRadius="8" Padding="15" Margin="5,0,5,0">
+                                            <StackPanel>
+                                                <TextBlock Text="全部任务数" FontSize="12" Foreground="#636E72" Margin="0,0,0,5"/>
+                                                <TextBlock x:Name="StatsTotalTasksText" Text="0" FontSize="24" FontWeight="Bold" Foreground="#00B894"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- 日记数 -->
+                                        <Border Background="#F0F3F8" CornerRadius="8" Padding="15" Margin="10,0,0,0">
+                                            <StackPanel>
+                                                <TextBlock Text="日记数" FontSize="12" Foreground="#636E72" Margin="0,0,0,5"/>
+                                                <TextBlock x:Name="StatsTotalDiariesText" Text="0" FontSize="24" FontWeight="Bold" Foreground="#FF7675"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </UniformGrid>
+
+                                    <!-- 第二部分：详细统计 -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- 最长连续打卡项目 -->
+                                        <Border Grid.Row="0" Grid.Column="0" Background="#FFF5F5" CornerRadius="8" Padding="15" Margin="0,0,10,10">
+                                            <StackPanel>
+                                                <TextBlock Text="🔥 最长连续打卡" FontSize="14" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
+                                                <TextBlock x:Name="StatsLongestStreakText" Text="暂无数据" FontSize="13" Foreground="#636E72" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- 连续日记 -->
+                                        <Border Grid.Row="0" Grid.Column="1" Background="#F0FFF4" CornerRadius="8" Padding="15" Margin="10,0,0,10">
+                                            <StackPanel>
+                                                <TextBlock Text="📅 连续记日记" FontSize="14" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
+                                                <TextBlock x:Name="StatsDiaryStreakText" Text="0 天" FontSize="13" Foreground="#636E72"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- 最近完成项目 -->
+                                        <Border Grid.Row="1" Grid.Column="0" Background="#F0F8FF" CornerRadius="8" Padding="15" Margin="0,10,10,0">
+                                            <StackPanel>
+                                                <TextBlock Text="✅ 最近完成项目" FontSize="14" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
+                                                <ItemsControl x:Name="StatsRecentProjectsList">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock Text="{Binding}" FontSize="13" Foreground="#636E72" Margin="0,0,0,5" TextTrimming="CharacterEllipsis"/>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- 活动时长Top3 -->
+                                        <Border Grid.Row="1" Grid.Column="1" Background="#FFF9E6" CornerRadius="8" Padding="15" Margin="10,10,0,0">
+                                            <StackPanel>
+                                                <TextBlock Text="⏱️ 最长活动时间" FontSize="14" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,10"/>
+                                                <ItemsControl x:Name="StatsTopActivitiesList">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,0,0,5">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Text="{Binding Name}" FontSize="13" Foreground="#636E72" TextTrimming="CharacterEllipsis"/>
+                                                                <TextBlock Grid.Column="1" Text="{Binding Time}" FontSize="13" Foreground="#636E72" Margin="10,0,0,0"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
 
                                 <!-- 功能按钮区域 -->
-                                <Grid Grid.Row="2">
+                                <Grid Grid.Row="3">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>

@@ -226,6 +226,7 @@ public enum TaskType
         public string Value { get; set; } = ""; // 打卡值或状态
         public int Streak { get; set; } = 0; // 连续打卡天数
         public string Notes { get; set; } = "";
+        public List<string> Photos { get; set; } = new List<string>(); // 打卡照片
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
     }
