@@ -55,9 +55,9 @@
                 <TextBox x:Name="ActivityTextBox" Width="200" Height="30" FontSize="14" Padding="5"/>
             </StackPanel>
             
-            <!-- 活动分类 -->
+            <!-- 标签 -->
             <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,0,0,15" VerticalAlignment="Center">
-                <TextBlock Text="活动分类：" FontSize="14" Foreground="#636E72" Width="80"/>
+                <TextBlock Text="标签：" FontSize="14" Foreground="#636E72" Width="80"/>
                 <ComboBox x:Name="CategoryComboBox" Width="200" Height="30">
                     <ComboBoxItem Content="工作"/>
                     <ComboBoxItem Content="学习"/>

@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.139";
+    public const string VERSION = "0.1.1.145";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -1986,7 +1986,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         SaveAppData();
         UpdateTimeRecordDisplay();
         
-        MessageBox.Show("时间记录已添加！", "成功");
+        // 打开编辑窗口
+        EditTimeRecord(newRecord);
     }
 
     private void UpdateTimeRecordDisplay()
@@ -2054,6 +2055,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             timeGrid.MouseMove += TimeGrid_MouseMove;
             timeGrid.MouseLeftButtonUp += TimeGrid_MouseLeftButtonUp;
             timeGrid.MouseLeave += TimeGrid_MouseLeave;
+            
+            // 重置拖动状态变量，防止编辑保存后拖动异常
+            _isDragging = false;
+            _startRow = -1;
+            _startCol = -1;
+            _currentRow = -1;
+            _currentCol = -1;
+            _dragPreviewBorder = null;
         }
     }
     
@@ -2062,7 +2071,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (timeGrid == null) return;
         
         // 缁樺埗鏃堕棿鍧楃綉鏍肩嚎
-        for (int row = 0; row < 12; row++)
+        for (int row = 0; row < 24; row++)
         {
             for (int col = 1; col <= 7; col++)
             {
@@ -2072,7 +2081,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     BorderBrush = Brushes.LightGray,
                     BorderThickness = new Thickness(0, 0, 1, 1)
                 };
-                Grid.SetRow(border, row + 1); // +1 鏄洜涓虹0琛屾槸鏃ユ湡鏍囬
+                Grid.SetRow(border, row); // 第一行对应00:00
                 Grid.SetColumn(border, col);
                 Grid.SetRowSpan(border, 1);
                 Grid.SetColumnSpan(border, 1);
@@ -2092,18 +2101,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (dayOfWeek == 0) dayOfWeek = 7; // 灏嗗懆鏃ヤ粠0杞崲涓?
             dayOfWeek -= 1; // 杞崲涓?-6鐨勭储寮?
             
-            // 璁＄畻寮€濮嬫椂闂磋鍙凤紙08:00-19:00锛屽叡12灏忔椂锛?
+            // 璁＄畻寮€濮嬫椂闂磋鍙凤紙00:00-23:00锛屽叡24灏忔椂锛?
             int startHour = record.StartTime.Hours;
-            if (startHour < 8 || startHour >= 19) continue; // 鍙樉绀?8:00-19:00鐨勮褰?
+            if (startHour < 0 || startHour >= 24) continue; // 鍙樉绀?0:00-23:00鐨勮褰?
             
-            int startRow = startHour - 8;
+            int startRow = startHour;
             
             // 璁＄畻缁撴潫鏃堕棿琛屽彿
             int endHour = record.EndTime.Hours;
-            if (endHour <= 8) continue;
-            if (endHour > 19) endHour = 19;
+            if (endHour <= 0) continue;
+            if (endHour > 24) endHour = 24;
             
-            int endRow = endHour - 8;
+            int endRow = endHour - 1;
             int rowSpan = endRow - startRow;
             
             if (rowSpan < 1) rowSpan = 1;
@@ -2119,7 +2128,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             };
             
             // 娣诲姞鐐瑰嚮浜嬩欢
-            timeBlock.MouseLeftButtonDown += (s, e) => EditTimeRecord(record);
+            timeBlock.MouseLeftButtonDown += (s, e) => 
+            {
+                e.Handled = true; // 阻止事件冒泡到网格的点击事件
+                EditTimeRecord(record);
+            };
             
             // 鍒涘缓鍐呭闈㈡澘
             var contentPanel = new StackPanel
@@ -2177,7 +2190,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         else if (result == null)
         {
             // 鍒犻櫎璁板綍
-            _appData.TimeRecords.Remove(record);
+            _appData.TimeRecords = _appData.TimeRecords.Where(r => r.Id != record.Id).ToList();
             SaveAppData();
             UpdateTimeRecordDisplay();
         }
@@ -2197,8 +2210,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         int row = GetRowFromPoint(mousePoint, timeGrid);
         int col = GetColumnFromPoint(mousePoint, timeGrid);
         
-        // 只处理有效的行和列（行：1-12，列：1-7）
-        if (row >= 1 && row <= 12 && col >= 1 && col <= 7)
+        // 只处理有效的行和列（行：0-23，列：1-7）
+            if (row >= 0 && row <= 23 && col >= 1 && col <= 7)
         {
             _isDragging = true;
             _startRow = row;
@@ -2242,8 +2255,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         int row = GetRowFromPoint(mousePoint, timeGrid);
         int col = GetColumnFromPoint(mousePoint, timeGrid);
         
-        // 只处理有效的行和列（行：1-12，列：1-7）
-        if (row >= 1 && row <= 12 && col >= 1 && col <= 7)
+        // 只处理有效的行和列（行：0-23，列：1-7）
+            if (row >= 0 && row <= 23 && col >= 1 && col <= 7)
         {
             _currentRow = row;
             _currentCol = col;
@@ -2291,7 +2304,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         int endCol = Math.Max(_startCol, _currentCol);
         
         // 只处理有效的选择（至少1行1列）
-        if (startRow >= 1 && endRow <= 12 && startCol >= 1 && endCol <= 7)
+        if (startRow >= 0 && endRow <= 23 && startCol >= 1 && endCol <= 7)
         {
             // 创建新的时间记录
             CreateNewTimeRecord(startCol, endCol, startRow, endRow);
@@ -2333,11 +2346,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     
     private int GetRowFromPoint(Point point, Grid grid)
     {
-        double rowHeight = 40; // 行高固定为40
+        // 动态获取实际行高
+        double rowHeight = grid.RowDefinitions.Count > 0 ? grid.RowDefinitions[0].ActualHeight : 40;
+        if (rowHeight <= 0) rowHeight = 40; // 确保行高有效
+        
         int row = (int)Math.Floor(point.Y / rowHeight);
         
-        // 确保行号在有效范围内（1-12，对应08:00-19:00）
-        return Math.Max(1, Math.Min(12, row));
+        // 确保行号在有效范围内（0-23，对应00:00-23:00）
+        return Math.Max(0, Math.Min(23, row));
     }
     
     private int GetColumnFromPoint(Point point, Grid grid)
@@ -2366,7 +2382,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         try
         {
             // 参数验证
-            if (startCol < 1 || endCol > 7 || startRow < 1 || endRow > 12)
+            if (startCol < 1 || endCol > 7 || startRow < 0 || endRow > 23)
             {
                 MessageBox.Show("选择的时间段无效，请重新选择！", "错误");
                 return;
@@ -2378,15 +2394,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             int actualStartRow = Math.Min(startRow, endRow);
             int actualEndRow = Math.Max(startRow, endRow);
             
-            // 计算开始时间和结束时间（每一行代表一个小时，从08:00开始）
-            TimeSpan startTime = TimeSpan.FromHours(8 + (actualStartRow - 1));
-            TimeSpan endTime = TimeSpan.FromHours(8 + actualEndRow);
+            // 计算开始时间和结束时间（每一行代表一个小时，从00:00开始）
+            TimeSpan startTime = TimeSpan.FromHours(actualStartRow);
+            TimeSpan endTime = TimeSpan.FromHours(actualEndRow + 1);
             
             // 计算开始日期和结束日期
             DateTime startDate = _currentWeekStart.AddDays(actualStartCol - 1);
             DateTime endDate = _currentWeekStart.AddDays(actualEndCol - 1);
             
             // 如果选择了多个小时但只有一天，创建一个时间记录
+            // 创建要编辑的记录
+            TimeRecordEntry recordToEdit = null;
+            
             if (startDate == endDate)
             {
                 // 创建新的时间记录
@@ -2404,6 +2423,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 
                 // 添加到数据
                 _appData.TimeRecords.Add(newRecord);
+                recordToEdit = newRecord;
             }
             // 如果选择了多个天，每天创建一个时间记录
             else
@@ -2414,13 +2434,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     Id = Guid.NewGuid().ToString(),
                     Date = startDate,
                     StartTime = startTime,
-                    EndTime = TimeSpan.FromHours(19),
+                    EndTime = TimeSpan.FromHours(24),
                     Activity = "新活动",
                     Category = "工作",
                     Notes = "",
                     CreatedAt = DateTime.Now
                 };
                 _appData.TimeRecords.Add(firstDayRecord);
+                recordToEdit = firstDayRecord;
                 
                 // 中间天的记录（全天）
                 for (int day = actualStartCol + 1; day < actualEndCol; day++)
@@ -2429,8 +2450,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     {
                         Id = Guid.NewGuid().ToString(),
                         Date = _currentWeekStart.AddDays(day - 1),
-                        StartTime = TimeSpan.FromHours(8),
-                        EndTime = TimeSpan.FromHours(19),
+                        StartTime = TimeSpan.FromHours(0),
+                        EndTime = TimeSpan.FromHours(24),
                         Activity = "新活动",
                         Category = "工作",
                         Notes = "",
@@ -2444,7 +2465,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 {
                     Id = Guid.NewGuid().ToString(),
                     Date = endDate,
-                    StartTime = TimeSpan.FromHours(8),
+                    StartTime = TimeSpan.FromHours(0),
                     EndTime = endTime,
                     Activity = "新活动",
                     Category = "工作",
@@ -2458,8 +2479,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             SaveAppData();
             UpdateTimeRecordDisplay();
             
-            // 显示成功消息
-            MessageBox.Show("时间段记录已添加！", "成功");
+            // 打开编辑窗口
+            if (recordToEdit != null)
+            {
+                EditTimeRecord(recordToEdit);
+            }
         }
         catch (Exception ex)
         {
