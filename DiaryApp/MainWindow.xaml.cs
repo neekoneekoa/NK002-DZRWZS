@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.148";
+    public const string VERSION = "0.1.1.161";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -1068,7 +1068,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void NewDiaryButton_Click(object sender, RoutedEventArgs e)
     {
-        var editWindow = new DiaryEditWindow(_appData.PersonalInfo);
+        var editWindow = new DiaryEditWindow(_appData.PersonalInfo, _appData);
         editWindow.Owner = this;
         if (editWindow.ShowDialog() == true && editWindow.ResultEntry != null)
         {
@@ -1631,7 +1631,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void EditDiaryEntry(DiaryEntry entry)
     {
-        var editWindow = new DiaryEditWindow(_appData.PersonalInfo, entry);
+        var editWindow = new DiaryEditWindow(_appData.PersonalInfo, _appData, entry);
         editWindow.Owner = this;
         if (editWindow.ShowDialog() == true && editWindow.ResultEntry != null)
         {
@@ -2134,6 +2134,31 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 EditTimeRecord(record);
             };
             
+            // 添加右键菜单
+            var contextMenu = new ContextMenu();
+            var deleteMenuItem = new MenuItem { Header = "删除" };
+            deleteMenuItem.Click += (s, e) =>
+            {
+                // 显示确认删除对话框
+                var result = MessageBox.Show("确定要删除这条时间记录吗？", "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (result == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        // 使用RemoveAll方法直接删除记录
+                        _appData.TimeRecords.RemoveAll(r => r.Id == record.Id);
+                        SaveAppData();
+                        UpdateTimeRecordDisplay();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"删除失败：{ex.Message}，请检查程序目录的写入权限。", "删除失败", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            };
+            contextMenu.Items.Add(deleteMenuItem);
+            timeBlock.ContextMenu = contextMenu;
+            
             // 鍒涘缓鍐呭闈㈡澘
             var contentPanel = new StackPanel
             {
@@ -2180,37 +2205,87 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // 检查记录是否已经存在于集合中
         bool isExistingRecord = _appData.TimeRecords.Any(r => r.Id == record.Id);
         
+        // 调试信息
+
+        
         var editWindow = new TimeRecordEditWindow(record);
         var result = editWindow.ShowDialog();
+        
+        
         
         if (result == true)
         {
             // 如果是新记录，添加到集合中
             if (!isExistingRecord)
             {
-                _appData.TimeRecords.Add(record);
-                _appData.TimeRecords = _appData.TimeRecords.OrderByDescending(t => t.Date).ThenByDescending(t => t.StartTime).ToList();
+                _appData.TimeRecords.Add(editWindow.EditedRecord);
+            }
+            else
+            {
+                // 更新现有记录
+                var existingRecord = _appData.TimeRecords.FirstOrDefault(r => r.Id == editWindow.EditedRecord.Id);
+                if (existingRecord != null)
+                {
+                    // 更新现有记录的所有属性
+                    existingRecord.Date = editWindow.EditedRecord.Date;
+                    existingRecord.StartTime = editWindow.EditedRecord.StartTime;
+                    existingRecord.EndTime = editWindow.EditedRecord.EndTime;
+                    existingRecord.Activity = editWindow.EditedRecord.Activity;
+                    existingRecord.Category = editWindow.EditedRecord.Category;
+                    existingRecord.Notes = editWindow.EditedRecord.Notes;
+                }
             }
             
-            // 淇濆瓨鏁版嵁
-            SaveAppData();
-            // 鏇存柊鏄剧ず
-            UpdateTimeRecordDisplay();
+            // 重新排序记录
+            _appData.TimeRecords = _appData.TimeRecords.OrderByDescending(t => t.Date).ThenByDescending(t => t.StartTime).ToList();
+            
+            try
+            {
+                // 保存数据
+                SaveAppData();
+                // 更新显示
+                UpdateTimeRecordDisplay();
+                
+                
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"保存失败：{ex.Message}，请检查程序目录的写入权限。", "保存失败", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
         else if (result == null)
         {
-            // 鍒犻櫎璁板綍（只处理已有记录）
+            // 删除记录（只处理已有记录）
             if (isExistingRecord)
             {
-                // 使用RemoveAll方法直接删除记录
-                _appData.TimeRecords.RemoveAll(r => r.Id == record.Id);
-                SaveAppData();
-                UpdateTimeRecordDisplay();
+                
+                
+                try
+                {
+                    // 使用RemoveAll方法直接删除记录
+                    _appData.TimeRecords.RemoveAll(r => r.Id == record.Id);
+                    
+                    SaveAppData();
+                    UpdateTimeRecordDisplay();
+                    
+                    
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"删除失败：{ex.Message}，请检查程序目录的写入权限。", "删除失败", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            else
+            {
+                
             }
         }
+        else
+        {
+            
+        }
         // 如果点击取消，对于新记录不做任何处理，对于已有记录保持不变
-    }    
-    #region 时间网格鼠标事件处理
+    }
     
     private void TimeGrid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
@@ -2225,7 +2300,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         int col = GetColumnFromPoint(mousePoint, timeGrid);
         
         // 只处理有效的行和列（行：0-23，列：1-7）
-            if (row >= 0 && row <= 23 && col >= 1 && col <= 7)
+        if (row >= 0 && row <= 23 && col >= 1 && col <= 7)
         {
             _isDragging = true;
             _startRow = row;
@@ -2517,8 +2592,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
     
-    #endregion
-
     #endregion
 
     #region 统一保存和备份事件

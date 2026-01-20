@@ -3,9 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="日记编辑" Height="1200" Width="900"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize">
+        ResizeMode="CanResize">
     <Grid Background="#F8F9FA" Margin="15" KeyDown="Window_KeyDown">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -80,7 +82,71 @@
             </StackPanel>
         </Border>
 
-        <Border Grid.Row="3" Background="White" CornerRadius="8" Padding="10" Margin="0,0,0,10">
+        <!-- 今日动作区域：左中右三栏布局 -->
+        <Border Grid.Row="3" Background="White" CornerRadius="8" Padding="10" Margin="0,0,0,0">
+            <StackPanel>
+                <TextBlock Text="📊 今日动作" FontSize="12" Foreground="#636E72" Margin="0,0,0,5"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- 左侧：今日完成任务 -->
+                    <Border Grid.Column="0" BorderBrush="#DFE6E9" BorderThickness="0,0,1,0" Padding="0,0,10,0">
+                        <StackPanel>
+                            <TextBlock Text="✅ 今日完成任务" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,5"/>
+                            <ListBox x:Name="TodayTasksListBox" Height="200" 
+                                     BorderThickness="0" Background="Transparent"
+                                     FontSize="14" Foreground="#2D3436">
+                            </ListBox>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- 列分隔器 -->
+                    <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent" ShowsPreview="True"/>
+                    
+                    <!-- 中间：时间记录饼状图 -->
+                    <Border Grid.Column="2" BorderBrush="#DFE6E9" BorderThickness="1,0,1,0" Padding="10,0,10,0">
+                        <StackPanel>
+                            <TextBlock Text="📈 时间记录饼状图" FontSize="14" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,5"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- 饼状图画布 -->
+                                <Canvas x:Name="PieChartCanvas" Width="250" Height="200" Margin="0,0,20,0"/>
+                                <!-- 图例区域 -->
+                                <StackPanel x:Name="LegendPanel" Grid.Column="1" Orientation="Vertical" Margin="0,10,0,0"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- 列分隔器 -->
+                    <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent" ShowsPreview="True"/>
+                    
+                    <!-- 右侧：打卡 -->
+                    <Border Grid.Column="4" BorderBrush="#DFE6E9" BorderThickness="0,0,0,0" Padding="10,0,0,0">
+                        <StackPanel>
+                            <TextBlock Text="📝 打卡" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,5"/>
+                            <ListBox x:Name="TodayCheckInsListBox" Height="200" 
+                                     BorderThickness="0" Background="Transparent"
+                                     FontSize="14" Foreground="#2D3436">
+                            </ListBox>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+        </Border>
+        
+        <!-- 行分隔器 -->
+        <GridSplitter Grid.Row="4" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Center" Background="Transparent" ShowsPreview="True" Margin="0,5,0,5"/>
+
+        <Border Grid.Row="5" Background="White" CornerRadius="8" Padding="10" Margin="0,0,0,10">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
@@ -88,7 +154,7 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 
-                <Border Grid.Row="0" Background="White" BorderBrush="#DFE6E9" BorderThickness="1" CornerRadius="4">
+                <Border Grid.Row="0" Background="#F0FFF0" BorderBrush="#DFE6E9" BorderThickness="1" CornerRadius="4">
                     <RichTextBox x:Name="DiaryContentRichTextBox" 
                                  Background="Transparent" BorderThickness="0"
                                  Padding="12"
@@ -213,7 +279,7 @@
             </Grid>
         </Border>
 
-        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="关闭" Width="80" Height="35" Background="#DFE6E9" Foreground="#2D3436" 
                     BorderThickness="0" Margin="0,0,10,0" Click="CancelButton_Click"/>
             <Button Content="💾 保存 (Ctrl+S)" Width="130" Height="35" Background="#00B894" Foreground="White" 

@@ -9,7 +9,7 @@
         Width="500"
         Height="450"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize">
+        ResizeMode="CanResize">
     <Window.Resources>
         <!-- 颜色定义 -->
         <Color x:Key="PrimaryColor">#FF6C5CE7</Color>

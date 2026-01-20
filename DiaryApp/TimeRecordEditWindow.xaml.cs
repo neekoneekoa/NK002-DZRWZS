@@ -15,7 +15,18 @@ namespace DiaryApp
         public TimeRecordEditWindow(TimeRecordEntry record)
         {
             InitializeComponent();
-            EditedRecord = record;
+            // 创建记录的副本，避免直接修改原始对象
+            EditedRecord = new TimeRecordEntry
+            {
+                Id = record.Id,
+                Date = record.Date,
+                StartTime = record.StartTime,
+                EndTime = record.EndTime,
+                Activity = record.Activity,
+                Category = record.Category,
+                Notes = record.Notes,
+                CreatedAt = record.CreatedAt
+            };
             InitializeTimeComboBoxes();
             LoadRecordData();
         }

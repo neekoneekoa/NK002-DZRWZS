@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="编辑时间记录" Height="400" Width="500"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize">
+        ResizeMode="CanResize">
     
     <Window.Resources>
         <!-- 颜色定义 -->

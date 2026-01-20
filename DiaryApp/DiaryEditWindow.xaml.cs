@@ -10,6 +10,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 
 namespace DiaryApp
 {
@@ -30,17 +31,19 @@ namespace DiaryApp
         private double _currentFontSize = 16;
         private bool _isUnderline = false;
         private readonly PersonalInfo _personalInfo;
+        private readonly AppData _appData; // 添加AppData成员变量
         private readonly HashSet<string> _boundParamNames = new HashSet<string> { "金钱", "savings", "Savings" }; // 绑定参数名集合
         private readonly Dictionary<string, decimal> _originalParamValues = new Dictionary<string, decimal>(); // 存储原始参数值，用于计算差值
 
         public DiaryEntry? ResultEntry { get; private set; }
         public bool IsSaved { get; private set; }
 
-        public DiaryEditWindow(PersonalInfo personalInfo, bool isNewEntry = true)
+        public DiaryEditWindow(PersonalInfo personalInfo, AppData appData, bool isNewEntry = true)
         {
             InitializeComponent();
             _isNewEntry = isNewEntry;
             _personalInfo = personalInfo;
+            _appData = appData;
             this.Title = isNewEntry ? "新增日记" : "编辑日记";
             
             if (isNewEntry)
@@ -51,18 +54,25 @@ namespace DiaryApp
             }
             
             InitializeRichTextBox();
+            
+            // 绘制饼状图
+            DrawPieChart();
         }
 
-        public DiaryEditWindow(PersonalInfo personalInfo, DiaryEntry entry)
+        public DiaryEditWindow(PersonalInfo personalInfo, AppData appData, DiaryEntry entry)
         {
             InitializeComponent();
             _isNewEntry = false;
             _personalInfo = personalInfo;
+            _appData = appData;
             _originalTitle = entry.Title;
             _originalContent = entry.Content;
             this.Title = "编辑日记";
             InitializeRichTextBox();
             LoadEntry(entry);
+            
+            // 绘制饼状图
+            DrawPieChart();
         }
 
         private void InitializeRichTextBox()
@@ -83,6 +93,8 @@ namespace DiaryApp
         private void DatePicker_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
         {
             UpdateWeekDayDisplay();
+            // 重新绘制饼状图
+            DrawPieChart();
         }
 
         private void UpdateWeekDayDisplay()
@@ -732,7 +744,336 @@ namespace DiaryApp
                 DiaryPhotosPanel.Children.Add(border);
             }
         }
-
+        
+        /// <summary>
+        /// 绘制饼状图
+        /// </summary>
+        private void DrawPieChart()
+        {
+            // 清空画布
+            PieChartCanvas.Children.Clear();
+            LegendPanel.Children.Clear();
+            
+            // 获取当前选中的日期
+            DateTime selectedDate = DatePicker.SelectedDate ?? DateTime.Today;
+            
+            // 获取当日的时间记录
+            var dayRecords = GetDayTimeRecords(selectedDate);
+            
+            // 计算活动统计信息，包含"无"活动类型
+            var activityStats = GetActivityStatsWithNoRecord(dayRecords);
+            
+            // 绘制饼状图
+            DrawPieChartSegments(activityStats);
+            
+            // 绘制图例
+            DrawLegend(activityStats);
+            
+            // 显示今日完成任务和打卡项目
+            DisplayTodayTasks();
+            DisplayTodayCheckIns();
+        }
+        
+        /// <summary>
+        /// 获取当日的时间记录
+        /// </summary>
+        /// <param name="date">日期</param>
+        /// <returns>当日的时间记录列表</returns>
+        private List<TimeRecordEntry> GetDayTimeRecords(DateTime date)
+        {
+            return _appData.TimeRecords
+                .Where(t => t.Date.Date == date.Date)
+                .OrderBy(t => t.StartTime)
+                .ToList();
+        }
+        
+        /// <summary>
+        /// 按活动名分组计算时间占比
+        /// </summary>
+        /// <param name="records">时间记录列表</param>
+        /// <returns>活动统计信息</returns>
+        private List<(string Activity, double DurationHours, double Percentage)> GetActivityStats(List<TimeRecordEntry> records)
+        {
+            // 按活动名分组
+            var grouped = records.GroupBy(r => r.Activity)
+                .Select(g => new 
+                {
+                    Activity = g.Key,
+                    DurationHours = g.Sum(r => r.DurationHours)
+                })
+                .OrderByDescending(g => g.DurationHours)
+                .ToList();
+            
+            // 计算总时间
+            double totalHours = grouped.Sum(g => g.DurationHours);
+            
+            // 计算百分比
+            return grouped.Select(g => (g.Activity, g.DurationHours, g.DurationHours / totalHours * 100)).ToList();
+        }
+        
+        /// <summary>
+        /// 按活动名分组计算时间占比，包含"无"活动类型
+        /// </summary>
+        /// <param name="records">时间记录列表</param>
+        /// <returns>活动统计信息</returns>
+        private List<(string Activity, double DurationHours, double Percentage)> GetActivityStatsWithNoRecord(List<TimeRecordEntry> records)
+        {
+            const double DAY_HOURS = 24.0;
+            
+            // 按活动名分组
+            var grouped = records.GroupBy(r => r.Activity)
+                .Select(g => new 
+                {
+                    Activity = g.Key,
+                    DurationHours = g.Sum(r => r.DurationHours)
+                })
+                .OrderByDescending(g => g.DurationHours)
+                .ToList();
+            
+            // 计算有记录的总时间
+            double recordedHours = grouped.Sum(g => g.DurationHours);
+            
+            // 计算无记录的时间
+            double noRecordHours = Math.Max(0, DAY_HOURS - recordedHours);
+            
+            // 如果有无记录时间，添加到分组中
+            if (noRecordHours > 0)
+            {
+                grouped.Add(new { Activity = "无", DurationHours = noRecordHours });
+            }
+            
+            // 计算百分比
+            return grouped.Select(g => (g.Activity, g.DurationHours, g.DurationHours / DAY_HOURS * 100)).ToList();
+        }
+        
+        /// <summary>
+        /// 绘制饼状图的各个扇形
+        /// </summary>
+        /// <param name="activityStats">活动统计信息</param>
+        private void DrawPieChartSegments(List<(string Activity, double DurationHours, double Percentage)> activityStats)
+        {
+            double width = PieChartCanvas.Width;
+            double height = PieChartCanvas.Height;
+            double centerX = width / 2;
+            double centerY = height / 2;
+            double radius = Math.Min(width, height) / 2.5;
+            
+            // 预定义颜色
+            var colors = new List<SolidColorBrush>
+            {
+                new SolidColorBrush(Color.FromRgb(108, 92, 231)), // 紫色
+                new SolidColorBrush(Color.FromRgb(255, 118, 117)), // 红色
+                new SolidColorBrush(Color.FromRgb(0, 184, 148)), // 绿色
+                new SolidColorBrush(Color.FromRgb(255, 195, 0)), // 黄色
+                new SolidColorBrush(Color.FromRgb(52, 152, 219)), // 蓝色
+                new SolidColorBrush(Color.FromRgb(155, 89, 182)), // 深紫色
+                new SolidColorBrush(Color.FromRgb(230, 126, 34)), // 橙色
+                new SolidColorBrush(Color.FromRgb(46, 204, 113)), // 浅绿色
+                new SolidColorBrush(Color.FromRgb(149, 165, 166)), // 灰色
+                new SolidColorBrush(Color.FromRgb(241, 196, 15)), // 亮黄色
+            };
+            
+            double startAngle = -90; // 从顶部开始绘制
+            int colorIndex = 0;
+            
+            foreach (var (activity, duration, percentage) in activityStats)
+            {
+                double angle = percentage / 100 * 360;
+                
+                // 创建扇形路径
+                System.Windows.Shapes.Path path = new System.Windows.Shapes.Path();
+                path.Fill = colors[colorIndex % colors.Count];
+                
+                // 创建路径几何
+                PathGeometry geometry = new PathGeometry();
+                PathFigure figure = new PathFigure();
+                figure.StartPoint = new Point(centerX, centerY);
+                
+                // 创建扇形弧
+                ArcSegment arc = new ArcSegment();
+                arc.Point = new Point(
+                    centerX + radius * Math.Cos((startAngle + angle) * Math.PI / 180),
+                    centerY + radius * Math.Sin((startAngle + angle) * Math.PI / 180));
+                arc.Size = new Size(radius, radius);
+                arc.IsLargeArc = angle > 180;
+                arc.SweepDirection = SweepDirection.Clockwise;
+                
+                // 添加线段
+                figure.Segments.Add(new LineSegment(new Point(
+                    centerX + radius * Math.Cos(startAngle * Math.PI / 180),
+                    centerY + radius * Math.Sin(startAngle * Math.PI / 180)), true));
+                figure.Segments.Add(arc);
+                figure.Segments.Add(new LineSegment(new Point(centerX, centerY), true));
+                
+                geometry.Figures.Add(figure);
+                path.Data = geometry;
+                
+                // 添加到画布
+                PieChartCanvas.Children.Add(path);
+                
+                // 在扇形中显示百分比
+                if (percentage > 5) // 只在百分比大于5%时显示文字
+                {
+                    double textAngle = startAngle + angle / 2;
+                    double textRadius = radius / 1.5;
+                    Point textPosition = new Point(
+                        centerX + textRadius * Math.Cos(textAngle * Math.PI / 180),
+                        centerY + textRadius * Math.Sin(textAngle * Math.PI / 180));
+                    
+                    TextBlock textBlock = new TextBlock();
+                    textBlock.Text = $"{percentage:F1}%";
+                    textBlock.FontSize = 12;
+                    textBlock.Foreground = Brushes.White;
+                    textBlock.FontWeight = FontWeights.Bold;
+                    textBlock.TextAlignment = TextAlignment.Center;
+                    textBlock.Width = 50;
+                    textBlock.Height = 20;
+                    
+                    Canvas.SetLeft(textBlock, textPosition.X - 25);
+                    Canvas.SetTop(textBlock, textPosition.Y - 10);
+                    
+                    PieChartCanvas.Children.Add(textBlock);
+                }
+                
+                startAngle += angle;
+                colorIndex++;
+            }
+        }
+        
+        /// <summary>
+        /// 绘制图例
+        /// </summary>
+        /// <param name="activityStats">活动统计信息</param>
+        private void DrawLegend(List<(string Activity, double DurationHours, double Percentage)> activityStats)
+        {
+            // 预定义颜色
+            var colors = new List<SolidColorBrush>
+            {
+                new SolidColorBrush(Color.FromRgb(108, 92, 231)), // 紫色
+                new SolidColorBrush(Color.FromRgb(255, 118, 117)), // 红色
+                new SolidColorBrush(Color.FromRgb(0, 184, 148)), // 绿色
+                new SolidColorBrush(Color.FromRgb(255, 195, 0)), // 黄色
+                new SolidColorBrush(Color.FromRgb(52, 152, 219)), // 蓝色
+                new SolidColorBrush(Color.FromRgb(155, 89, 182)), // 深紫色
+                new SolidColorBrush(Color.FromRgb(230, 126, 34)), // 橙色
+                new SolidColorBrush(Color.FromRgb(46, 204, 113)), // 浅绿色
+                new SolidColorBrush(Color.FromRgb(149, 165, 166)), // 灰色
+                new SolidColorBrush(Color.FromRgb(241, 196, 15)), // 亮黄色
+            };
+            
+            int colorIndex = 0;
+            
+            foreach (var (activity, duration, percentage) in activityStats)
+            {
+                // 创建图例项
+                StackPanel legendItem = new StackPanel();
+                legendItem.Orientation = Orientation.Horizontal;
+                legendItem.Margin = new Thickness(0, 5, 0, 0);
+                
+                // 颜色方块
+                Rectangle colorRect = new Rectangle();
+                colorRect.Width = 20;
+                colorRect.Height = 20;
+                colorRect.Fill = colors[colorIndex % colors.Count];
+                colorRect.Margin = new Thickness(0, 0, 10, 0);
+                
+                // 活动信息
+                TextBlock activityText = new TextBlock();
+                activityText.Text = $"{activity} ({duration:F1}小时, {percentage:F1}%)";
+                activityText.FontSize = 13;
+                activityText.VerticalAlignment = VerticalAlignment.Center;
+                
+                // 添加到图例面板
+                legendItem.Children.Add(colorRect);
+                legendItem.Children.Add(activityText);
+                LegendPanel.Children.Add(legendItem);
+                
+                colorIndex++;
+            }
+        }
+        
+        /// <summary>
+        /// 显示今日完成任务
+        /// </summary>
+        private void DisplayTodayTasks()
+        {
+            // 清空列表
+            TodayTasksListBox.Items.Clear();
+            
+            // 获取当前选中的日期
+            DateTime selectedDate = DatePicker.SelectedDate ?? DateTime.Today;
+            
+            // 获取今日完成的任务
+            var todayCompletedTasks = _appData.Tasks
+                .Where(t => t.Status == TaskStatus.Completed && 
+                           t.CompletedAt.HasValue && 
+                           t.CompletedAt.Value.Date == selectedDate.Date)
+                .OrderBy(t => t.CompletedAt)
+                .ToList();
+            
+            // 如果没有完成任务，显示提示信息
+            if (todayCompletedTasks.Count == 0)
+            {
+                TodayTasksListBox.Items.Add("今日没有完成的任务");
+                return;
+            }
+            
+            // 显示任务
+            foreach (var task in todayCompletedTasks)
+            {
+                var taskItem = new TextBlock
+                {
+                    Text = $"• {task.Title}",
+                    FontSize = 13,
+                    Foreground = new SolidColorBrush(Color.FromRgb(45, 52, 54)),
+                    Margin = new Thickness(0, 2, 0, 2)
+                };
+                TodayTasksListBox.Items.Add(taskItem);
+            }
+        }
+        
+        /// <summary>
+        /// 显示今日打卡项目
+        /// </summary>
+        private void DisplayTodayCheckIns()
+        {
+            // 清空列表
+            TodayCheckInsListBox.Items.Clear();
+            
+            // 获取当前选中的日期
+            DateTime selectedDate = DatePicker.SelectedDate ?? DateTime.Today;
+            
+            // 获取今日的打卡记录
+            var todayCheckIns = _appData.CheckIns
+                .Where(c => c.Date.Date == selectedDate.Date)
+                .OrderBy(c => c.CreatedAt)
+                .ToList();
+            
+            // 如果没有打卡记录，显示提示信息
+            if (todayCheckIns.Count == 0)
+            {
+                TodayCheckInsListBox.Items.Add("今日没有打卡记录");
+                return;
+            }
+            
+            // 显示打卡记录
+            foreach (var checkIn in todayCheckIns)
+            {
+                // 获取打卡项目名称
+                var project = _appData.CheckInProjects.FirstOrDefault(p => p.Id == checkIn.ProjectId);
+                string projectName = project?.Name ?? checkIn.Type;
+                
+                var checkInItem = new TextBlock
+                {
+                    Text = $"• {projectName}: {checkIn.Value}",
+                    FontSize = 13,
+                    Foreground = new SolidColorBrush(Color.FromRgb(45, 52, 54)),
+                    Margin = new Thickness(0, 2, 0, 2)
+                };
+                TodayCheckInsListBox.Items.Add(checkInItem);
+            }
+        }
+        
         private void ColorButton_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
