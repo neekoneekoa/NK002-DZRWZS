@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.145";
+    public const string VERSION = "0.1.1.148";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -327,6 +327,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private int _currentRow = -1;
     private int _currentCol = -1;
     private Border? _dragPreviewBorder = null;
+    
+    // 时间记录网格引用
+    private Grid _timeGrid;
 
     public MainWindow()
     {
@@ -344,6 +347,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Log("开始调用InitializeComponent()");
             InitializeComponent();
             Log("InitializeComponent()完成");
+            
+            // 获取时间记录网格引用
+            _timeGrid = FindName("TimeGrid") as Grid ?? throw new Exception("未找到TimeGrid元素");
             
             Log("开始设置窗口拖动");
             // 支持窗口拖动 (因为设置了WindowStyle="None")
@@ -1980,12 +1986,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             CreatedAt = DateTime.Now
         };
 
-        _appData.TimeRecords.Add(newRecord);
-        _appData.TimeRecords = _appData.TimeRecords.OrderByDescending(t => t.Date).ThenByDescending(t => t.StartTime).ToList();
-        
-        SaveAppData();
-        UpdateTimeRecordDisplay();
-        
         // 打开编辑窗口
         EditTimeRecord(newRecord);
     }
@@ -2000,7 +2000,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             .ToList();
 
         // 娓呴櫎鐜版湁鐨勬椂闂村潡
-        var timeGrid = FindName("TimeGrid") as Grid;
+        var timeGrid = _timeGrid;
         if (timeGrid != null)
         {
             // 首先移除所有鼠标事件处理程序，避免重复订阅
@@ -2177,11 +2177,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     
     private void EditTimeRecord(TimeRecordEntry record)
     {
+        // 检查记录是否已经存在于集合中
+        bool isExistingRecord = _appData.TimeRecords.Any(r => r.Id == record.Id);
+        
         var editWindow = new TimeRecordEditWindow(record);
         var result = editWindow.ShowDialog();
         
         if (result == true)
         {
+            // 如果是新记录，添加到集合中
+            if (!isExistingRecord)
+            {
+                _appData.TimeRecords.Add(record);
+                _appData.TimeRecords = _appData.TimeRecords.OrderByDescending(t => t.Date).ThenByDescending(t => t.StartTime).ToList();
+            }
+            
             // 淇濆瓨鏁版嵁
             SaveAppData();
             // 鏇存柊鏄剧ず
@@ -2189,13 +2199,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         else if (result == null)
         {
-            // 鍒犻櫎璁板綍
-            _appData.TimeRecords = _appData.TimeRecords.Where(r => r.Id != record.Id).ToList();
-            SaveAppData();
-            UpdateTimeRecordDisplay();
+            // 鍒犻櫎璁板綍（只处理已有记录）
+            if (isExistingRecord)
+            {
+                // 使用RemoveAll方法直接删除记录
+                _appData.TimeRecords.RemoveAll(r => r.Id == record.Id);
+                SaveAppData();
+                UpdateTimeRecordDisplay();
+            }
         }
-    }
-    
+        // 如果点击取消，对于新记录不做任何处理，对于已有记录保持不变
+    }    
     #region 时间网格鼠标事件处理
     
     private void TimeGrid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -2408,8 +2422,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             
             if (startDate == endDate)
             {
-                // 创建新的时间记录
-                var newRecord = new TimeRecordEntry
+                // 创建新的时间记录（但不立即添加到集合）
+                recordToEdit = new TimeRecordEntry
                 {
                     Id = Guid.NewGuid().ToString(),
                     Date = startDate,
@@ -2420,16 +2434,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     Notes = "",
                     CreatedAt = DateTime.Now
                 };
-                
-                // 添加到数据
-                _appData.TimeRecords.Add(newRecord);
-                recordToEdit = newRecord;
             }
-            // 如果选择了多个天，每天创建一个时间记录
+            // 如果选择了多个天，需要特殊处理
             else
             {
-                // 第一天的记录
-                var firstDayRecord = new TimeRecordEntry
+                // 先创建要编辑的第一天记录（不立即添加到集合）
+                recordToEdit = new TimeRecordEntry
                 {
                     Id = Guid.NewGuid().ToString(),
                     Date = startDate,
@@ -2440,49 +2450,64 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     Notes = "",
                     CreatedAt = DateTime.Now
                 };
-                _appData.TimeRecords.Add(firstDayRecord);
-                recordToEdit = firstDayRecord;
-                
-                // 中间天的记录（全天）
-                for (int day = actualStartCol + 1; day < actualEndCol; day++)
-                {
-                    var midDayRecord = new TimeRecordEntry
-                    {
-                        Id = Guid.NewGuid().ToString(),
-                        Date = _currentWeekStart.AddDays(day - 1),
-                        StartTime = TimeSpan.FromHours(0),
-                        EndTime = TimeSpan.FromHours(24),
-                        Activity = "新活动",
-                        Category = "工作",
-                        Notes = "",
-                        CreatedAt = DateTime.Now
-                    };
-                    _appData.TimeRecords.Add(midDayRecord);
-                }
-                
-                // 最后一天的记录
-                var lastDayRecord = new TimeRecordEntry
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    Date = endDate,
-                    StartTime = TimeSpan.FromHours(0),
-                    EndTime = endTime,
-                    Activity = "新活动",
-                    Category = "工作",
-                    Notes = "",
-                    CreatedAt = DateTime.Now
-                };
-                _appData.TimeRecords.Add(lastDayRecord);
             }
-            
-            // 保存数据并更新显示
-            SaveAppData();
-            UpdateTimeRecordDisplay();
             
             // 打开编辑窗口
             if (recordToEdit != null)
             {
-                EditTimeRecord(recordToEdit);
+                // 特殊处理跨天情况
+                if (startDate != endDate)
+                {
+                    // 显示提示，告知用户跨天选择会创建多个记录
+                    MessageBox.Show("您选择了跨天的时间段，将创建多个记录。请编辑并保存第一天的记录，其他天的记录将自动创建。", "提示");
+                    
+                    // 先让用户编辑第一天的记录
+                    EditTimeRecord(recordToEdit);
+                    
+                    // 如果用户点击了保存，再创建其他天的记录
+                    if (_appData.TimeRecords.Any(r => r.Id == recordToEdit.Id))
+                    {
+                        // 创建中间天的记录
+                        for (int day = actualStartCol + 1; day < actualEndCol; day++)
+                        {
+                            var midDayRecord = new TimeRecordEntry
+                            {
+                                Id = Guid.NewGuid().ToString(),
+                                Date = _currentWeekStart.AddDays(day - 1),
+                                StartTime = TimeSpan.FromHours(0),
+                                EndTime = TimeSpan.FromHours(24),
+                                Activity = recordToEdit.Activity,
+                                Category = recordToEdit.Category,
+                                Notes = recordToEdit.Notes,
+                                CreatedAt = DateTime.Now
+                            };
+                            _appData.TimeRecords.Add(midDayRecord);
+                        }
+                        
+                        // 创建最后一天的记录
+                        var lastDayRecord = new TimeRecordEntry
+                        {
+                            Id = Guid.NewGuid().ToString(),
+                            Date = endDate,
+                            StartTime = TimeSpan.FromHours(0),
+                            EndTime = endTime,
+                            Activity = recordToEdit.Activity,
+                            Category = recordToEdit.Category,
+                            Notes = recordToEdit.Notes,
+                            CreatedAt = DateTime.Now
+                        };
+                        _appData.TimeRecords.Add(lastDayRecord);
+                        
+                        // 保存数据并更新显示
+                        SaveAppData();
+                        UpdateTimeRecordDisplay();
+                    }
+                }
+                else
+                {
+                    // 单天情况，直接编辑
+                    EditTimeRecord(recordToEdit);
+                }
             }
         }
         catch (Exception ex)
@@ -3105,3 +3130,4 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     #endregion
 }
+

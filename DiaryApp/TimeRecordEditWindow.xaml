@@ -24,6 +24,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
@@ -75,7 +76,7 @@
             </StackPanel>
             
             <!-- 按钮 -->
-            <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+            <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                 <Button x:Name="SaveButton" Content="保存" Width="80" Height="35" Background="#6C5CE7" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="SaveButton_Click"/>
                 <Button x:Name="DeleteButton" Content="删除" Width="80" Height="35" Background="#FF7675" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="DeleteButton_Click"/>
                 <Button x:Name="CancelButton" Content="取消" Width="80" Height="35" Background="#BDC3C7" Foreground="#2D3436" BorderThickness="0" Click="CancelButton_Click"/>
