@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.166";
+    public const string VERSION = "0.1.1.173";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -2257,7 +2257,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (endHour > 24) endHour = 24;
             
             int endRow = endHour - 1;
-            int rowSpan = endRow - startRow;
+            int rowSpan = endHour - startHour; // 直接计算小时差，确保跨度正确
             
             if (rowSpan < 1) rowSpan = 1;
             
@@ -2334,7 +2334,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             timeBlock.Child = contentPanel;
             
             // 璁剧疆浣嶇疆鍜屽ぇ灏?
-            Grid.SetRow(timeBlock, startRow + 1); // +1 鏄洜涓虹0琛屾槸鏃ユ湡鏍囬
+            Grid.SetRow(timeBlock, startRow); // 直接使用开始小时作为行索引，对应00:00-23:00
             Grid.SetColumn(timeBlock, dayOfWeek + 1); // +1 鏄洜涓虹0鍒楁槸鏃堕棿鏍囩
             Grid.SetRowSpan(timeBlock, rowSpan);
             Grid.SetColumnSpan(timeBlock, 1);
@@ -2579,9 +2579,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     
     private int GetRowFromPoint(Point point, Grid grid)
     {
-        // 动态获取实际行高
-        double rowHeight = grid.RowDefinitions.Count > 0 ? grid.RowDefinitions[0].ActualHeight : 40;
-        if (rowHeight <= 0) rowHeight = 40; // 确保行高有效
+        // 使用固定行高40，与XAML中定义的一致
+        double rowHeight = 40;
         
         int row = (int)Math.Floor(point.Y / rowHeight);
         
