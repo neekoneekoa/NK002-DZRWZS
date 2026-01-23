@@ -416,7 +416,8 @@
                                     <!-- 临时任务列表 -->
                                     <ListBox Grid.Row="1" x:Name="TempTaskListBox" 
                                              Background="Transparent" BorderThickness="0" 
-                                             SelectionMode="Single">
+                                             SelectionMode="Single"
+                                             SelectionChanged="TempTaskListBox_SelectionChanged">
                                         <ListBox.ItemTemplate>
                                         <DataTemplate>
                                             <StackPanel Margin="0,0,0,5">
@@ -482,7 +483,8 @@
                                     <!-- 项目任务列表 -->
                                     <ListBox Grid.Row="1" x:Name="ProjectTaskListBox" 
                                              Background="Transparent" BorderThickness="0" 
-                                             SelectionMode="Single">
+                                             SelectionMode="Single"
+                                             SelectionChanged="ProjectTaskListBox_SelectionChanged">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
                                                 <StackPanel Margin="0,0,0,5">

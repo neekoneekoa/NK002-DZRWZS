@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.193";
+    public const string VERSION = "0.1.1.197";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -1900,12 +1900,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void TempTaskListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        // 空方法，避免闪退
+        if (TempTaskListBox.SelectedItem != null)
+        {
+            ProjectTaskListBox.SelectedItem = null;
+        }
     }
 
     private void ProjectTaskListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        // 空方法，避免闪退
+        if (ProjectTaskListBox.SelectedItem != null)
+        {
+            TempTaskListBox.SelectedItem = null;
+        }
     }
 
     private void TempTaskListBox_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)

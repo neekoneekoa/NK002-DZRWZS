@@ -129,15 +129,17 @@ public static class BackupManager
     // 恢复备份
     public static AppData? RestoreBackup(string filepath)
     {
-        if (!ValidateBackup(filepath))
-            return null;
+        // 移除强制验证，允许导入手动修改过的备份文件
+        // if (!ValidateBackup(filepath))
+        //    return null;
 
         try
         {
             var options = new JsonSerializerOptions 
             { 
                 WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true // 增加对大小写不敏感的支持
             };
             
             var json = File.ReadAllText(filepath, Encoding.UTF8);
@@ -152,7 +154,7 @@ public static class BackupManager
                     TimeRecords = backupData.TimeRecords ?? new List<TimeRecordEntry>(),
                     CheckInProjects = backupData.CheckInProjects ?? new List<CheckInProject>(),
                     CheckIns = backupData.CheckIns ?? new List<CheckInEntry>(),
-                    Version = backupData.Info.Version,
+                    Version = backupData.Info?.Version ?? "1.0",
                     LastSaved = DateTime.Now
                 };
             }

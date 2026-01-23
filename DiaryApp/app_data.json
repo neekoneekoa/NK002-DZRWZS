@@ -1,0 +1,732 @@
+{
+    "diaries": [
+        {
+            "id": "d7ecb403-d177-4b13-9726-6f20898733f4",
+            "title": "鹅鸭杀+A10+软件开发",
+            "content": "今天可能就主要是玩了一下鹅鸭杀，一开始主要是徐文昊玩，之后我们就一起去玩了一下，感觉还是OK的。工作方面还是一直在做A10的项目，明天我希望可以把A10的其他东西全部弄好，毕竟22号我就离职了。对了今天还到了热狗，感觉味道不错。\r\n",
+            "photos": [],
+            "tags": [
+                "软件开发",
+                "摩诚",
+                "游戏"
+            ],
+            "parameters": [],
+            "createdAt": "2026-01-21T00:47:33",
+            "periodType": 0,
+            "dateStr": "2026-01-21 00:47",
+            "dateOnly": "2026-01-21",
+            "timeOnly": "00:47",
+            "contentPreview": "今天可能就主要是玩了一下鹅鸭杀，一开始主要是徐文昊玩，之后我们就一起去玩了一下，感觉还是OK的。工作方面还是一直在做A10的项目，明天我希望可以把A10的其他东西全部弄好，毕竟22号我就离职了。对了今天还到了热狗，感觉味道不错...",
+            "searchableText": "鹅鸭杀+a10+软件开发 今天可能就主要是玩了一下鹅鸭杀，一开始主要是徐文昊玩，之后我们就一起去玩了一下，感觉还是ok的。工作方面还是一直在做a10的项目，明天我希望可以把a10的其他东西全部弄好，毕竟22号我就离职了。对了今天还到了热狗，感觉味道不错。\r\n 软件开发 摩诚 游戏",
+            "periodTypeDescription": "日常"
+        },
+        {
+            "id": "949dda0c-8c78-428a-bb36-579b4fc10a6e",
+            "title": "离职",
+            "content": "最近重要的是就是我在15号的时候提出了离职，大概是在22号的时候就不会干了。之后我就赶紧学技术。\r\n",
+            "photos": [],
+            "tags": [
+                "摩诚",
+                "软件开发"
+            ],
+            "parameters": [],
+            "createdAt": "2026-01-18T21:10:16",
+            "periodType": 1,
+            "dateStr": "2026-01-18 21:10",
+            "dateOnly": "2026-01-18",
+            "timeOnly": "21:10",
+            "contentPreview": "最近重要的是就是我在15号的时候提出了离职，大概是在22号的时候就不会干了。之后我就赶紧学技术。\r",
+            "searchableText": "离职 最近重要的是就是我在15号的时候提出了离职，大概是在22号的时候就不会干了。之后我就赶紧学技术。\r\n 摩诚 软件开发",
+            "periodTypeDescription": "周记"
+        },
+        {
+            "id": "",
+            "title": "休息",
+            "content": "今天把大部分的东西都洗了一边，就是还没扫地。洗一个热水澡是真舒服啊，手脚都是热的。下午 和谈见见打了一会游戏，之后还是继续在开发这款软件了。最后和谈健健和罗洪文一起玩到凌晨了。今天不知道是不是在这家公司的最后一个休息日。希望后面我离职的时候不要为难我\r\n",
+            "photos": [],
+            "tags": [
+                "假期",
+                "克己",
+                "洗澡",
+                "洗床单"
+            ],
+            "parameters": [],
+            "createdAt": "2026-01-11T00:43:23",
+            "periodType": 0,
+            "dateStr": "2026-01-11 00:43",
+            "dateOnly": "2026-01-11",
+            "timeOnly": "00:43",
+            "contentPreview": "今天把大部分的东西都洗了一边，就是还没扫地。洗一个热水澡是真舒服啊，手脚都是热的。下午 和谈见见打了一会游戏，之后还是继续在开发这款软件了...",
+            "searchableText": "休息 今天把大部分的东西都洗了一边，就是还没扫地。洗一个热水澡是真舒服啊，手脚都是热的。下午 和谈见见打了一会游戏，之后还是继续在开发这款软件了。最后和谈健健和罗洪文一起玩到凌晨了。今天不知道是不是在这家公司的最后一个休息日。希望后面我离职的时候不要为难我\r\n 假期 克己 洗澡 洗床单",
+            "periodTypeDescription": "日常"
+        },
+        {
+            "id": "b3b2e40a-d482-4f5c-aa00-2aff70add2d5",
+            "title": "过生日",
+            "content": "今天过生日了，今天其实做的很少。今天应该就是起点了，以后这个软件就用来记录我了。正好，今天主要也在开发这款软件。把日记的功能做起来了。这几天就赶紧把其他板块的功能都完善一下。\r\n",
+            "photos": [],
+            "tags": [
+                "大餐",
+                "生日",
+                "项目K22",
+                "任务程序开发"
+            ],
+            "parameters": [],
+            "createdAt": "2026-01-06T23:18:41",
+            "periodType": 0,
+            "dateStr": "2026-01-06 23:18",
+            "dateOnly": "2026-01-06",
+            "timeOnly": "23:18",
+            "contentPreview": "今天过生日了，今天其实做的很少。今天应该就是起点了，以后这个软件就用来记录我了。正好，今天主要也在开发这款软件...",
+            "searchableText": "过生日 今天过生日了，今天其实做的很少。今天应该就是起点了，以后这个软件就用来记录我了。正好，今天主要也在开发这款软件。把日记的功能做起来了。这几天就赶紧把其他板块的功能都完善一下。\r\n 大餐 生日 项目k22 任务程序开发",
+            "periodTypeDescription": "日常"
+        }
+    ],
+    "tasks": [
+        {
+            "id": "aab7316a-c947-4a3f-9be7-407e23d8d9a6",
+            "title": "颜料混合机",
+            "priority": 2,
+            "level": 1,
+            "status": 0,
+            "taskType": 1,
+            "projectTags": [
+                "发明"
+            ],
+            "chapters": [
+                {
+                    "id": "9f3200e8-d526-491d-8909-01791b64df2d",
+                    "title": "第一章",
+                    "content": "章节内容",
+                    "subTasks": [],
+                    "notes": "",
+                    "createdAt": "2026-01-21T13:24:35.907206+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-21T13:24:35.9072187+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-21T13:24:35.9072079+08:00",
+            "endDate": "2026-01-21T13:24:35.9072079+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "中"
+        },
+        {
+            "id": "08dc1bc1-a845-484d-8dcd-b85f5af9ceef",
+            "title": "颜料混合机",
+            "priority": 2,
+            "level": 1,
+            "status": 0,
+            "taskType": 1,
+            "projectTags": [],
+            "chapters": [
+                {
+                    "id": "07439b48-d6bf-4641-a0ea-9cd8ba674c64",
+                    "title": "第一章",
+                    "content": "章节内容",
+                    "subTasks": [],
+                    "notes": "",
+                    "createdAt": "2026-01-21T13:24:18.727253+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-21T13:24:18.7272573+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-21T13:24:18.7272545+08:00",
+            "endDate": "2026-01-21T13:24:18.7272545+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "中"
+        },
+        {
+            "id": "2c5fda97-7731-4b3d-aeb6-04c55870c8e6",
+            "title": "飞将",
+            "priority": 3,
+            "level": 1,
+            "status": 0,
+            "taskType": 1,
+            "projectTags": [],
+            "chapters": [
+                {
+                    "id": "64d09a60-0df2-4caf-8734-a353298fa3a5",
+                    "title": "第一章",
+                    "content": "章节内容",
+                    "subTasks": [],
+                    "notes": "",
+                    "createdAt": "2026-01-21T13:23:45.6442994+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-21T13:23:45.6443079+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-21T13:23:45.6443016+08:00",
+            "endDate": "2026-01-21T13:23:45.6443017+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "低"
+        },
+        {
+            "id": "4936c777-bba7-4087-bf59-cb41728c2448",
+            "title": "闪卡制作机（或者相片）",
+            "priority": 2,
+            "level": 1,
+            "status": 0,
+            "taskType": 1,
+            "projectTags": [],
+            "chapters": [
+                {
+                    "id": "24b69f85-9770-4cbc-b443-e609edc6090a",
+                    "title": "第一章",
+                    "content": "章节内容",
+                    "subTasks": [],
+                    "notes": "",
+                    "createdAt": "2026-01-21T13:21:20.1776246+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-21T13:21:20.1776393+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-21T13:21:20.1776274+08:00",
+            "endDate": "2026-01-21T13:21:20.1776274+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "中"
+        },
+        {
+            "id": "013cf749-9880-4220-8ec0-cccbcc94540e",
+            "title": "嘎啦game，LOL版本",
+            "priority": 2,
+            "level": 1,
+            "status": 0,
+            "taskType": 0,
+            "projectTags": [],
+            "chapters": [
+                {
+                    "id": "e09ba0ae-a399-4055-8085-c5bb08637775",
+                    "title": "第一章",
+                    "content": "章节内容",
+                    "subTasks": [],
+                    "notes": "",
+                    "createdAt": "2026-01-21T13:20:47.4667443+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-21T13:20:47.4667612+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-21T13:20:47.4667499+08:00",
+            "endDate": "2026-01-21T13:20:47.4667499+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "中"
+        },
+        {
+            "id": "7f981cc0-7ac1-47f3-9ea9-65f0b274ed53",
+            "title": "辛吉德香薰机",
+            "priority": 3,
+            "level": 1,
+            "status": 0,
+            "taskType": 1,
+            "projectTags": [
+                "发明"
+            ],
+            "chapters": [
+                {
+                    "id": "6d56e634-373a-4c49-b954-fd161d24f5b1",
+                    "title": "第一章",
+                    "content": "章节内容",
+                    "subTasks": [],
+                    "notes": "",
+                    "createdAt": "2026-01-21T13:17:13.5989082+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-21T13:17:13.5990151+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-21T13:17:13.5989141+08:00",
+            "endDate": "2026-01-21T13:17:13.5989142+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "低"
+        },
+        {
+            "id": "ac2991c1-5171-4515-a954-9bfe8ca90836",
+            "title": "智能交互桌宠",
+            "priority": 1,
+            "level": 1,
+            "status": 0,
+            "taskType": 1,
+            "projectTags": [
+                "发明"
+            ],
+            "chapters": [
+                {
+                    "id": "3586dc9f-20e2-4f6b-8bda-61a72a18856b",
+                    "title": "第一章",
+                    "content": "章节内容",
+                    "subTasks": [],
+                    "notes": "",
+                    "createdAt": "2026-01-21T13:13:18.7109233+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-21T13:13:18.7109308+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-21T13:13:18.7109255+08:00",
+            "endDate": "2026-01-21T13:13:18.7109255+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "高"
+        },
+        {
+            "id": "b9d644f2-a616-4dbe-bf47-95a3d6b9aba0",
+            "title": "健康管家硬件系统",
+            "priority": 2,
+            "level": 1,
+            "status": 0,
+            "taskType": 1,
+            "projectTags": [
+                "发明"
+            ],
+            "chapters": [
+                {
+                    "id": "e3a4e5d1-06e5-40a3-a71b-5028a5ee7fe1",
+                    "title": "第一章",
+                    "content": "章节内容",
+                    "subTasks": [],
+                    "notes": "",
+                    "createdAt": "2026-01-21T13:12:20.1512251+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-21T13:12:20.1512401+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-21T13:12:20.1512282+08:00",
+            "endDate": "2026-01-21T13:12:20.1512283+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "中"
+        },
+        {
+            "id": "1f6edf75-2d2c-4c87-a081-30d8f9748840",
+            "title": "智能睡眠周期闹钟",
+            "priority": 2,
+            "level": 1,
+            "status": 0,
+            "taskType": 1,
+            "projectTags": [],
+            "chapters": [
+                {
+                    "id": "a215c9d3-8d13-48e1-8f1f-bccd92b25c92",
+                    "title": "第一章",
+                    "content": "章节内容",
+                    "subTasks": [],
+                    "notes": "",
+                    "createdAt": "2026-01-21T13:11:01.6600136+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-21T13:11:01.6600181+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-21T13:11:01.6600153+08:00",
+            "endDate": "2026-01-21T13:11:01.6600153+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "中"
+        },
+        {
+            "id": "488d2f10-6e5c-4353-815c-c01eae83fc61",
+            "title": "ZB-A菌教学",
+            "priority": 3,
+            "level": 1,
+            "status": 0,
+            "taskType": 1,
+            "projectTags": [
+                "建模"
+            ],
+            "chapters": [
+                {
+                    "id": "e9864f54-f8af-41db-afab-27097710dd79",
+                    "title": "第一章",
+                    "content": "章节内容",
+                    "subTasks": [],
+                    "notes": "",
+                    "createdAt": "2026-01-21T13:07:55.7598292+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-21T13:07:55.759877+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-21T13:07:55.7598314+08:00",
+            "endDate": "2026-01-21T13:07:55.7598314+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "低"
+        },
+        {
+            "id": "f45ffbc4-ca4c-4308-a594-3e3d291109b3",
+            "title": "水泵类型学习",
+            "priority": 3,
+            "level": 1,
+            "status": 0,
+            "taskType": 0,
+            "projectTags": [],
+            "chapters": [
+                {
+                    "id": "9705e135-11a7-4477-8751-01e8cd4eb1a0",
+                    "title": "第一章",
+                    "content": "电磁阀，齿轮泵，蠕动泵，活塞泵，电磁泵，",
+                    "subTasks": [],
+                    "notes": "",
+                    "createdAt": "2026-01-21T12:57:49.5814778+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-21T12:57:49.5815609+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-21T12:57:49.5814803+08:00",
+            "endDate": "2026-01-21T12:57:49.5814803+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "低"
+        },
+        {
+            "id": "13581426-b137-4f41-9989-ff55ede481e9",
+            "title": "完善任务助手",
+            "priority": 1,
+            "level": 1,
+            "status": 0,
+            "taskType": 1,
+            "projectTags": [],
+            "chapters": [
+                {
+                    "id": "57599989-9bfe-4100-9983-db695cf96308",
+                    "title": "第一章",
+                    "content": "章节内容",
+                    "subTasks": [],
+                    "notes": "",
+                    "createdAt": "2026-01-18T21:06:49.3995032+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-18T21:06:49.3995113+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-18T21:06:49.3995055+08:00",
+            "endDate": "2026-01-18T21:06:49.3995055+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "高"
+        },
+        {
+            "id": "709d4d38-971f-46aa-ad40-a8125fdb4816",
+            "title": "学习电机",
+            "priority": 1,
+            "level": 1,
+            "status": 0,
+            "taskType": 1,
+            "projectTags": [],
+            "chapters": [
+                {
+                    "id": "d53bd50e-d85a-4ef5-b4cc-046e5215a974",
+                    "title": "第一章",
+                    "content": "章节内容",
+                    "subTasks": [],
+                    "notes": "",
+                    "createdAt": "2026-01-18T21:06:21.2933399+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-18T21:06:21.2933497+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-18T21:06:21.2933424+08:00",
+            "endDate": "2026-01-18T21:06:21.2933425+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "高"
+        },
+        {
+            "id": "d0f68971-8057-4f9f-b662-1a21812736fc",
+            "title": "学习BMS",
+            "priority": 1,
+            "level": 1,
+            "status": 0,
+            "taskType": 1,
+            "projectTags": [],
+            "chapters": [
+                {
+                    "id": "dc261db1-0f39-4bce-aac7-8d4d4c0856cb",
+                    "title": "第一章",
+                    "content": "初级学习（入门）",
+                    "subTasks": [
+                        {
+                            "id": "58260fb9-0993-4f7f-b84c-0b1f175129de",
+                            "title": "购买设备",
+                            "isCompleted": false,
+                            "createdAt": "2026-01-18T21:05:48.7911406+08:00",
+                            "scheduledTime": "2026-01-18T00:00:00",
+                            "content": "看看李玉凡的设备",
+                            "notes": "注意事项备注",
+                            "durationDays": 1,
+                            "startDate": "2026-01-18T00:00:00",
+                            "endDate": "2026-01-20T00:00:00"
+                        }
+                    ],
+                    "notes": "",
+                    "createdAt": "2026-01-18T21:05:48.7911455+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-18T21:05:48.7911558+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-18T21:05:48.7911478+08:00",
+            "endDate": "2026-01-18T21:05:48.7911479+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "高"
+        },
+        {
+            "id": "44c90631-a9e5-4c0e-8e22-71ad9279ee9e",
+            "title": "K22",
+            "priority": 2,
+            "level": 1,
+            "status": 0,
+            "taskType": 1,
+            "projectTags": [],
+            "chapters": [
+                {
+                    "id": "9d289ef8-69a5-41fb-bb1f-8958c5697d99",
+                    "title": "第一章",
+                    "content": "章节内容",
+                    "subTasks": [],
+                    "notes": "",
+                    "createdAt": "2026-01-18T21:02:05.8494767+08:00",
+                    "orderIndex": 0
+                }
+            ],
+            "subTasks": [],
+            "content": "",
+            "createdAt": "2026-01-18T21:02:05.8494904+08:00",
+            "completedAt": null,
+            "reminderSettings": null,
+            "fontSize": 14,
+            "textColor": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "isUnderline": false,
+            "totalDays": 1,
+            "startDate": "2026-01-18T21:02:05.8494807+08:00",
+            "endDate": "2026-01-18T21:02:05.8494807+08:00",
+            "statusDescription": "待完成",
+            "priorityDescription": "中"
+        }
+    ],
+    "timeRecords": [
+        {
+            "id": "5505405f-be64-4635-8c3f-a51b7f8acd2f",
+            "date": "2026-01-13T00:00:00+08:00",
+            "startTime": "09:00:00",
+            "endTime": "10:00:00",
+            "activity": "新活动",
+            "category": "工作",
+            "notes": "",
+            "createdAt": "2026-01-18T21:10:43.9118634+08:00",
+            "durationHours": 1,
+            "timeRange": "09:00 - 10:00"
+        }
+    ],
+    "checkInProjects": [
+        {
+            "id": "7cbb567d-14ba-4e64-b53c-8068f74bb73e",
+            "name": "学习日语",
+            "type": "习惯",
+            "deadlineDate": null,
+            "createdAt": "2026-01-18T22:52:54.2142209+08:00",
+            "updatedAt": "2026-01-18T23:24:12.7731085+08:00"
+        },
+        {
+            "id": "7f855946-7ad5-4a01-875f-25b1fd2ba96c",
+            "name": "美容+生姜+洗脚+漱口",
+            "type": "习惯",
+            "deadlineDate": null,
+            "createdAt": "2026-01-18T22:52:57.1682276+08:00",
+            "updatedAt": "2026-01-18T23:40:13.2828441+08:00"
+        },
+        {
+            "id": "ba7732c2-5af5-4d58-a5f5-1c620d223eb4",
+            "name": "运动",
+            "type": "习惯",
+            "deadlineDate": null,
+            "createdAt": "2026-01-18T23:29:14.5620506+08:00",
+            "updatedAt": "2026-01-18T23:29:29.2216715+08:00"
+        },
+        {
+            "id": "0ac5ab0a-33c7-4456-8c6e-aaffb397a28b",
+            "name": "英语单词",
+            "type": "习惯",
+            "deadlineDate": null,
+            "createdAt": "2026-01-21T08:59:58.7838934+08:00",
+            "updatedAt": "2026-01-21T09:00:07.8042519+08:00"
+        }
+    ],
+    "checkIns": [
+        {
+            "id": "c685b176-1e2c-43ef-9d84-dc9eec8320a5",
+            "projectId": "7cbb567d-14ba-4e64-b53c-8068f74bb73e",
+            "type": "习惯",
+            "date": "2026-01-21T00:00:00+08:00",
+            "value": "完成",
+            "streak": 0,
+            "notes": "14了，从今天开始后面要认真记录了",
+            "photos": [],
+            "createdAt": "2026-01-21T12:56:53.3425227+08:00",
+            "updatedAt": "2026-01-21T12:56:53.3423412+08:00"
+        },
+        {
+            "id": "ad2b3b80-9be2-44ec-b2c9-5893a3399387",
+            "projectId": "",
+            "type": "运动",
+            "date": "2026-01-18T00:00:00+08:00",
+            "value": "完成",
+            "streak": 0,
+            "notes": "",
+            "photos": [],
+            "createdAt": "2026-01-18T20:59:03.3325931+08:00",
+            "updatedAt": "2026-01-18T20:59:03.332522+08:00"
+        },
+        {
+            "id": "ed873531-83dd-4b03-8c36-85ab7f969272",
+            "projectId": "",
+            "type": "运动",
+            "date": "2026-01-18T00:00:00+08:00",
+            "value": "完成",
+            "streak": 0,
+            "notes": "",
+            "photos": [],
+            "createdAt": "2026-01-18T20:59:06.9010352+08:00",
+            "updatedAt": "2026-01-18T20:59:06.9010288+08:00"
+        },
+        {
+            "id": "d74b135e-1ed5-4d06-b436-92f049b1b2e1",
+            "projectId": "",
+            "type": "运动",
+            "date": "2026-01-18T00:00:00+08:00",
+            "value": "完成",
+            "streak": 0,
+            "notes": "",
+            "photos": [],
+            "createdAt": "2026-01-18T20:59:08.5770984+08:00",
+            "updatedAt": "2026-01-18T20:59:08.5770901+08:00"
+        },
+        {
+            "id": "e221b5fc-f96d-4bd0-bb2b-538f4fcbbe01",
+            "projectId": "7cbb567d-14ba-4e64-b53c-8068f74bb73e",
+            "type": "习惯",
+            "date": "2026-01-18T00:00:00+08:00",
+            "value": "完成",
+            "streak": 0,
+            "notes": "",
+            "photos": [],
+            "createdAt": "2026-01-18T22:53:22.0485722+08:00",
+            "updatedAt": "2026-01-18T22:53:22.0485462+08:00"
+        }
+    ],
+    "version": "1.0",
+    "lastSaved": "2026-01-23T23:35:49.281007"
+}
