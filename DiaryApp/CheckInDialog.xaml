@@ -10,6 +10,7 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <TextBlock Text="这一刻的想法..." FontSize="16" FontWeight="Bold" Margin="0,0,0,10" Foreground="#2D3436"/>
@@ -33,7 +34,51 @@
             </ScrollViewer>
         </StackPanel>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+        <!-- Tags Section -->
+        <Grid Grid.Row="3" Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="标签：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBox x:Name="TagsTextBox" Grid.Column="1" Height="30" FontSize="14" Padding="5"
+                     Tag="输入标签，多个标签用逗号分隔"
+                     PreviewMouseLeftButtonUp="TagsTextBox_PreviewMouseLeftButtonUp"
+                     GotFocus="TagsTextBox_GotFocus"/>
+            <Popup x:Name="QuickTagPopup" PlacementTarget="{Binding ElementName=TagsTextBox}" StaysOpen="False" PopupAnimation="Slide">
+                <Border Background="White" BorderBrush="#DFE6E9" BorderThickness="1" CornerRadius="4" Padding="8" MinWidth="200" MaxWidth="400">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="10" ShadowDepth="2" Direction="270" Color="#EEEEEE" Opacity="0.5"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <TextBlock Text="📌 快捷标签" FontSize="12" FontWeight="Bold" Foreground="#636E72" Margin="0,0,0,8"/>
+                        <ItemsControl x:Name="QuickTagsItemsControl">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{Binding Converter={StaticResource TagToColorConverter}}" CornerRadius="12" Margin="0,0,6,6" Padding="10,4" Cursor="Hand">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding}" Foreground="White" FontWeight="Bold" FontSize="12" Margin="0,0,6,0" MouseLeftButtonDown="QuickTag_Click"/>
+                                            <Button Content="×" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="14" 
+                                                    Click="DeleteQuickTagButton_Click" Tag="{Binding}" Focusable="False"
+                                                    Padding="2,-2,2,0" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                    ToolTip="删除此快捷标签"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock x:Name="NoQuickTagsText" Text="暂无常用标签" FontSize="12" Foreground="#B2BEC3" HorizontalAlignment="Center" Margin="5" Visibility="Collapsed"/>
+                    </StackPanel>
+                </Border>
+            </Popup>
+        </Grid>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="取消" Width="100" Height="35" Margin="0,0,10,0"
                     Background="#F0F3F8" Foreground="#636E72" BorderThickness="0"
                     Click="CancelButton_Click" Cursor="Hand"/>

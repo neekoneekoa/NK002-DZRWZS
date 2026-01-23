@@ -239,6 +239,68 @@ namespace DiaryApp
                 TagInputTextBox.Text = "";
                 TagInputTextBox.Foreground = Brushes.Black;
             }
+            ShowQuickTagPopup();
+        }
+
+        private void TagInputTextBox_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (QuickTagPopup != null && !QuickTagPopup.IsOpen)
+            {
+                ShowQuickTagPopup();
+            }
+        }
+
+        private void ShowQuickTagPopup()
+        {
+            if (_appData.GlobalTags == null) _appData.GlobalTags = new List<string>();
+            
+            QuickTagsItemsControl.ItemsSource = null;
+            QuickTagsItemsControl.ItemsSource = _appData.GlobalTags;
+            
+            NoQuickTagsText.Visibility = _appData.GlobalTags.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+            QuickTagPopup.IsOpen = true;
+        }
+
+        private void QuickTag_Click(object sender, MouseButtonEventArgs e)
+        {
+            string? tag = null;
+            if (sender is Border border && border.DataContext is string t1)
+            {
+                tag = t1;
+            }
+            else if (sender is TextBlock textBlock && textBlock.Text is string t2)
+            {
+                tag = t2;
+            }
+
+            if (tag != null)
+            {
+                if (!_tags.Contains(tag))
+                {
+                    _tags.Add(tag);
+                    RefreshTagsPanel();
+                }
+                QuickTagPopup.IsOpen = false;
+                TagInputTextBox.Focus();
+            }
+        }
+
+        private void DeleteQuickTagButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is string tag)
+            {
+                _appData.GlobalTags.Remove(tag);
+                ShowQuickTagPopup(); // Refresh list
+                e.Handled = true; // Prevent closing popup
+            }
+        }
+
+        private void ClosePopup_Click(object sender, RoutedEventArgs e)
+        {
+            if (QuickTagPopup != null)
+            {
+                QuickTagPopup.IsOpen = false;
+            }
         }
 
         private void TagInputTextBox_LostFocus(object sender, RoutedEventArgs e)
@@ -332,6 +394,20 @@ namespace DiaryApp
                 RefreshTagsPanel();
             }
             
+            // Save to global tags
+            bool globalTagAdded = false;
+            if (_appData.GlobalTags == null) _appData.GlobalTags = new List<string>();
+            if (!_appData.GlobalTags.Contains(tagText))
+            {
+                _appData.GlobalTags.Add(tagText);
+                globalTagAdded = true;
+            }
+
+            if (globalTagAdded)
+            {
+                SaveAppData();
+            }
+
             TagInputTextBox.Text = "";
             TagInputTextBox.Focus();
         }
@@ -1097,12 +1173,13 @@ namespace DiaryApp
         {
             try
             {
-                var dialog = new CheckInDialog(checkIn);
+                var dialog = new CheckInDialog(_appData, checkIn);
                 dialog.Owner = this;
                 if (dialog.ShowDialog() == true)
                 {
                     // 更新打卡记录
                     checkIn.Notes = dialog.Notes;
+                    checkIn.Tags = dialog.Tags;
                     checkIn.Photos = dialog.PhotoPaths;
                     checkIn.UpdatedAt = DateTime.Now;
                     
@@ -1251,6 +1328,34 @@ namespace DiaryApp
             ResultEntry = null;
             DialogResult = false;
             Close();
+        }
+
+        private const string DATA_FILE = "app_data.json";
+
+        private string GetDataFilePath()
+        {
+            var appDir = AppDomain.CurrentDomain.BaseDirectory;
+            return System.IO.Path.Combine(appDir, DATA_FILE);
+        }
+
+        private void SaveAppData()
+        {
+            try
+            {
+                _appData.LastSaved = DateTime.Now;
+                var options = new System.Text.Json.JsonSerializerOptions 
+                { 
+                    WriteIndented = true,
+                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                };
+                var json = System.Text.Json.JsonSerializer.Serialize(_appData, options);
+                var dataFile = GetDataFilePath();
+                System.IO.File.WriteAllText(dataFile, json);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"保存失败: {ex.Message}");
+            }
         }
 
         private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)

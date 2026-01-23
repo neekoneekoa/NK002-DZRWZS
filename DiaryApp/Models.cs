@@ -225,6 +225,7 @@ public enum TaskType
         public DateTime Date { get; set; } = DateTime.Today;
         public string Value { get; set; } = ""; // 打卡值或状态
         public int Streak { get; set; } = 0; // 连续打卡天数
+        public List<string> Tags { get; set; } = new List<string>(); // 打卡标签
         public string Notes { get; set; } = "";
         public List<string> Photos { get; set; } = new List<string>(); // 打卡照片
         public DateTime CreatedAt { get; set; } = DateTime.Now;
@@ -304,6 +305,7 @@ public enum TaskType
         public List<TimeRecordEntry> TimeRecords { get; set; } = new List<TimeRecordEntry>();
         public List<CheckInProject> CheckInProjects { get; set; } = new List<CheckInProject>();
         public List<CheckInEntry> CheckIns { get; set; } = new List<CheckInEntry>();
+        public List<string> GlobalTags { get; set; } = new List<string>(); // 全局标签列表（用于快捷输入）
         public PersonalInfo PersonalInfo { get; set; } = new PersonalInfo();
         public ReminderSetting ReminderSetting { get; set; } = new ReminderSetting();
         public DateTime LastSaved { get; set; } = DateTime.Now;

@@ -13,6 +13,8 @@ namespace DiaryApp
         public bool IsDeleteRequested { get; private set; } = false;
         private List<string> _currentProjectTags = new List<string>();
         private ReminderSetting? _tempReminderSettings = null;
+        private AppData _appData;
+        private const string DATA_FILE = "app_data.json";
 
         // 自动扩展输入框的默认高度和最小行数
         private const double DEFAULT_TEXTBOX_HEIGHT = 30;
@@ -139,17 +141,25 @@ namespace DiaryApp
             textBox.SelectionLength = selectionLength;
         }
 
-        public TaskEditWindow(TaskEntry? taskEntry = null)
+        public TaskEditWindow(AppData appData, TaskEntry? taskEntry = null)
         {
             try
             {
                 InitializeComponent();
+                _appData = appData;
                 TaskEntry = taskEntry;
                 LoadTaskData();
                 
                 // 添加标题文本框事件处理
                 TitleTextBox.GotFocus += TitleTextBox_GotFocus;
                 TitleTextBox.LostFocus += TitleTextBox_LostFocus;
+
+                // 添加项目标签输入框事件处理
+                if (ProjectTagsTextBox != null)
+                {
+                    ProjectTagsTextBox.PreviewMouseLeftButtonUp += ProjectTagsTextBox_PreviewMouseLeftButtonUp;
+                    ProjectTagsTextBox.GotFocus += ProjectTagsTextBox_GotFocus;
+                }
                 
                 // 初始化提示文字
                 InitializeTitlePlaceholder();
@@ -969,19 +979,40 @@ namespace DiaryApp
             var tagText = ProjectTagsTextBox.Text?.Trim();
             if (!string.IsNullOrEmpty(tagText) && tagText != ProjectTagsTextBox.Tag?.ToString())
             {
+                bool globalTagAdded = false;
                 // 分割多个标签（用逗号分隔）
                 var tags = tagText.Split(new[] { ',', '，' }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var tag in tags)
                 {
                     var trimmedTag = tag.Trim();
-                    if (!string.IsNullOrEmpty(trimmedTag) && !_currentProjectTags.Contains(trimmedTag))
+                    if (!string.IsNullOrEmpty(trimmedTag))
                     {
-                        _currentProjectTags.Add(trimmedTag);
+                        if (!_currentProjectTags.Contains(trimmedTag))
+                        {
+                            _currentProjectTags.Add(trimmedTag);
+                        }
+
+                        // 保存到全局标签
+                        if (_appData != null)
+                        {
+                            if (_appData.GlobalTags == null) _appData.GlobalTags = new List<string>();
+                            if (!_appData.GlobalTags.Contains(trimmedTag))
+                            {
+                                _appData.GlobalTags.Add(trimmedTag);
+                                globalTagAdded = true;
+                            }
+                        }
                     }
+                }
+                
+                if (globalTagAdded)
+                {
+                    SaveAppData();
                 }
                 
                 RefreshProjectTagsDisplay();
                 ProjectTagsTextBox.Text = "";
+                ProjectTagsTextBox.Focus();
             }
         }
 
@@ -1000,12 +1031,90 @@ namespace DiaryApp
         {
             ProjectTagsItemsControl.ItemsSource = null;
             ProjectTagsItemsControl.ItemsSource = _currentProjectTags;
-            
-            // 如果是编辑现有任务，初始化标签列表
-            if (TaskEntry != null && TaskEntry.ProjectTags != null)
+        }
+
+        private void ProjectTagsTextBox_PreviewMouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (QuickTagPopup != null && !QuickTagPopup.IsOpen)
             {
-                _currentProjectTags = new List<string>(TaskEntry.ProjectTags);
-                ProjectTagsItemsControl.ItemsSource = _currentProjectTags;
+                ShowQuickTagPopup();
+            }
+        }
+
+        private void ProjectTagsTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            ShowQuickTagPopup();
+        }
+
+        private void ShowQuickTagPopup()
+        {
+            if (QuickTagPopup == null || QuickTagsItemsControl == null || NoQuickTagsText == null || _appData == null) return;
+
+            var globalTags = _appData.GlobalTags ?? new List<string>();
+            
+            if (globalTags.Count > 0)
+            {
+                QuickTagsItemsControl.ItemsSource = null;
+                QuickTagsItemsControl.ItemsSource = globalTags;
+                QuickTagsItemsControl.Visibility = Visibility.Visible;
+                NoQuickTagsText.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                QuickTagsItemsControl.Visibility = Visibility.Collapsed;
+                NoQuickTagsText.Visibility = Visibility.Visible;
+            }
+
+            QuickTagPopup.IsOpen = true;
+        }
+
+        private void QuickTag_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            string? tag = null;
+            if (sender is Border border && border.DataContext is string t1)
+            {
+                tag = t1;
+            }
+            else if (sender is TextBlock textBlock && textBlock.Text is string t2)
+            {
+                tag = t2;
+            }
+
+            if (tag != null)
+            {
+                if (!_currentProjectTags.Contains(tag))
+                {
+                    _currentProjectTags.Add(tag);
+                    RefreshProjectTagsDisplay();
+                }
+                QuickTagPopup.IsOpen = false;
+                ProjectTagsTextBox.Focus();
+            }
+        }
+
+        private void DeleteQuickTagButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is string tag && _appData != null)
+            {
+                if (_appData.GlobalTags != null && _appData.GlobalTags.Contains(tag))
+                {
+                    _appData.GlobalTags.Remove(tag);
+                    // 重新显示弹窗以刷新列表
+                    ShowQuickTagPopup();
+                    
+                    // 保存数据
+                    SaveAppData();
+                }
+                // 防止事件冒泡导致弹窗关闭
+                e.Handled = true;
+            }
+        }
+
+        private void ClosePopup_Click(object sender, RoutedEventArgs e)
+        {
+            if (QuickTagPopup != null)
+            {
+                QuickTagPopup.IsOpen = false;
             }
         }
 
@@ -1405,6 +1514,32 @@ namespace DiaryApp
             }
             
             return children;
+        }
+
+        private string GetDataFilePath()
+        {
+            var appDir = AppDomain.CurrentDomain.BaseDirectory;
+            return System.IO.Path.Combine(appDir, DATA_FILE);
+        }
+
+        private void SaveAppData()
+        {
+            try
+            {
+                _appData.LastSaved = DateTime.Now;
+                var options = new System.Text.Json.JsonSerializerOptions 
+                { 
+                    WriteIndented = true,
+                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                };
+                var json = System.Text.Json.JsonSerializer.Serialize(_appData, options);
+                var dataFile = GetDataFilePath();
+                System.IO.File.WriteAllText(dataFile, json);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"保存失败: {ex.Message}");
+            }
         }
     }
 }

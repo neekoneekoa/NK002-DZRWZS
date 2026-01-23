@@ -72,8 +72,48 @@
                                  Background="Transparent" BorderThickness="0"
                                  Padding="8,4"
                                  GotFocus="TagInputTextBox_GotFocus" LostFocus="TagInputTextBox_LostFocus"
-                                 KeyDown="TagInputTextBox_KeyDown"/>
+                                 KeyDown="TagInputTextBox_KeyDown"
+                                 PreviewMouseLeftButtonUp="TagInputTextBox_PreviewMouseLeftButtonUp"/>
                     </Border>
+                    <Popup x:Name="QuickTagPopup" PlacementTarget="{Binding ElementName=TagInputTextBox}" StaysOpen="False" PopupAnimation="Slide">
+                        <Border Background="White" BorderBrush="#DFE6E9" BorderThickness="1" CornerRadius="4" Padding="8" MinWidth="200" MaxWidth="400">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Direction="270" Color="#EEEEEE" Opacity="0.5"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="📌 快捷标签" FontSize="12" FontWeight="Bold" Foreground="#636E72" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="✕" Width="20" Height="20" Background="Transparent" BorderThickness="0" Foreground="#636E72" 
+                                            Click="ClosePopup_Click" Cursor="Hand" ToolTip="关闭"/>
+                                </Grid>
+                                <ItemsControl x:Name="QuickTagsItemsControl">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding Converter={StaticResource TagToColorConverter}}" CornerRadius="12" Margin="0,0,6,6" Padding="10,4" Cursor="Hand" MouseLeftButtonDown="QuickTag_Click">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding}" Foreground="White" FontSize="12" Margin="0,0,6,0"/>
+                                                    <Button Content="×" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="14" 
+                                                            Click="DeleteQuickTagButton_Click" Tag="{Binding}" Focusable="False"
+                                                            Padding="2,-2,2,0" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                            ToolTip="删除此快捷标签"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock x:Name="NoQuickTagsText" Text="暂无常用标签" FontSize="12" Foreground="#B2BEC3" HorizontalAlignment="Center" Margin="5" Visibility="Collapsed"/>
+                            </StackPanel>
+                        </Border>
+                    </Popup>
                     <Button Grid.Column="1" Content="➕" Width="30" Height="25" Margin="5,0,0,0"
                             Background="#A29BFE" Foreground="White" BorderThickness="0"
                             Click="AddTagButton_Click"/>

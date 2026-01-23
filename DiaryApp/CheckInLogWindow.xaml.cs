@@ -42,7 +42,9 @@ namespace DiaryApp
         public string DateStr => _entry.CreatedAt.ToString("yyyy年MM月dd日 HH:mm");
         public string Notes => _entry.Notes;
         public List<string> Photos => _entry.Photos;
+        public List<string> Tags => _entry.Tags;
         public bool HasNotes => !string.IsNullOrEmpty(_entry.Notes);
         public bool HasPhotos => _entry.Photos != null && _entry.Photos.Any();
+        public bool HasTags => _entry.Tags != null && _entry.Tags.Any();
     }
 }

@@ -1,6 +1,9 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Collections.Generic;
+using System.Windows.Input;
+using System.Windows.Media;
 
 namespace DiaryApp
 {
@@ -11,10 +14,12 @@ namespace DiaryApp
     {
         // 用于传递编辑的时间记录
         public TimeRecordEntry EditedRecord { get; private set; }
+        private AppData _appData;
         
-        public TimeRecordEditWindow(TimeRecordEntry record)
+        public TimeRecordEditWindow(AppData appData, TimeRecordEntry record)
         {
             InitializeComponent();
+            _appData = appData;
             // 创建记录的副本，避免直接修改原始对象
             EditedRecord = new TimeRecordEntry
             {
@@ -58,11 +63,7 @@ namespace DiaryApp
             ActivityTextBox.Text = EditedRecord.Activity;
             
             // 设置分类
-            CategoryComboBox.SelectedItem = CategoryComboBox.Items.Cast<ComboBoxItem>().FirstOrDefault(item => item.Content.ToString() == EditedRecord.Category);
-            if (CategoryComboBox.SelectedItem == null && CategoryComboBox.Items.Count > 0)
-            {
-                CategoryComboBox.SelectedIndex = 0;
-            }
+            CategoryTextBox.Text = EditedRecord.Category;
             
             NotesTextBox.Text = EditedRecord.Notes;
         }
@@ -117,14 +118,60 @@ namespace DiaryApp
             EditedRecord.StartTime = startTime;
             EditedRecord.EndTime = endTime;
             EditedRecord.Activity = ActivityTextBox.Text;
-            EditedRecord.Category = (CategoryComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "其他";
+            EditedRecord.Category = CategoryTextBox.Text.Trim();
+            if (string.IsNullOrEmpty(EditedRecord.Category))
+            {
+                EditedRecord.Category = "其他";
+            }
             EditedRecord.Notes = NotesTextBox.Text;
             
+            // Save category to GlobalTags if new
+            bool globalTagAdded = false;
+            if (_appData.GlobalTags == null) _appData.GlobalTags = new List<string>();
+            if (!_appData.GlobalTags.Contains(EditedRecord.Category))
+            {
+                _appData.GlobalTags.Add(EditedRecord.Category);
+                globalTagAdded = true;
+            }
+
+            if (globalTagAdded)
+            {
+                SaveAppData();
+            }
+
             // 设置对话框结果为OK
             this.DialogResult = true;
             this.Close();
         }
         
+        private const string DATA_FILE = "app_data.json";
+
+        private string GetDataFilePath()
+        {
+            var appDir = AppDomain.CurrentDomain.BaseDirectory;
+            return System.IO.Path.Combine(appDir, DATA_FILE);
+        }
+
+        private void SaveAppData()
+        {
+            try
+            {
+                _appData.LastSaved = DateTime.Now;
+                var options = new System.Text.Json.JsonSerializerOptions 
+                { 
+                    WriteIndented = true,
+                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                };
+                var json = System.Text.Json.JsonSerializer.Serialize(_appData, options);
+                var dataFile = GetDataFilePath();
+                System.IO.File.WriteAllText(dataFile, json);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"保存失败: {ex.Message}");
+            }
+        }
+
         // 删除按钮点击事件
         private void DeleteButton_Click(object sender, RoutedEventArgs e)
         {
@@ -141,6 +188,52 @@ namespace DiaryApp
         {
             this.DialogResult = false;
             this.Close();
+        }
+
+        private void CategoryTextBox_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (QuickTagPopup != null && !QuickTagPopup.IsOpen)
+            {
+                ShowQuickTagPopup();
+            }
+        }
+
+        private void CategoryTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            ShowQuickTagPopup();
+        }
+
+        private void ShowQuickTagPopup()
+        {
+            if (_appData.GlobalTags == null) _appData.GlobalTags = new List<string>();
+            
+            QuickTagsItemsControl.ItemsSource = null;
+            QuickTagsItemsControl.ItemsSource = _appData.GlobalTags;
+            
+            NoQuickTagsText.Visibility = _appData.GlobalTags.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+            QuickTagPopup.IsOpen = true;
+        }
+
+        private void QuickTag_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is TextBlock textBlock)
+            {
+                CategoryTextBox.Text = textBlock.Text;
+                QuickTagPopup.IsOpen = false;
+            }
+        }
+
+        private void DeleteQuickTagButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is string tagToDelete)
+            {
+                if (_appData.GlobalTags.Contains(tagToDelete))
+                {
+                    _appData.GlobalTags.Remove(tagToDelete);
+                    ShowQuickTagPopup(); // 刷新列表
+                }
+            }
+            e.Handled = true; // 防止触发其他点击事件
         }
     }
 }

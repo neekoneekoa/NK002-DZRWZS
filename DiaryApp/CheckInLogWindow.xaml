@@ -34,18 +34,37 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 
                                 <!-- Header: Date -->
                                 <TextBlock Text="{Binding DateStr}" FontSize="14" Foreground="#6C5CE7" FontWeight="Bold"/>
                                 
+                                <!-- Tags -->
+                                <ItemsControl Grid.Row="1" ItemsSource="{Binding Tags}" Margin="0,5,0,5"
+                                              Visibility="{Binding HasTags, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding Converter={StaticResource TagToColorConverter}}" 
+                                                    CornerRadius="4" Margin="0,0,5,0" Padding="8,2">
+                                                <TextBlock Text="{Binding}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
                                 <!-- Content: Text -->
-                                <TextBlock Grid.Row="1" Text="{Binding Notes}" FontSize="15" Foreground="#2D3436" 
-                                           TextWrapping="Wrap" Margin="0,10,0,10"
+                                <TextBlock Grid.Row="2" Text="{Binding Notes}" FontSize="15" Foreground="#2D3436" 
+                                           TextWrapping="Wrap" Margin="0,5,0,10"
                                            Visibility="{Binding HasNotes, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                 
                                 <!-- Content: Photos -->
-                                <ItemsControl Grid.Row="2" ItemsSource="{Binding Photos}"
+                                <ItemsControl Grid.Row="3" ItemsSource="{Binding Photos}"
                                              Visibility="{Binding HasPhotos, Converter={StaticResource BooleanToVisibilityConverter}}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>

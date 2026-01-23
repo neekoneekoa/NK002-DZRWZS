@@ -1,9 +1,9 @@
-﻿<Application x:Class="DiaryApp.App"
+<Application x:Class="DiaryApp.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:DiaryApp"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <local:TagToColorConverter x:Key="TagToColorConverter"/>
     </Application.Resources>
 </Application>

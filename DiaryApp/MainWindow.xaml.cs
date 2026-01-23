@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.173";
+    public const string VERSION = "0.1.1.193";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -1101,6 +1101,70 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void DiaryTagFilterBox_GotFocus(object sender, RoutedEventArgs e)
     {
         DiaryTagPlaceholder.Visibility = Visibility.Collapsed;
+        ShowDiaryQuickTagPopup();
+    }
+
+    private void DiaryTagFilterBox_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (DiaryTagPopup != null && !DiaryTagPopup.IsOpen)
+        {
+            ShowDiaryQuickTagPopup();
+        }
+    }
+
+    private void ShowDiaryQuickTagPopup()
+    {
+        if (DiaryTagPopup == null || DiaryQuickTagsItemsControl == null || NoDiaryQuickTagsText == null || _appData == null) return;
+
+        var globalTags = _appData.GlobalTags ?? new List<string>();
+        
+        if (globalTags.Count > 0)
+        {
+            DiaryQuickTagsItemsControl.ItemsSource = null;
+            DiaryQuickTagsItemsControl.ItemsSource = globalTags;
+            DiaryQuickTagsItemsControl.Visibility = Visibility.Visible;
+            NoDiaryQuickTagsText.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            DiaryQuickTagsItemsControl.Visibility = Visibility.Collapsed;
+            NoDiaryQuickTagsText.Visibility = Visibility.Visible;
+        }
+
+        DiaryTagPopup.IsOpen = true;
+    }
+
+    private void DiaryQuickTag_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Border border && border.DataContext is string tag)
+        {
+            DiaryTagFilterBox.Text = tag;
+            DiaryTagPopup.IsOpen = false;
+            DiaryTagFilterBox.Focus();
+            DiaryTagFilterBox.CaretIndex = DiaryTagFilterBox.Text.Length;
+        }
+    }
+
+    private void DeleteDiaryQuickTagButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is string tag)
+        {
+            if (_appData.GlobalTags != null && _appData.GlobalTags.Contains(tag))
+            {
+                _appData.GlobalTags.Remove(tag);
+                ShowDiaryQuickTagPopup();
+                SaveAppData();
+            }
+            e.Handled = true;
+        }
+    }
+
+    private void ClosePopup_Click(object sender, RoutedEventArgs e)
+    {
+        if (DiaryTagPopup != null)
+        {
+            DiaryTagPopup.IsOpen = false;
+        }
     }
 
     private void DiaryTagFilterBox_LostFocus(object sender, RoutedEventArgs e)
@@ -1679,7 +1743,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void NewTaskButton_Click(object sender, RoutedEventArgs e)
     {
-        var taskEditWindow = new TaskEditWindow();
+        var taskEditWindow = new TaskEditWindow(_appData);
         if (taskEditWindow.ShowDialog() == true)
         {
             // 如果用户保存了任务，将任务添加到数据源
@@ -1750,7 +1814,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         try
         {
-            var editWindow = new TaskEditWindow(selectedTask);
+            var editWindow = new TaskEditWindow(_appData, selectedTask);
             if (editWindow.ShowDialog() == true)
             {
                 if (editWindow.IsDeleteRequested)
@@ -1779,9 +1843,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         ProjectTaskListBox.Items.Clear();
         
         // 将任务分类并排序后添加到不同列表
-        // 排序规则：已完成的任务排在未完成的任务下面
+        // 排序规则：已完成的任务排在未完成的任务下面 -> 按标签分组 -> 按创建时间排序
         var sortedTasks = _appData.Tasks.OrderBy(t => t.Status == TaskStatus.Completed ? 1 : 0) // 先按完成状态排序
-                                      .ThenBy(t => t.CreatedAt); // 再按创建时间排序
+                                      .ThenBy(t => t.ProjectTags != null && t.ProjectTags.Count > 0 ? t.ProjectTags[0] : "zzzzzz") // 再按标签排序（无标签排在最后）
+                                      .ThenBy(t => t.CreatedAt); // 最后按创建时间排序
         
         foreach (var task in sortedTasks)
         {
@@ -1875,7 +1940,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
 
             Log($"开始编辑任务: {selectedTask.Title}");
-            var editWindow = new TaskEditWindow(selectedTask);
+            var editWindow = new TaskEditWindow(_appData, selectedTask);
             if (editWindow.ShowDialog() == true)
             {
                 if (editWindow.IsDeleteRequested)
@@ -2113,6 +2178,22 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var weekEnd = _currentWeekStart.AddDays(6);
             CurrentWeekText.Text = $"{_currentWeekStart.Year}年第{GetWeekNumber(_currentWeekStart)}周({_currentWeekStart:MM-dd} ~ {weekEnd:MM-dd})";
         }
+
+        // 更新表头日期
+        try
+        {
+            if (WeekDay1Text != null) WeekDay1Text.Text = $"周一 ({_currentWeekStart:MM.dd})";
+            if (WeekDay2Text != null) WeekDay2Text.Text = $"周二 ({_currentWeekStart.AddDays(1):MM.dd})";
+            if (WeekDay3Text != null) WeekDay3Text.Text = $"周三 ({_currentWeekStart.AddDays(2):MM.dd})";
+            if (WeekDay4Text != null) WeekDay4Text.Text = $"周四 ({_currentWeekStart.AddDays(3):MM.dd})";
+            if (WeekDay5Text != null) WeekDay5Text.Text = $"周五 ({_currentWeekStart.AddDays(4):MM.dd})";
+            if (WeekDay6Text != null) WeekDay6Text.Text = $"周六 ({_currentWeekStart.AddDays(5):MM.dd})";
+            if (WeekDay7Text != null) WeekDay7Text.Text = $"周日 ({_currentWeekStart.AddDays(6):MM.dd})";
+        }
+        catch (Exception ex)
+        {
+            Log($"更新周视图日期失败: {ex.Message}");
+        }
     }
 
     private void AddTimeRecordButton_Click(object sender, RoutedEventArgs e)
@@ -2261,12 +2342,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             
             if (rowSpan < 1) rowSpan = 1;
             
-            // 鍒涘缓鏃堕棿鍧?
+            // 创建时间块
+            // 使用 Category 作为标签颜色，如果没有 Category 则使用 Activity
+            string colorKey = !string.IsNullOrEmpty(record.Category) ? record.Category : record.Activity;
+            var brush = TagToColorConverter.GetColorBrush(colorKey);
+            // 稍微增加透明度
+            var color = brush.Color;
+            var transparentBrush = new SolidColorBrush(Color.FromArgb(200, color.R, color.G, color.B));
+            transparentBrush.Freeze();
+
             var timeBlock = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(150, 108, 92, 231)), // 鍗婇€忔槑绱壊
-                BorderBrush = Brushes.DarkSlateBlue,
-                BorderThickness = new Thickness(1),
+                Background = transparentBrush,
+                BorderBrush = Brushes.Transparent, // 移除边框，看起来更扁平化
+                BorderThickness = new Thickness(0),
                 CornerRadius = new CornerRadius(4),
                 Cursor = Cursors.Hand
             };
@@ -2310,6 +2399,30 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 Background = Brushes.Transparent
             };
             
+            // 添加分类标签（如果有）
+            if (!string.IsNullOrEmpty(record.Category))
+            {
+                var tagBorder = new Border
+                {
+                    Background = TagToColorConverter.GetColorBrush(record.Category),
+                    CornerRadius = new CornerRadius(4),
+                    Padding = new Thickness(4, 1, 4, 1),
+                    Margin = new Thickness(0, 0, 0, 4),
+                    HorizontalAlignment = HorizontalAlignment.Left
+                };
+
+                var tagText = new TextBlock
+                {
+                    Text = record.Category,
+                    FontSize = 10,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = Brushes.White
+                };
+
+                tagBorder.Child = tagText;
+                contentPanel.Children.Add(tagBorder);
+            }
+            
             // 娣诲姞娲诲姩鍚嶇О
             var activityText = new TextBlock
             {
@@ -2352,7 +2465,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // 调试信息
 
         
-        var editWindow = new TimeRecordEditWindow(record);
+        var editWindow = new TimeRecordEditWindow(_appData, record);
         var result = editWindow.ShowDialog();
         
         
@@ -3094,7 +3207,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 }
 
                 // 弹出打卡日志窗口
-                var dialog = new CheckInDialog();
+                var dialog = new CheckInDialog(_appData);
                 dialog.Owner = this;
                 if (dialog.ShowDialog() == true)
                 {
@@ -3106,6 +3219,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         Value = "完成",
                         Date = DateTime.Today,
                         Notes = dialog.Notes,
+                        Tags = dialog.Tags,
                         Photos = dialog.PhotoPaths,
                         CreatedAt = DateTime.Now
                     };

@@ -221,7 +221,47 @@
                                             <TextBox x:Name="DiaryTagFilterBox" BorderThickness="0" 
                                                      Background="Transparent" Padding="10,8"
                                                      TextChanged="DiaryTagFilterBox_TextChanged"
-                                                     GotFocus="DiaryTagFilterBox_GotFocus" LostFocus="DiaryTagFilterBox_LostFocus"/>
+                                                     GotFocus="DiaryTagFilterBox_GotFocus" LostFocus="DiaryTagFilterBox_LostFocus"
+                                                     PreviewMouseLeftButtonUp="DiaryTagFilterBox_PreviewMouseLeftButtonUp"/>
+                                            <Popup x:Name="DiaryTagPopup" PlacementTarget="{Binding ElementName=DiaryTagFilterBox}" StaysOpen="False" PopupAnimation="Slide">
+                                                <Border Background="White" BorderBrush="#DFE6E9" BorderThickness="1" CornerRadius="4" Padding="8" MinWidth="200" MaxWidth="400">
+                                                    <Border.Effect>
+                                                        <DropShadowEffect BlurRadius="10" ShadowDepth="2" Direction="270" Color="#EEEEEE" Opacity="0.5"/>
+                                                    </Border.Effect>
+                                                    <StackPanel>
+                                                        <Grid Margin="0,0,0,8">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="📌 快捷标签" FontSize="12" FontWeight="Bold" Foreground="#636E72" VerticalAlignment="Center"/>
+                                                            <Button Grid.Column="1" Content="✕" Width="20" Height="20" Background="Transparent" BorderThickness="0" Foreground="#636E72" 
+                                                                    Click="ClosePopup_Click" Cursor="Hand" ToolTip="关闭"/>
+                                                        </Grid>
+                                                        <ItemsControl x:Name="DiaryQuickTagsItemsControl">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <WrapPanel Orientation="Horizontal"/>
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border Background="{Binding Converter={StaticResource TagToColorConverter}}" CornerRadius="12" Margin="0,0,6,6" Padding="10,4" Cursor="Hand" MouseLeftButtonDown="DiaryQuickTag_Click">
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <TextBlock Text="{Binding}" Foreground="White" FontSize="12" Margin="0,0,6,0"/>
+                                                                            <Button Content="×" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="14" 
+                                                                                    Click="DeleteDiaryQuickTagButton_Click" Tag="{Binding}" Focusable="False"
+                                                                                    Padding="2,-2,2,0" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                                                    ToolTip="删除此快捷标签"/>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                        <TextBlock x:Name="NoDiaryQuickTagsText" Text="暂无常用标签" FontSize="12" Foreground="#B2BEC3" HorizontalAlignment="Center" Margin="5" Visibility="Collapsed"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </Popup>
                                         </Grid>
                                     </Border>
 
@@ -394,6 +434,23 @@
                                                             </Style>
                                                         </TextBlock.Style>
                                                     </TextBlock>
+                                                    
+                                                    <!-- 任务标签显示 -->
+                                                    <ItemsControl ItemsSource="{Binding ProjectTags}" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel Orientation="Horizontal"/>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Background="{Binding Converter={StaticResource TagToColorConverter}}" 
+                                                                        CornerRadius="4" Margin="0,0,4,0" Padding="6,2">
+                                                                    <TextBlock Text="{Binding}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
                                                 </StackPanel>
                                             </StackPanel>
                                         </DataTemplate>
@@ -443,6 +500,23 @@
                                                                 </Style>
                                                             </TextBlock.Style>
                                                         </TextBlock>
+                                                        
+                                                        <!-- 任务标签显示 -->
+                                                        <ItemsControl ItemsSource="{Binding ProjectTags}" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <StackPanel Orientation="Horizontal"/>
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border Background="{Binding Converter={StaticResource TagToColorConverter}}" 
+                                                                            CornerRadius="4" Margin="0,0,4,0" Padding="6,2">
+                                                                        <TextBlock Text="{Binding}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
                                                     </StackPanel>
                                                 </StackPanel>
                                             </DataTemplate>
@@ -482,7 +556,13 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="60"/> <!-- 时间列 -->
-                                        <ColumnDefinition Width="*"/>   <!-- 周一到周日 -->
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="30"/>    <!-- 星期标题 -->
@@ -490,16 +570,16 @@
                                     </Grid.RowDefinitions>
 
                                     <!-- 星期标题 -->
-                                    <TextBlock Grid.Column="1" Grid.Row="0" Text="周一" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
-                                    <TextBlock Grid.Column="2" Grid.Row="0" Text="周二" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
-                                    <TextBlock Grid.Column="3" Grid.Row="0" Text="周三" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
-                                    <TextBlock Grid.Column="4" Grid.Row="0" Text="周四" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
-                                    <TextBlock Grid.Column="5" Grid.Row="0" Text="周五" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
-                                    <TextBlock Grid.Column="6" Grid.Row="0" Text="周六" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
-                                    <TextBlock Grid.Column="7" Grid.Row="0" Text="周日" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
+                                    <TextBlock x:Name="WeekDay1Text" Grid.Column="1" Grid.Row="0" Text="周一" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
+                                    <TextBlock x:Name="WeekDay2Text" Grid.Column="2" Grid.Row="0" Text="周二" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
+                                    <TextBlock x:Name="WeekDay3Text" Grid.Column="3" Grid.Row="0" Text="周三" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
+                                    <TextBlock x:Name="WeekDay4Text" Grid.Column="4" Grid.Row="0" Text="周四" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
+                                    <TextBlock x:Name="WeekDay5Text" Grid.Column="5" Grid.Row="0" Text="周五" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
+                                    <TextBlock x:Name="WeekDay6Text" Grid.Column="6" Grid.Row="0" Text="周六" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
+                                    <TextBlock x:Name="WeekDay7Text" Grid.Column="7" Grid.Row="0" Text="周日" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#2D3436"/>
 
                                     <!-- 时间标签和时间块 -->
-                                        <ScrollViewer Grid.Row="1" Grid.ColumnSpan="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                        <ScrollViewer Grid.Row="1" Grid.ColumnSpan="8" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                         <Grid x:Name="TimeGrid">
                                             <Grid.RowDefinitions>
                                             <RowDefinition Height="40"/>
