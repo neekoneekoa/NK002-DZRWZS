@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.197";
+    public const string VERSION = "0.1.1.199";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -603,6 +603,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     _appData.TimeRecords = _appData.TimeRecords ?? new List<TimeRecordEntry>();
                     _appData.CheckIns = _appData.CheckIns ?? new List<CheckInEntry>();
                     _appData.CheckInProjects = _appData.CheckInProjects ?? new List<CheckInProject>();
+                    _appData.PersonalInfo = _appData.PersonalInfo ?? new PersonalInfo();
 
                     // 初始化任务的Chapters属性和章节的SubTasks属性
                     foreach (var task in _appData.Tasks)
@@ -627,6 +628,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         
         // 重新计算个人信息数值
         RecalculatePersonalInfo();
+        
+        // 更新UI显示
+        LoadPersonalInfo();
     }
 
     // 重新计算个人信息数值
@@ -3176,13 +3180,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             if (CheckInProjectListBox != null && CheckInProjectListBox.SelectedItem is CheckInProject project)
             {
-                var newName = Microsoft.VisualBasic.Interaction.InputBox("输入项目名称：", "编辑项目", project.Name);
-                if (!string.IsNullOrWhiteSpace(newName))
+                var editWindow = new CheckInProjectEditWindow(project);
+                editWindow.Owner = this;
+                if (editWindow.ShowDialog() == true)
                 {
-                    project.Name = newName;
-                    project.UpdatedAt = DateTime.Now;
                     SaveAppData();
                     RefreshCheckInProjectList();
+                    MessageBox.Show("项目编辑成功！", "成功");
                 }
             }
             else

@@ -734,6 +734,20 @@
                                                 <StackPanel>
                                                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="#2D3436" FontSize="14"/>
                                                     <TextBlock Text="{Binding Type}" Margin="0,4,0,0" FontSize="11" Foreground="#636E72"/>
+                                                    <ItemsControl ItemsSource="{Binding Tags}" Margin="0,4,0,0" HorizontalAlignment="Left">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <WrapPanel Orientation="Horizontal"/>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Background="#6C5CE7" CornerRadius="10" Margin="0,0,6,4" Padding="8,2,8,2">
+                                                                    <TextBlock Text="{Binding}" Foreground="White" FontSize="10"/>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>

@@ -213,6 +213,7 @@ public enum TaskType
         public string Name { get; set; } = ""; // 项目名称
         public string Type { get; set; } = ""; // 项目类型：习惯、运动、学习等
         public DateTime? DeadlineDate { get; set; } // 到期日期（可选）
+        public List<string> Tags { get; set; } = new List<string>(); // 项目标签
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
     }
