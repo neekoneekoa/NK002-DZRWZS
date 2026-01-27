@@ -46,6 +46,8 @@ namespace DiaryApp
                 StartTimeComboBox.Items.Add(timeStr);
                 EndTimeComboBox.Items.Add(timeStr);
             }
+            // 添加24:00到结束时间选项
+            EndTimeComboBox.Items.Add("24:00");
         }
         
         // 加载时间记录数据
@@ -55,7 +57,17 @@ namespace DiaryApp
             
             // 设置时间
             string startTimeStr = $"{EditedRecord.StartTime.Hours:D2}:00";
-            string endTimeStr = $"{EditedRecord.EndTime.Hours:D2}:00";
+            
+            string endTimeStr;
+            // 检查是否为24:00（即1天）
+            if (Math.Abs(EditedRecord.EndTime.TotalHours - 24) < 0.01)
+            {
+                endTimeStr = "24:00";
+            }
+            else
+            {
+                endTimeStr = $"{EditedRecord.EndTime.Hours:D2}:00";
+            }
             
             StartTimeComboBox.SelectedItem = startTimeStr;
             EndTimeComboBox.SelectedItem = endTimeStr;
@@ -103,8 +115,25 @@ namespace DiaryApp
             string startTimeStr = startSelected.ToString() ?? "08:00";
             string endTimeStr = endSelected.ToString() ?? "09:00";
             
-            TimeSpan startTime = TimeSpan.Parse(startTimeStr);
-            TimeSpan endTime = TimeSpan.Parse(endTimeStr);
+            TimeSpan startTime;
+            if (startTimeStr == "24:00")
+            {
+                startTime = TimeSpan.FromDays(1);
+            }
+            else
+            {
+                startTime = TimeSpan.Parse(startTimeStr);
+            }
+
+            TimeSpan endTime;
+            if (endTimeStr == "24:00")
+            {
+                endTime = TimeSpan.FromDays(1);
+            }
+            else
+            {
+                endTime = TimeSpan.Parse(endTimeStr);
+            }
             
             // 验证时间顺序
             if (endTime <= startTime)

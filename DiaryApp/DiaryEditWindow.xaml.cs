@@ -617,8 +617,9 @@ namespace DiaryApp
             try
             {
                 decimal totalSavingsChange = 0;
+                var processedIds = new HashSet<string>();
                 
-                // 遍历所有参数
+                // 1. 处理当前存在的参数（修改或新增）
                 foreach (var param in _parameters)
                 {
                     if (IsBoundParameter(param.Name))
@@ -630,15 +631,29 @@ namespace DiaryApp
                                 trimmedName.Equals("savings", StringComparison.OrdinalIgnoreCase) || 
                                 trimmedName.Equals("Savings", StringComparison.OrdinalIgnoreCase))
                             {
-                                // 计算差值
+                                // 获取原值
                                 decimal originalValue = 0;
-                                _originalParamValues.TryGetValue(param.Id, out originalValue);
+                                if (!string.IsNullOrEmpty(param.Id) && _originalParamValues.TryGetValue(param.Id, out originalValue))
+                                {
+                                    processedIds.Add(param.Id);
+                                }
                                 
                                 // 差值 = 新值 - 原值
                                 decimal change = paramValue - originalValue;
                                 totalSavingsChange += change;
                             }
                         }
+                    }
+                }
+
+                // 2. 处理已删除的参数（在原值中有，但当前参数列表中没有，或者改名为非绑定参数）
+                foreach (var kvp in _originalParamValues)
+                {
+                    if (!processedIds.Contains(kvp.Key))
+                    {
+                        // 该参数已被删除或不再是绑定参数，需要减去其原值贡献
+                        // 相当于：新值(0) - 原值
+                        totalSavingsChange -= kvp.Value;
                     }
                 }
                 
@@ -671,18 +686,31 @@ namespace DiaryApp
                     return string.Empty;
                 }
                 
-                // 获取当前值
-                decimal currentValue = 0;
-                if (param.Name.Trim().Equals("金钱", StringComparison.OrdinalIgnoreCase))
+                // 获取当前总金额
+                decimal currentTotal = 0;
+                if (param.Name.Trim().Equals("金钱", StringComparison.OrdinalIgnoreCase) || 
+                    param.Name.Trim().Equals("savings", StringComparison.OrdinalIgnoreCase) || 
+                    param.Name.Trim().Equals("Savings", StringComparison.OrdinalIgnoreCase))
                 {
-                    currentValue = _personalInfo.Savings;
+                    currentTotal = _personalInfo.Savings;
                 }
                 
-                // 计算新值
-                decimal newValue = currentValue + paramValue;
+                // 获取原始值（如果是新添加的参数，原始值为0）
+                decimal originalValue = 0;
+                if (!string.IsNullOrEmpty(param.Id))
+                {
+                    _originalParamValues.TryGetValue(param.Id, out originalValue);
+                }
                 
-                // 格式化显示
-                return $"({(paramValue >= 0 ? "+" : "")}{param.Value} → {newValue.ToString("N2")})";
+                // 计算基础值（排除当前参数贡献后的金额）
+                decimal baseValue = currentTotal - originalValue;
+                
+                // 计算新值
+                decimal newValue = baseValue + paramValue;
+                
+                // 格式化显示: (4995 + 5 = 5000)
+                string operatorStr = paramValue >= 0 ? "+" : "";
+                return $"({baseValue:N0} {operatorStr} {paramValue:N0} = {newValue:N0})";
             }
             catch
             {

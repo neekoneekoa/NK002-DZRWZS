@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.209";
+    public const string VERSION = "0.1.1.220";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -633,7 +633,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         
         // 重新计算个人信息数值
-        RecalculatePersonalInfo();
+        // RecalculatePersonalInfo(); // 禁用自动重新计算，防止覆盖手动输入的值
         
         // 更新UI显示
         LoadPersonalInfo();
@@ -1088,8 +1088,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _appData.Diaries.Add(editWindow.ResultEntry);
             SaveAppData();
             RefreshDiaryTimeline();
-            // 重新计算个人信息数值
-            RecalculatePersonalInfo();
+            // 更新个人信息UI显示
+            LoadPersonalInfo();
         }
     }
 
@@ -1718,8 +1718,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 _appData.Diaries[index] = editWindow.ResultEntry;
                 SaveAppData();
                 RefreshDiaryTimeline();
-                // 重新计算个人信息数值
-                RecalculatePersonalInfo();
+                // 更新个人信息UI显示
+                LoadPersonalInfo();
             }
         }
     }
@@ -1730,11 +1730,36 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (result == MessageBoxResult.Yes)
         {
+            // Calculate savings to remove
+            decimal savingsToRemove = 0;
+            if (entry.Parameters != null)
+            {
+                foreach (var param in entry.Parameters)
+                {
+                    string trimmedName = param.Name.Trim();
+                    if (trimmedName.Equals("金钱", StringComparison.OrdinalIgnoreCase) || 
+                        trimmedName.Equals("savings", StringComparison.OrdinalIgnoreCase) || 
+                        trimmedName.Equals("Savings", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (decimal.TryParse(param.Value, out decimal paramValue))
+                        {
+                            savingsToRemove += paramValue;
+                        }
+                    }
+                }
+            }
+            
+            if (savingsToRemove != 0)
+            {
+                _appData.PersonalInfo.Savings -= savingsToRemove;
+                _appData.PersonalInfo.LastUpdated = DateTime.Now;
+            }
+
             _appData.Diaries.RemoveAll(d => d.Id == entry.Id);
             SaveAppData();
             RefreshDiaryTimeline();
-            // 重新计算个人信息数值
-            RecalculatePersonalInfo();
+            // 更新个人信息UI显示
+            LoadPersonalInfo();
         }
     }
 
@@ -3014,9 +3039,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             if (decimal.TryParse(PersonalSavingsTextBox.Text, out decimal savings))
             {
-                _appData.PersonalInfo.Savings = savings;
-                _appData.PersonalInfo.LastUpdated = DateTime.Now;
-                PersonalLastUpdatedText.Text = $"最后更新：{_appData.PersonalInfo.LastUpdated:yyyy-MM-dd HH:mm}";
+                // Only update if value changed to avoid circular updates and timestamp resets
+                if (_appData.PersonalInfo.Savings != savings)
+                {
+                    _appData.PersonalInfo.Savings = savings;
+                    _appData.PersonalInfo.LastUpdated = DateTime.Now;
+                    PersonalLastUpdatedText.Text = $"最后更新：{_appData.PersonalInfo.LastUpdated:yyyy-MM-dd HH:mm}";
+                }
             }
         }
         catch (Exception ex)
