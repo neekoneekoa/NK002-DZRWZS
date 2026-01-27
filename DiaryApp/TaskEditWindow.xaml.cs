@@ -217,6 +217,10 @@ namespace DiaryApp
                     UpdateProjectTagsVisibility();
                     
                     // 加载项目标签
+                    if (TaskEntry.ProjectTags != null)
+                    {
+                        _currentProjectTags = new List<string>(TaskEntry.ProjectTags);
+                    }
                     RefreshProjectTagsDisplay();
                     
                     PriorityComboBox.SelectedIndex = TaskEntry.Priority - 1;
