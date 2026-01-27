@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.220";
+    public const string VERSION = "0.1.1.223";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -2402,9 +2402,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             
             int startRow = startHour;
             
-            // 璁＄畻缁撴潫鏃堕棿琛屽彿
-            int endHour = record.EndTime.Hours;
-            if (endHour <= 0) continue;
+            // 计算结束时间行号
+            int endHour = (int)record.EndTime.TotalHours;
+            if (endHour <= 0 && record.EndTime.TotalMinutes > 0) endHour = 24; // Handle cases where total hours might be 0 but there is duration, or just use TotalHours logic
+            
+            // If strictly 0 duration, skip
+            if (endHour <= 0 && record.EndTime.TotalMinutes <= 0) continue;
+            
             if (endHour > 24) endHour = 24;
             
             int endRow = endHour - 1;
