@@ -298,6 +298,15 @@ public enum TaskType
         }
     }
 
+    // ===== 倒数日数据模型 =====
+    public class CountdownItem
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Title { get; set; } = "";
+        public DateTime TargetDate { get; set; } = DateTime.Today;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+    }
+
     // ===== 应用统一数据模型 =====
     public class AppData
     {
@@ -308,6 +317,13 @@ public enum TaskType
         public List<CheckInEntry> CheckIns { get; set; } = new List<CheckInEntry>();
         public List<string> GlobalTags { get; set; } = new List<string>(); // 全局标签列表（用于快捷输入）
         public PersonalInfo PersonalInfo { get; set; } = new PersonalInfo();
+        
+        // 倒数日列表（替代旧的单一 Countdown 属性）
+        public List<CountdownItem> Countdowns { get; set; } = new List<CountdownItem>();
+        
+        [Obsolete("Use Countdowns list instead")]
+        public CountdownItem? Countdown { get; set; } = null; // 保留用于向后兼容迁移
+
         public ReminderSetting ReminderSetting { get; set; } = new ReminderSetting();
         public DateTime LastSaved { get; set; } = DateTime.Now;
         public string Version { get; set; } = "0.2.0";

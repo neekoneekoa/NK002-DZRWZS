@@ -25,7 +25,13 @@ public class BackupData
     public List<TaskEntry> Tasks { get; set; } = new();
     public List<TimeRecordEntry> TimeRecords { get; set; } = new();
     public List<CheckInProject> CheckInProjects { get; set; } = new();
-    public List<CheckInEntry> CheckIns { get; set; } = new();
+    public List<CheckInEntry> CheckIns { get; set; } = new List<CheckInEntry>();
+    public PersonalInfo PersonalInfo { get; set; } = new PersonalInfo();
+    public ReminderSetting ReminderSetting { get; set; } = new ReminderSetting();
+    public List<string> GlobalTags { get; set; } = new List<string>();
+    public List<CountdownItem> Countdowns { get; set; } = new List<CountdownItem>();
+    [Obsolete("仅用于兼容旧版本备份")]
+    public CountdownItem? Countdown { get; set; } // 用于兼容旧版本备份
 }
 
 public static class BackupManager
@@ -75,7 +81,11 @@ public static class BackupManager
             Tasks = appData.Tasks,
             TimeRecords = appData.TimeRecords,
             CheckInProjects = appData.CheckInProjects,
-            CheckIns = appData.CheckIns
+            CheckIns = appData.CheckIns,
+            PersonalInfo = appData.PersonalInfo,
+            ReminderSetting = appData.ReminderSetting,
+            GlobalTags = appData.GlobalTags,
+            Countdowns = appData.Countdowns
         };
 
         var options = new JsonSerializerOptions 
@@ -147,6 +157,13 @@ public static class BackupManager
             
             if (backupData != null)
             {
+                // 兼容旧版本备份中的倒数日数据
+                var countdowns = backupData.Countdowns ?? new List<CountdownItem>();
+                if (countdowns.Count == 0 && backupData.Countdown != null)
+                {
+                    countdowns.Add(backupData.Countdown);
+                }
+
                 return new AppData
                 {
                     Diaries = backupData.Diaries ?? new List<DiaryEntry>(),
@@ -154,6 +171,10 @@ public static class BackupManager
                     TimeRecords = backupData.TimeRecords ?? new List<TimeRecordEntry>(),
                     CheckInProjects = backupData.CheckInProjects ?? new List<CheckInProject>(),
                     CheckIns = backupData.CheckIns ?? new List<CheckInEntry>(),
+                    PersonalInfo = backupData.PersonalInfo ?? new PersonalInfo(),
+                    ReminderSetting = backupData.ReminderSetting ?? new ReminderSetting(),
+                    GlobalTags = backupData.GlobalTags ?? new List<string>(),
+                    Countdowns = countdowns,
                     Version = backupData.Info?.Version ?? "1.0",
                     LastSaved = DateTime.Now
                 };
@@ -250,7 +271,11 @@ public static class BackupManager
             Tasks = appData.Tasks,
             TimeRecords = appData.TimeRecords,
             CheckInProjects = appData.CheckInProjects,
-            CheckIns = appData.CheckIns
+            CheckIns = appData.CheckIns,
+            PersonalInfo = appData.PersonalInfo,
+            ReminderSetting = appData.ReminderSetting,
+            GlobalTags = appData.GlobalTags,
+            Countdowns = appData.Countdowns
         };
 
         var options = new JsonSerializerOptions 

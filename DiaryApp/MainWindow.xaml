@@ -775,33 +775,9 @@
                                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                                     <StackPanel>
                                         <!-- 第一块：倒数日功能 -->
-                                        <Border CornerRadius="12" Background="#F8F9FA" Padding="20" Margin="0,0,0,20">
-                                            <Grid>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                </Grid.RowDefinitions>
-
-                                                <TextBlock Grid.Row="0" Text="⏰ 倒数日" FontSize="14" FontWeight="Bold" Foreground="#636E72" Margin="0,0,0,10"/>
-                                                
-                                                <StackPanel Grid.Row="1" Margin="0,0,0,8">
-                                                    <TextBlock Text="标题：" FontSize="12" Foreground="#636E72" Margin="0,0,0,3"/>
-                                                    <TextBlock x:Name="CountdownTitleText" Text="未设置" FontSize="13" Foreground="#2D3436" FontWeight="SemiBold"/>
-                                                </StackPanel>
-
-                                                <StackPanel Grid.Row="2" Margin="0,0,0,8">
-                                                    <TextBlock Text="到期时间：" FontSize="12" Foreground="#636E72" Margin="0,0,0,3"/>
-                                                    <TextBlock x:Name="CountdownDeadlineText" Text="未设置" FontSize="13" Foreground="#2D3436" FontWeight="SemiBold"/>
-                                                </StackPanel>
-
-                                                <StackPanel Grid.Row="3">
-                                                    <TextBlock Text="剩余时间：" FontSize="12" Foreground="#636E72" Margin="0,0,0,3"/>
-                                                    <TextBlock x:Name="CountdownRemainText" Text="未知" FontSize="14" Foreground="#6C5CE7" FontWeight="Bold"/>
-                                                </StackPanel>
-                                            </Grid>
-                                        </Border>
+                                        <UniformGrid x:Name="CountdownContainer" Rows="1" Columns="4" Margin="0,0,0,20">
+                                            <!-- 动态生成倒数日卡片 -->
+                                        </UniformGrid>
 
                                         <!-- 第二块：打卡总体展示 -->
                                         <Border CornerRadius="12" Background="#F8F9FA" Padding="20" Margin="0,0,0,20">

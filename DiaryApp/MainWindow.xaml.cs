@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.199";
+    public const string VERSION = "0.1.1.207";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -451,6 +451,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         
         // 初始化个人数据
         LoadPersonalInfo();
+        
+        // 更新倒数日显示
+        UpdateCountdownDisplay();
+        
+        // 更新提醒定时器状态
+        UpdateReminderTimer();
     }
     
     private void SetWindowSizeTo70Percent()
@@ -631,6 +637,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         
         // 更新UI显示
         LoadPersonalInfo();
+        UpdateCountdownDisplay();
     }
 
     // 重新计算个人信息数值
@@ -790,6 +797,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // 根据配置更新提醒定时器
     private void UpdateReminderTimer()
     {
+        if (_reminderTimer == null) return;
+
         if (_appData.ReminderSetting.IsEnabled)
         {
             if (!_reminderTimer.IsEnabled)
@@ -1798,15 +1807,27 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // 添加日志记录当前选中状态
         Log($"编辑任务按钮点击 - 临时任务选中: {TempTaskListBox.SelectedItem != null}, 项目任务选中: {ProjectTaskListBox.SelectedItem != null}");
         
-        if (TempTaskListBox.SelectedItem is TaskEntry tempTask)
+        // 检查选中状态，如果两个都选中了（理论上不应该发生），优先处理项目任务或者提示用户
+        bool isTempSelected = TempTaskListBox.SelectedItem is TaskEntry;
+        bool isProjectSelected = ProjectTaskListBox.SelectedItem is TaskEntry;
+
+        if (isTempSelected && isProjectSelected)
         {
-            selectedTask = tempTask;
-            Log($"选中了临时任务: {tempTask.Title}");
+            // 异常情况：两个列表都有选中项
+            // 尝试清除临时任务的选中状态，假设用户想编辑项目任务（因为用户特别提到了项目任务的问题）
+            TempTaskListBox.SelectedItem = null;
+            selectedTask = ProjectTaskListBox.SelectedItem as TaskEntry;
+            Log($"检测到双重选中，强制选择项目任务: {selectedTask?.Title}");
         }
-        else if (ProjectTaskListBox.SelectedItem is TaskEntry projectTask)
+        else if (isTempSelected)
         {
-            selectedTask = projectTask;
-            Log($"选中了项目任务: {projectTask.Title}");
+            selectedTask = TempTaskListBox.SelectedItem as TaskEntry;
+            Log($"选中了临时任务: {selectedTask?.Title}");
+        }
+        else if (isProjectSelected)
+        {
+            selectedTask = ProjectTaskListBox.SelectedItem as TaskEntry;
+            Log($"选中了项目任务: {selectedTask?.Title}");
         }
 
         if (selectedTask == null)
@@ -1904,17 +1925,31 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void TempTaskListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (TempTaskListBox.SelectedItem != null)
+        try 
         {
-            ProjectTaskListBox.SelectedItem = null;
+            if (TempTaskListBox.SelectedItem != null)
+            {
+                ProjectTaskListBox.SelectedItem = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"TempTaskListBox_SelectionChanged error: {ex.Message}");
         }
     }
 
     private void ProjectTaskListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (ProjectTaskListBox.SelectedItem != null)
+        try
         {
-            TempTaskListBox.SelectedItem = null;
+            if (ProjectTaskListBox.SelectedItem != null)
+            {
+                TempTaskListBox.SelectedItem = null;
+            }
+        }
+        catch (Exception ex)
+        {
+             Log($"ProjectTaskListBox_SelectionChanged error: {ex.Message}");
         }
     }
 
@@ -3314,7 +3349,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ProjectCurrentStreakText.Text = currentStreak.ToString();
 
             UpdateProjectCheckInCalendar(projectCheckIns);
-            UpdateCountdownDisplay(project);
+            // UpdateCountdownDisplay(); // 倒数日现在是独立的，不需要随项目更新
             UpdateMonthlyStats(project);
         }
         catch (Exception ex)
@@ -3347,35 +3382,349 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return streak;
     }
 
-    private void UpdateCountdownDisplay(CheckInProject project)
+    private void UpdateCountdownDisplay()
     {
         try
         {
-            if (!project.DeadlineDate.HasValue)
+            // 数据迁移：将旧的单数 Countdown 迁移到 Countdowns 列表
+            if (_appData.Countdowns == null) _appData.Countdowns = new List<CountdownItem>();
+            
+            // 检查旧数据是否存在
+            #pragma warning disable CS0612 // 类型或成员已过时
+            if (_appData.Countdown != null)
             {
-                if (CountdownTitleText != null) CountdownTitleText.Text = "未设置";
-                if (CountdownDeadlineText != null) CountdownDeadlineText.Text = "未设置";
-                if (CountdownRemainText != null) CountdownRemainText.Text = "未知";
-                return;
+                _appData.Countdowns.Add(_appData.Countdown);
+                _appData.Countdown = null;
+                SaveAppData();
             }
+            #pragma warning restore CS0612
 
-            if (CountdownTitleText != null) CountdownTitleText.Text = project.Name;
-            if (CountdownDeadlineText != null) CountdownDeadlineText.Text = project.DeadlineDate?.ToString("yyyy年MM月dd日") ?? "未知";
+            if (CountdownContainer == null) return;
+            CountdownContainer.Children.Clear();
 
-            var remainDays = (project.DeadlineDate?.Date - DateTime.Today)?.Days ?? 0;
-            if (CountdownRemainText != null)
+            // 固定显示4个槽位
+            for (int i = 0; i < 4; i++)
             {
-                if (remainDays > 0)
-                    CountdownRemainText.Text = $"还有 {remainDays} 天";
-                else if (remainDays == 0)
-                    CountdownRemainText.Text = "就在今天!";
+                var border = new Border
+                {
+                    CornerRadius = new CornerRadius(12),
+                    Padding = new Thickness(20),
+                    Margin = new Thickness(0, 0, i == 3 ? 0 : 20, 0), // 最后一个不需要右边距
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8F9FA")),
+                    MinHeight = 160 // 确保高度一致
+                };
+
+                if (i < _appData.Countdowns.Count)
+                {
+                    var item = _appData.Countdowns[i];
+                    
+                    // 现有倒数日内容
+                    var grid = new Grid();
+                    grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                    grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                    grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                    grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+                    // 1. 顶部：图标 + 操作按钮
+                    var headerGrid = new Grid { Margin = new Thickness(0, 0, 0, 10) };
+                    headerGrid.Children.Add(new TextBlock 
+                    { 
+                        Text = "⏰ 倒数日", 
+                        FontSize = 14, 
+                        FontWeight = FontWeights.Bold, 
+                        Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#636E72")), 
+                        VerticalAlignment = VerticalAlignment.Center 
+                    });
+                    
+                    var headerButtons = new StackPanel 
+                    { 
+                        Orientation = Orientation.Horizontal, 
+                        HorizontalAlignment = HorizontalAlignment.Right, 
+                        VerticalAlignment = VerticalAlignment.Center 
+                    };
+                    
+                    // 删除按钮
+                    var deleteBtn = new Button { 
+                        Content = "🗑️", 
+                        Background = Brushes.Transparent, 
+                        Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF7675")),
+                        BorderThickness = new Thickness(0),
+                        Cursor = Cursors.Hand,
+                        FontSize = 12,
+                        Margin = new Thickness(0, 0, 8, 0),
+                        ToolTip = "删除倒计时",
+                        Tag = item
+                    };
+                    deleteBtn.Click += DeleteCountdown_Click;
+                    headerButtons.Children.Add(deleteBtn);
+
+                    // 编辑按钮
+                    var editBtn = new Button { 
+                        Content = "设置", 
+                        Background = Brushes.Transparent, 
+                        Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#6C5CE7")),
+                        BorderThickness = new Thickness(0),
+                        Cursor = Cursors.Hand,
+                        FontSize = 12,
+                        FontWeight = FontWeights.SemiBold,
+                        ToolTip = "修改倒计时",
+                        Tag = item
+                    };
+                    editBtn.Click += EditCountdown_Click;
+                    headerButtons.Children.Add(editBtn);
+                    
+                    headerGrid.Children.Add(headerButtons);
+                    Grid.SetRow(headerGrid, 0);
+                    grid.Children.Add(headerGrid);
+
+                    // 2. 标题
+                    var titlePanel = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
+                    titlePanel.Children.Add(new TextBlock { Text = "标题：", FontSize = 12, Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#636E72")), Margin = new Thickness(0, 0, 0, 3) });
+                    titlePanel.Children.Add(new TextBlock { Text = item.Title, FontSize = 13, Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D3436")), FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
+                    Grid.SetRow(titlePanel, 1);
+                    grid.Children.Add(titlePanel);
+
+                    // 3. 到期时间
+                    var datePanel = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
+                    datePanel.Children.Add(new TextBlock { Text = "到期时间：", FontSize = 12, Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#636E72")), Margin = new Thickness(0, 0, 0, 3) });
+                    datePanel.Children.Add(new TextBlock { Text = item.TargetDate.ToString("yyyy年MM月dd日"), FontSize = 13, Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D3436")), FontWeight = FontWeights.SemiBold });
+                    Grid.SetRow(datePanel, 2);
+                    grid.Children.Add(datePanel);
+
+                    // 4. 剩余时间
+                    var remainDays = (item.TargetDate.Date - DateTime.Today).Days;
+                    var remainText = "";
+                    if (remainDays > 0) remainText = $"还有 {remainDays} 天";
+                    else if (remainDays == 0) remainText = "就在今天!";
+                    else remainText = $"已过期 {Math.Abs(remainDays)} 天";
+
+                    var remainPanel = new StackPanel();
+                    remainPanel.Children.Add(new TextBlock { Text = "剩余时间：", FontSize = 12, Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#636E72")), Margin = new Thickness(0, 0, 0, 3) });
+                    remainPanel.Children.Add(new TextBlock { Text = remainText, FontSize = 14, Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#6C5CE7")), FontWeight = FontWeights.Bold });
+                    Grid.SetRow(remainPanel, 3);
+                    grid.Children.Add(remainPanel);
+
+                    border.Child = grid;
+                }
                 else
-                    CountdownRemainText.Text = $"已过期 {Math.Abs(remainDays)} 天";
+                {
+                    // 空槽位 - 显示添加按钮
+                    border.Background = Brushes.White; // 白色背景
+                    border.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DFE6E9"));
+                    border.BorderThickness = new Thickness(2);
+                    
+                    var emptyGrid = new Grid();
+                    var addBtn = new Button {
+                        Content = "+",
+                        FontSize = 40,
+                        Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DFE6E9")),
+                        Background = Brushes.Transparent,
+                        BorderThickness = new Thickness(0),
+                        Cursor = Cursors.Hand,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        ToolTip = "添加倒计时",
+                        Width = 100,
+                        Height = 100
+                    };
+                    addBtn.Click += AddCountdown_Click;
+                    emptyGrid.Children.Add(addBtn);
+                    border.Child = emptyGrid;
+                }
+                
+                CountdownContainer.Children.Add(border);
             }
         }
         catch (Exception ex)
         {
             Log($"更新倒数日显示失败: {ex.Message}");
+        }
+    }
+
+    private void AddCountdown_Click(object sender, RoutedEventArgs e)
+    {
+        if (_appData.Countdowns.Count >= 4)
+        {
+            MessageBox.Show("最多只能添加4个倒数日", "提示");
+            return;
+        }
+        ShowCountdownDialog(null);
+    }
+
+    private void EditCountdown_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is CountdownItem item)
+        {
+            ShowCountdownDialog(item);
+        }
+    }
+
+    private void DeleteCountdown_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is CountdownItem item)
+        {
+            if (MessageBox.Show("确定要删除这个倒数日吗？", "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                _appData.Countdowns.Remove(item);
+                SaveAppData();
+                UpdateCountdownDisplay();
+                Log("删除了倒数日");
+            }
+        }
+    }
+
+    private void ShowCountdownDialog(CountdownItem? itemToEdit)
+    {
+        try
+        {
+            bool isNew = itemToEdit == null;
+            
+            // 创建倒数日设置窗口
+            var dialog = new Window
+            {
+                Title = isNew ? "新建倒计时" : "编辑倒计时",
+                Width = 350,
+                Height = 280, 
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this,
+                ResizeMode = ResizeMode.NoResize,
+                WindowStyle = WindowStyle.ToolWindow,
+                Background = new SolidColorBrush(Colors.White)
+            };
+
+            var mainPanel = new StackPanel { Margin = new Thickness(20) };
+
+            // 标题输入
+            mainPanel.Children.Add(new TextBlock 
+            { 
+                Text = "标题：", 
+                Margin = new Thickness(0, 0, 0, 5),
+                FontSize = 14,
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D3436"))
+            });
+
+            var titleBox = new TextBox
+            {
+                Text = itemToEdit?.Title ?? "重要日子",
+                Margin = new Thickness(0, 0, 0, 15),
+                Height = 30,
+                FontSize = 14,
+                VerticalContentAlignment = VerticalAlignment.Center
+            };
+            mainPanel.Children.Add(titleBox);
+
+            // 日期选择
+            mainPanel.Children.Add(new TextBlock 
+            { 
+                Text = "目标日期：", 
+                Margin = new Thickness(0, 0, 0, 5),
+                FontSize = 14,
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D3436"))
+            });
+
+            var datePicker = new DatePicker
+            {
+                SelectedDate = itemToEdit?.TargetDate ?? DateTime.Today.AddDays(1),
+                Margin = new Thickness(0, 0, 0, 20),
+                Height = 35, // Match previous height
+                FontSize = 14
+            };
+            mainPanel.Children.Add(datePicker);
+
+            // 按钮区域
+            var btnPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+            
+            var okBtn = new Button 
+            { 
+                Content = "确定", 
+                Width = 90, 
+                Height = 35,
+                Margin = new Thickness(0, 0, 10, 0), 
+                IsDefault = true,
+                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#6C5CE7")),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0),
+                FontSize = 13,
+                FontWeight = FontWeights.SemiBold,
+                Cursor = Cursors.Hand
+            };
+            
+            // 添加圆角样式
+            var okStyle = new Style(typeof(Border));
+            okStyle.Setters.Add(new Setter(Border.CornerRadiusProperty, new CornerRadius(6)));
+            okBtn.Resources.Add(typeof(Border), okStyle);
+
+            var cancelBtn = new Button 
+            { 
+                Content = "取消", 
+                Width = 90, 
+                Height = 35,
+                IsCancel = true,
+                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#DFE6E9")),
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#636E72")),
+                BorderThickness = new Thickness(0),
+                FontSize = 13,
+                Cursor = Cursors.Hand
+            };
+            
+            // 添加圆角样式
+            var cancelStyle = new Style(typeof(Border));
+            cancelStyle.Setters.Add(new Setter(Border.CornerRadiusProperty, new CornerRadius(6)));
+            cancelBtn.Resources.Add(typeof(Border), cancelStyle);
+            
+            okBtn.Click += (s, args) => { 
+                if (string.IsNullOrWhiteSpace(titleBox.Text))
+                {
+                    MessageBox.Show("请输入标题", "提示");
+                    return;
+                }
+                if (datePicker.SelectedDate == null)
+                {
+                    MessageBox.Show("请选择日期", "提示");
+                    return;
+                }
+                dialog.DialogResult = true; 
+                dialog.Close(); 
+            };
+            
+            cancelBtn.Click += (s, args) => dialog.Close();
+
+            btnPanel.Children.Add(okBtn);
+            btnPanel.Children.Add(cancelBtn);
+            mainPanel.Children.Add(btnPanel);
+
+            dialog.Content = mainPanel;
+
+            if (dialog.ShowDialog() == true)
+            {
+                if (isNew)
+                {
+                    var newItem = new CountdownItem
+                    {
+                        Title = titleBox.Text.Trim(),
+                        TargetDate = datePicker.SelectedDate.Value,
+                        CreatedAt = DateTime.Now
+                    };
+                    _appData.Countdowns.Add(newItem);
+                    Log($"创建了新倒数日: {newItem.Title}");
+                }
+                else
+                {
+                    if (itemToEdit != null)
+                    {
+                        itemToEdit.Title = titleBox.Text.Trim();
+                        itemToEdit.TargetDate = datePicker.SelectedDate.Value;
+                        Log($"更新了倒数日: {itemToEdit.Title}");
+                    }
+                }
+                SaveAppData();
+                UpdateCountdownDisplay();
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"设置倒计时失败: {ex.Message}");
+            MessageBox.Show($"设置倒计时失败: {ex.Message}", "错误");
         }
     }
 
