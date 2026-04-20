@@ -960,8 +960,12 @@
                                             Click="EditPersonalInfoButton_Click"/>
                                     <Button x:Name="SavePersonalInfoButton" Content="💾 保存个人信息" Height="45" 
                                             Background="#00B894" Foreground="White" BorderThickness="0"
-                                            FontSize="16" FontWeight="Bold"
+                                            FontSize="16" FontWeight="Bold" Margin="0,0,10,0"
                                             Click="SavePersonalInfoButton_Click" IsEnabled="False"/>
+                                    <Button x:Name="MindMapButton" Content="🧠 全部资料" Height="45" 
+                                            Background="#6C5CE7" Foreground="White" BorderThickness="0"
+                                            FontSize="16" FontWeight="Bold"
+                                            Click="MindMapButton_Click"/>
                                 </StackPanel>
 
                                 <!-- 最后更新时间 -->

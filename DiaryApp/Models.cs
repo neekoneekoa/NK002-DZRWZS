@@ -327,5 +327,26 @@ public enum TaskType
         public ReminderSetting ReminderSetting { get; set; } = new ReminderSetting();
         public DateTime LastSaved { get; set; } = DateTime.Now;
         public string Version { get; set; } = "0.2.0";
+        
+        // 思维导图数据
+        public MindMapNode MindMapRoot { get; set; } = new MindMapNode { Id = "root", Content = "我", IsRoot = true };
+    }
+
+    // ===== 思维导图数据模型 =====
+    public class MindMapNode
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Content { get; set; } = "";
+        public List<MindMapNode> Children { get; set; } = new List<MindMapNode>();
+        public bool IsRoot { get; set; } = false;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        
+        // 节点位置（用于可视化）
+        public double X { get; set; } = 0;
+        public double Y { get; set; } = 0;
+        
+        // 是否展开
+        public bool IsExpanded { get; set; } = true;
     }
 }

@@ -166,7 +166,7 @@ public static class AppBrushes
 // 版本信息 - 自动更新为当前时间
 public static class AppVersion
 {
-    public const string VERSION = "0.1.1.223";
+    public const string VERSION = "0.1.1.227";
     public static readonly string BUILD_DATE = DateTime.Now.ToString("yyyy-MM-dd");
     public static readonly string BUILD_TIME = DateTime.Now.ToString("HH:mm");
 }
@@ -3091,6 +3091,25 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         catch (Exception ex)
         {
             MessageBox.Show($"保存失败：{ex.Message}", "保存失败", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void MindMapButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var mindMapWindow = new MindMapWindow(_appData.MindMapRoot);
+            var result = mindMapWindow.ShowDialog();
+            
+            if (result == true)
+            {
+                SaveAppData();
+                MessageBox.Show("思维导图已保存！", "保存成功", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"打开思维导图失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
