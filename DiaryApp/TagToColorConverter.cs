@@ -8,50 +8,51 @@ namespace DiaryApp
 {
     public class TagToColorConverter : IValueConverter
     {
-        private static readonly List<string> _colors = new List<string>
+        private static readonly List<string> _colors = new()
         {
-            "#6C5CE7", // Purple
-            "#0984E3", // Blue
-            "#00B894", // Green
-            "#E17055", // Orange
-            "#D63031", // Red
-            "#FD79A8", // Pink
-            "#00CEC9", // Teal
-            "#FDCB6E", // Yellow
-            "#636E72", // Grey
-            "#2D3436", // Dark Grey
-            "#e84393", // Prunus Avium
-            "#2d98da", // Boyzone
-            "#20bf6b", // Emerald
-            "#f7b731", // NYC Taxi
-            "#fa8231", // Tangerine
-            "#eb3b5a", // Desire
-            "#4b7bec", // Royal Blue
-            "#a55eea", // Royal Purple
-            "#778ca3", // Metal Blue
-            "#4b6584"  // Blue Horizon
+            "#6C5CE7",
+            "#0984E3",
+            "#00B894",
+            "#E17055",
+            "#D63031",
+            "#FD79A8",
+            "#00CEC9",
+            "#FDCB6E",
+            "#636E72",
+            "#2D3436",
+            "#E84393",
+            "#2D98DA",
+            "#20BF6B",
+            "#F7B731",
+            "#FA8231",
+            "#EB3B5A",
+            "#4B7BEC",
+            "#A55EEA",
+            "#778CA3",
+            "#4B6584"
         };
 
-        private static readonly Dictionary<string, SolidColorBrush> _cache = new Dictionary<string, SolidColorBrush>();
+        private static readonly Dictionary<string, SolidColorBrush> _cache = new(StringComparer.OrdinalIgnoreCase);
 
         public static SolidColorBrush GetColorBrush(string tag)
         {
-            if (string.IsNullOrEmpty(tag)) return Brushes.Transparent;
+            if (string.IsNullOrWhiteSpace(tag))
+            {
+                return Brushes.Transparent;
+            }
 
+            tag = tag.Trim();
             if (_cache.TryGetValue(tag, out var brush))
             {
                 return brush;
             }
 
-            // Use simple hashing to pick a color
-            int index = Math.Abs(tag.GetHashCode()) % _colors.Count;
-            var colorCode = _colors[index];
-            
-            try 
+            try
             {
+                var colorCode = _colors[(int)(ComputeStableHash(tag) % (uint)_colors.Count)];
                 var color = (Color)ColorConverter.ConvertFromString(colorCode);
                 var newBrush = new SolidColorBrush(color);
-                newBrush.Freeze(); // Freeze for performance
+                newBrush.Freeze();
                 _cache[tag] = newBrush;
                 return newBrush;
             }
@@ -67,13 +68,28 @@ namespace DiaryApp
             {
                 return GetColorBrush(tag);
             }
-            
+
             return Brushes.Transparent;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
+        }
+
+        private static uint ComputeStableHash(string text)
+        {
+            const uint offsetBasis = 2166136261;
+            const uint prime = 16777619;
+
+            uint hash = offsetBasis;
+            foreach (var ch in text.ToLowerInvariant())
+            {
+                hash ^= ch;
+                hash *= prime;
+            }
+
+            return hash;
         }
     }
 }

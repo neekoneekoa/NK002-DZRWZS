@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -16,15 +17,15 @@ namespace DiaryApp
         private AppData _appData;
         private const string DATA_FILE = "app_data.json";
 
-        // 自动扩展输入框的默认高度和最小行数
+        // 自动扩展输入框的默认高度和最少行数
         private const double DEFAULT_TEXTBOX_HEIGHT = 30;
         private const double LINE_HEIGHT = 20;
         private const int MIN_LINES_FOR_AUTO_EXPAND = 1;
 
-        // 存储所有提醒日期的集合
+        // 存储所有提醒日期
         private List<DateTime> _reminderDates = new List<DateTime>();
 
-        // 设置输入框自动扩展功能
+        // 为输入框启用自动扩展
         private void SetupAutoExpandTextBox(TextBox textBox, double initialHeight = DEFAULT_TEXTBOX_HEIGHT)
         {
             var defaultHeight = ComputeDefaultTextBoxHeight(textBox);
@@ -60,7 +61,7 @@ namespace DiaryApp
             var textBox = sender as TextBox;
             if (textBox == null) return;
 
-            // 延迟更新高度，避免频繁计算
+            // 延迟更新高度，避免频繁重算
             textBox.Dispatcher.BeginInvoke(() => UpdateTextBoxHeight(textBox), System.Windows.Threading.DispatcherPriority.Render);
         }
 
@@ -69,7 +70,7 @@ namespace DiaryApp
             var textBox = sender as TextBox;
             if (textBox == null) return;
 
-            // 当宽度改变时重新计算高度
+            // 宽度变化时重新计算高度
             if (e.WidthChanged)
             {
                 textBox.Dispatcher.BeginInvoke(() => UpdateTextBoxHeight(textBox), System.Windows.Threading.DispatcherPriority.Render);
@@ -84,10 +85,10 @@ namespace DiaryApp
             int selectionStart = textBox.SelectionStart;
             int selectionLength = textBox.SelectionLength;
 
-            // 临时设置高度为自动，以便测量
+            // 临时改为自动高度，便于测量
             textBox.Height = double.NaN;
 
-            // 测量文本高度
+            // 娴嬮噺鏂囨湰楂樺害
             var formattedText = new System.Windows.Media.FormattedText(
                 textBox.Text,
                 System.Globalization.CultureInfo.CurrentCulture,
@@ -97,7 +98,7 @@ namespace DiaryApp
                 System.Windows.Media.Brushes.Black,
                 VisualTreeHelper.GetDpi(textBox).PixelsPerDip);
 
-            // 考虑padding
+            // 鑰冭檻padding
             double paddingHeight = textBox.Padding.Top + textBox.Padding.Bottom;
             double borderHeight = textBox.BorderThickness.Top + textBox.BorderThickness.Bottom;
             double totalPadding = paddingHeight + borderHeight;
@@ -122,7 +123,7 @@ namespace DiaryApp
             // 计算行数
             int lineCount = (int)Math.Ceiling(formattedText.Height / singleLineText.Height);
 
-            // 如果只有一行，保持默认高度
+            // 只有一行时保持默认高度
             if (lineCount <= 1)
             {
                 textBox.Height = defaultHeight;
@@ -150,29 +151,29 @@ namespace DiaryApp
                 TaskEntry = taskEntry;
                 LoadTaskData();
                 
-                // 添加标题文本框事件处理
+                // 注册标题输入框事件
                 TitleTextBox.GotFocus += TitleTextBox_GotFocus;
                 TitleTextBox.LostFocus += TitleTextBox_LostFocus;
 
-                // 添加项目标签输入框事件处理
+                // 注册项目标签输入框事件
                 if (ProjectTagsTextBox != null)
                 {
                     ProjectTagsTextBox.PreviewMouseLeftButtonUp += ProjectTagsTextBox_PreviewMouseLeftButtonUp;
                     ProjectTagsTextBox.GotFocus += ProjectTagsTextBox_GotFocus;
                 }
                 
-                // 初始化提示文字
+                // 初始化占位提示
                 InitializeTitlePlaceholder();
                 
                 // 初始化提醒信息显示
-                UpdateReminderInfoDisplay();
+                RefreshReminderInfoDisplay();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"TaskEditWindow构造函数异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"TaskEditWindow 构造函数异常: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 MessageBox.Show($"初始化任务编辑窗口时发生错误: {ex.Message}\n\n堆栈跟踪: {ex.StackTrace}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                throw; // 重新抛出异常，让调用者知道发生了错误
+                throw; // 继续抛出异常，便于上层感知
             }
         }
 
@@ -180,7 +181,7 @@ namespace DiaryApp
         {
             try
             {
-                // 防止初始化时控件尚未完全初始化导致的空引用异常
+                // 防止初始化未完成时访问控件
                 if (TitleTextBox == null || PriorityComboBox == null || 
                     StatusComboBox == null || CompletedDatePicker == null || ChaptersPanel == null ||
                     TaskTypeComboBox == null || ReminderCalendar == null)
@@ -200,6 +201,7 @@ namespace DiaryApp
 
                 if (TaskEntry != null)
                 {
+                    _tempReminderSettings = TaskEntry.ReminderSettings?.Clone() as ReminderSetting;
                     if (!string.IsNullOrEmpty(TaskEntry.Title))
                     {
                         TitleTextBox.Text = TaskEntry.Title;
@@ -213,10 +215,10 @@ namespace DiaryApp
                     // 加载任务类型
                     TaskTypeComboBox.SelectedIndex = (int)TaskEntry.TaskType;
                     
-                    // 显示/隐藏项目标签相关控件
+                    // 显示或隐藏项目标签相关控件
                     UpdateProjectTagsVisibility();
                     
-                    // 加载项目标签
+                    // 鍔犺浇椤圭洰鏍囩
                     if (TaskEntry.ProjectTags != null)
                     {
                         _currentProjectTags = new List<string>(TaskEntry.ProjectTags);
@@ -227,7 +229,7 @@ namespace DiaryApp
                     StatusComboBox.SelectedIndex = (int)TaskEntry.Status;
                     CompletedDatePicker.SelectedDate = TaskEntry.CompletedAt;
 
-                    // 加载章节
+                    // 鍔犺浇绔犺妭
                     ChaptersPanel.Children.Clear();
                     if (TaskEntry.Chapters != null)
                     {
@@ -241,15 +243,15 @@ namespace DiaryApp
                 {
                     // 默认值
                     TitleTextBox.Text = "";
-                    TaskTypeComboBox.SelectedIndex = 0; // 默认临时任务
+                    TaskTypeComboBox.SelectedIndex = 0; // 榛樿涓存椂浠诲姟
                     PriorityComboBox.SelectedIndex = 1;
                     StatusComboBox.SelectedIndex = 0;
                     CompletedDatePicker.SelectedDate = null;
 
-                    // 显示/隐藏项目标签相关控件
+                    // 显示或隐藏项目标签相关控件
                     UpdateProjectTagsVisibility();
                     
-                    // 默认添加第一章
+                    // 榛樿娣诲姞绗竴绔?
                     ChaptersPanel.Children.Clear();
                     AddDefaultChapter();
                 }
@@ -258,7 +260,7 @@ namespace DiaryApp
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"LoadTaskData异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"LoadTaskData 异常: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 MessageBox.Show($"加载任务数据时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -284,7 +286,7 @@ namespace DiaryApp
 
         private void BackgroundColorButton_Click(object sender, RoutedEventArgs e)
         {
-            // 背景颜色按钮点击事件 - 暂时留空
+            // 鑳屾櫙棰滆壊鎸夐挳鐐瑰嚮浜嬩欢 - 鏆傛椂鐣欑┖
         }
 
         private void TitleTextBox_LostFocus(object sender, RoutedEventArgs e)
@@ -336,17 +338,17 @@ namespace DiaryApp
                 Margin = new Thickness(0, 0, 0, 20)
             };
 
-            // 章节标题栏
+            // 绔犺妭鏍囬鏍?
             var chapterHeaderPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 Margin = new Thickness(0, 0, 0, 10)
             };
 
-            // 折叠/展开按钮
+            // 鎶樺彔/灞曞紑鎸夐挳
             var expandButton = new Button
             {
-                Content = "▼",
+                Content = ">",
                 Width = 25,
                 Height = 25,
                 Background = Brushes.Transparent,
@@ -359,17 +361,17 @@ namespace DiaryApp
             var chapterTitleTextBox = new TextBox
             {
                 Text = chapter.Title,
-                Width = 300, // 更长的宽度
+                Width = 300, // 鏇撮暱鐨勫搴?
                 FontSize = 16,
                 FontWeight = FontWeights.Bold,
                 BorderThickness = new Thickness(1),
                 BorderBrush = Brushes.Gray,
                 Background = Brushes.LightYellow,
                 Padding = new Thickness(8),
-                Tag = "章节标题"
+                Tag = "绔犺妭鏍囬"
             };
             
-            // 添加占位符功能
+            // 娣诲姞鍗犱綅绗﹀姛鑳?
             if (string.IsNullOrEmpty(chapter.Title))
             {
                 chapterTitleTextBox.Text = chapterTitleTextBox.Tag?.ToString() ?? "";
@@ -418,13 +420,13 @@ namespace DiaryApp
                 FontSize = 12
             };
 
-            // 创建章节内容面板（可折叠）
+            // 鍒涘缓绔犺妭鍐呭闈㈡澘锛堝彲鎶樺彔锛?
             var chapterContentPanel = new StackPanel
             {
                 Margin = new Thickness(10, 0, 0, 0)
             };
 
-            // 章节内容
+            // 绔犺妭鍐呭
             var chapterContentTextBox = new TextBox
             {
                 Text = chapter.Content,
@@ -437,10 +439,10 @@ namespace DiaryApp
                 Tag = "章节内容"
             };
             
-            // 设置自动扩展功能
+            // 璁剧疆鑷姩鎵╁睍鍔熻兘
             SetupAutoExpandTextBox(chapterContentTextBox);
             
-            // 添加占位符功能
+            // 娣诲姞鍗犱綅绗﹀姛鑳?
             if (string.IsNullOrEmpty(chapter.Content))
             {
                 chapterContentTextBox.Text = chapterContentTextBox.Tag?.ToString() ?? "";
@@ -465,7 +467,7 @@ namespace DiaryApp
                 }
             };
 
-            // 子任务列表
+            // 瀛愪换鍔″垪琛?
             var subTasksPanel = new StackPanel
             {
                 Margin = new Thickness(20, 0, 0, 0)
@@ -486,7 +488,7 @@ namespace DiaryApp
                 AddSubTaskToChapterPanel(subTask, subTasksPanel);
             };
 
-            // 加载现有子任务
+            // 鍔犺浇鐜版湁瀛愪换鍔?
             if (chapter.SubTasks != null)
             {
                 foreach (var subTask in chapter.SubTasks)
@@ -495,14 +497,14 @@ namespace DiaryApp
                 }
             }
 
-            // 添加到章节内容面板
+            // 娣诲姞鍒扮珷鑺傚唴瀹归潰鏉?
             chapterContentPanel.Children.Add(chapterContentTextBox);
             chapterContentPanel.Children.Add(subTasksPanel);
 
-            // 删除章节按钮事件
+            // 鍒犻櫎绔犺妭鎸夐挳浜嬩欢
             deleteChapterButton.Click += (sender, e) =>
             {
-                // 显示确认删除对话框
+                // 鏄剧ず纭鍒犻櫎瀵硅瘽妗?
                 MessageBoxResult result = MessageBox.Show(
                     "确定要删除这个章节吗？删除后将无法恢复。",
                     "确认删除",
@@ -511,13 +513,13 @@ namespace DiaryApp
                 
                 if (result == MessageBoxResult.Yes)
                 {
-                    // 从UI中移除章节面板
+                    // 浠嶶I涓Щ闄ょ珷鑺傞潰鏉?
                     if (chapterPanel.Parent is Panel parentPanel)
                     {
                         parentPanel.Children.Remove(chapterPanel);
                     }
                     
-                    // 从任务的章节列表中移除对应的章节
+                    // 浠庝换鍔＄殑绔犺妭鍒楄〃涓Щ闄ゅ搴旂殑绔犺妭
                     if (TaskEntry != null)
                     {
                         TaskEntry.Chapters.Remove(chapter);
@@ -525,13 +527,13 @@ namespace DiaryApp
                 }
             };
 
-            // 折叠/展开逻辑
+            // 鎶樺彔/灞曞紑閫昏緫
             var isExpanded = true;
             expandButton.Click += (sender, e) =>
             {
                 isExpanded = !isExpanded;
                 chapterContentPanel.Visibility = isExpanded ? Visibility.Visible : Visibility.Collapsed;
-                expandButton.Content = isExpanded ? "▼" : "▶";
+                expandButton.Content = isExpanded ? ">" : "v";
             };
 
             chapterHeaderPanel.Children.Add(expandButton);
@@ -539,11 +541,11 @@ namespace DiaryApp
             chapterHeaderPanel.Children.Add(addSubTaskButton);
             chapterHeaderPanel.Children.Add(deleteChapterButton);
 
-            // 将章节标题栏和内容面板添加到章节面板
+            // 灏嗙珷鑺傛爣棰樻爮鍜屽唴瀹归潰鏉挎坊鍔犲埌绔犺妭闈㈡澘
             chapterPanel.Children.Add(chapterHeaderPanel);
             chapterPanel.Children.Add(chapterContentPanel);
 
-            // 添加到章节列表
+            // 娣诲姞鍒扮珷鑺傚垪琛?
             ChaptersPanel.Children.Add(chapterPanel);
         }
 
@@ -564,17 +566,17 @@ namespace DiaryApp
                 Child = subTaskPanel
             };
 
-            // 第一行：折叠/展开按钮、时间范围和名称
+            // 绗竴琛岋細鎶樺彔/灞曞紑鎸夐挳銆佹椂闂磋寖鍥村拰鍚嶇О
             var firstRowPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 Margin = new Thickness(0, 0, 0, 8)
             };
 
-            // 折叠/展开按钮
+            // 鎶樺彔/灞曞紑鎸夐挳
             var expandButton = new Button
             {
-                Content = "▼",
+                Content = ">",
                 Width = 20,
                 Height = 20,
                 Background = Brushes.Transparent,
@@ -584,10 +586,10 @@ namespace DiaryApp
                 FontSize = 8
             };
 
-            // 开始时间和结束时间选择器
+            // 寮€濮嬫椂闂村拰缁撴潫鏃堕棿閫夋嫨鍣?
             var startTimePicker = new DatePicker
             {
-                SelectedDate = subTask.StartDate, // 使用子任务的开始日期（有默认值）
+                SelectedDate = subTask.StartDate, // 浣跨敤瀛愪换鍔＄殑寮€濮嬫棩鏈燂紙鏈夐粯璁ゅ€硷級
                 Width = 120,
                 FontSize = 12,
                 Margin = new Thickness(0, 0, 5, 0)
@@ -602,7 +604,7 @@ namespace DiaryApp
 
             var endTimePicker = new DatePicker
             {
-                SelectedDate = subTask.EndDate, // 使用子任务的结束日期（有默认值）
+                SelectedDate = subTask.EndDate, // 浣跨敤瀛愪换鍔＄殑缁撴潫鏃ユ湡锛堟湁榛樿鍊硷級
                 Width = 120,
                 FontSize = 12,
                 Margin = new Thickness(0, 0, 10, 0)
@@ -611,14 +613,14 @@ namespace DiaryApp
             var nameTextBox = new TextBox
             {
                 Text = subTask.Title,
-                Width = 300, // 更长的宽度
+                Width = 300, // 鏇撮暱鐨勫搴?
                 FontSize = 14,
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(5),
                 Tag = "子任务名称"
             };
             
-            // 添加占位符功能
+            // 娣诲姞鍗犱綅绗﹀姛鑳?
             if (string.IsNullOrEmpty(subTask.Title))
             {
                 nameTextBox.Text = nameTextBox.Tag?.ToString() ?? "";
@@ -650,10 +652,10 @@ namespace DiaryApp
                 VerticalAlignment = VerticalAlignment.Center
             };
 
-            // 删除按钮
+            // 鍒犻櫎鎸夐挳
             var deleteButton = new Button
             {
-                Content = "×",
+                Content = "x",
                 Width = 25,
                 Height = 25,
                 Background = Brushes.Red,
@@ -677,7 +679,7 @@ namespace DiaryApp
             firstRowPanel.Children.Add(completedCheckBox);
             firstRowPanel.Children.Add(deleteButton);
 
-            // 第二行：子任务内容
+            // 绗簩琛岋細瀛愪换鍔″唴瀹?
             var contentTextBox = new TextBox
             {
                 Text = subTask.Content,
@@ -690,10 +692,10 @@ namespace DiaryApp
                 Tag = "子任务内容"
             };
             
-            // 设置自动扩展功能
+            // 璁剧疆鑷姩鎵╁睍鍔熻兘
             SetupAutoExpandTextBox(contentTextBox);
             
-            // 添加占位符功能
+            // 娣诲姞鍗犱綅绗﹀姛鑳?
             if (string.IsNullOrEmpty(subTask.Content))
             {
                 contentTextBox.Text = contentTextBox.Tag?.ToString() ?? "";
@@ -718,7 +720,7 @@ namespace DiaryApp
                 }
             };
 
-            // 第四行：注意事项备注
+            // 绗洓琛岋細娉ㄦ剰浜嬮」澶囨敞
             var notesTextBox = new TextBox
             {
                 Text = subTask.Notes,
@@ -730,10 +732,10 @@ namespace DiaryApp
                 Tag = "注意事项备注"
             };
             
-            // 设置自动扩展功能
+            // 璁剧疆鑷姩鎵╁睍鍔熻兘
             SetupAutoExpandTextBox(notesTextBox);
             
-            // 添加占位符功能
+            // 娣诲姞鍗犱綅绗﹀姛鑳?
             if (string.IsNullOrEmpty(subTask.Notes))
             {
                 notesTextBox.Text = notesTextBox.Tag?.ToString() ?? "";
@@ -758,7 +760,7 @@ namespace DiaryApp
                 }
             };
 
-            // 创建可折叠的子任务内容面板
+            // 鍒涘缓鍙姌鍙犵殑瀛愪换鍔″唴瀹归潰鏉?
             var subTaskContentPanel = new StackPanel
             {
                 Margin = new Thickness(20, 0, 0, 0)
@@ -767,13 +769,13 @@ namespace DiaryApp
             subTaskContentPanel.Children.Add(contentTextBox);
             subTaskContentPanel.Children.Add(notesTextBox);
 
-            // 折叠/展开逻辑
+            // 鎶樺彔/灞曞紑閫昏緫
             var isExpanded = true;
             expandButton.Click += (sender, e) =>
             {
                 isExpanded = !isExpanded;
                 subTaskContentPanel.Visibility = isExpanded ? Visibility.Visible : Visibility.Collapsed;
-                expandButton.Content = isExpanded ? "▼" : "▶";
+                expandButton.Content = isExpanded ? ">" : "v";
             };
 
             subTaskPanel.Children.Add(firstRowPanel);
@@ -786,11 +788,11 @@ namespace DiaryApp
         {
             if (string.IsNullOrWhiteSpace(TitleTextBox.Text))
             {
-                MessageBox.Show("请输入任务标题", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("请输入任务标题。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
-            // 收集章节数据
+            // 鏀堕泦绔犺妭鏁版嵁
             var chapters = new List<TaskChapter>();
             foreach (var chapterChild in ChaptersPanel.Children)
             {
@@ -802,20 +804,20 @@ namespace DiaryApp
                         SubTasks = new List<SubTask>()
                     };
 
-                    // 获取章节标题
+                    // 鑾峰彇绔犺妭鏍囬
                     if (chapterPanel.Children.Count > 0 && chapterPanel.Children[0] is StackPanel chapterHeaderPanel)
                     {
-                        // 章节标题面板包含：折叠按钮(0)、标题文本框(1)、添加子任务按钮(2)
+                        // 绔犺妭鏍囬闈㈡澘鍖呭惈锛氭姌鍙犳寜閽?0)銆佹爣棰樻枃鏈(1)銆佹坊鍔犲瓙浠诲姟鎸夐挳(2)
                         if (chapterHeaderPanel.Children.Count > 1 && chapterHeaderPanel.Children[1] is TextBox chapterTitleTextBox)
                         {
                             chapter.Title = chapterTitleTextBox.Text;
                         }
                     }
 
-                    // 获取章节内容和子任务
+                    // 鑾峰彇绔犺妭鍐呭鍜屽瓙浠诲姟
                     if (chapterPanel.Children.Count > 1 && chapterPanel.Children[1] is StackPanel chapterContentPanel)
                     {
-                        // 章节内容面板包含：章节内容文本框(0)、子任务列表面板(1)
+                        // 绔犺妭鍐呭闈㈡澘鍖呭惈锛氱珷鑺傚唴瀹规枃鏈(0)銆佸瓙浠诲姟鍒楄〃闈㈡澘(1)
                         if (chapterContentPanel.Children.Count > 0 && chapterContentPanel.Children[0] is TextBox chapterContentTextBox)
                         {
                             chapter.Content = chapterContentTextBox.Text;
@@ -823,7 +825,7 @@ namespace DiaryApp
 
                         if (chapterContentPanel.Children.Count > 1 && chapterContentPanel.Children[1] is StackPanel subTasksPanel)
                         {
-                            // 获取子任务
+                            // 鑾峰彇瀛愪换鍔?
                             foreach (var subTaskChild in subTasksPanel.Children)
                             {
                                 if (subTaskChild is Border subTaskBorder && subTaskBorder.Child is StackPanel subTaskPanel)
@@ -833,10 +835,10 @@ namespace DiaryApp
                                         Id = Guid.NewGuid().ToString()
                                     };
 
-                                    // 解析子任务面板
+                                    // 瑙ｆ瀽瀛愪换鍔￠潰鏉?
                                     if (subTaskPanel.Children.Count > 0 && subTaskPanel.Children[0] is StackPanel firstRowPanel)
                                     {
-                                        // 子任务第一行包含：折叠按钮(0)、开始时间(1)、分隔符(2)、结束时间(3)、标题(4)、完成复选框(5)、删除按钮(6)
+                                        // 瀛愪换鍔＄涓€琛屽寘鍚細鎶樺彔鎸夐挳(0)銆佸紑濮嬫椂闂?1)銆佸垎闅旂(2)銆佺粨鏉熸椂闂?3)銆佹爣棰?4)銆佸畬鎴愬閫夋(5)銆佸垹闄ゆ寜閽?6)
                                         if (firstRowPanel.Children.Count > 1 && firstRowPanel.Children[1] is DatePicker startTimePicker)
                                         {
                                             subTask.ScheduledTime = startTimePicker.SelectedDate;
@@ -858,7 +860,7 @@ namespace DiaryApp
 
                                     if (subTaskPanel.Children.Count > 1 && subTaskPanel.Children[1] is StackPanel subTaskContentPanel)
                                     {
-                                        // 子任务内容面板包含：内容文本框(0)、备注文本框(1)
+                                        // 瀛愪换鍔″唴瀹归潰鏉垮寘鍚細鍐呭鏂囨湰妗?0)銆佸娉ㄦ枃鏈(1)
                                         if (subTaskContentPanel.Children.Count > 0 && subTaskContentPanel.Children[0] is TextBox contentTextBox)
                                         {
                                             subTask.Content = contentTextBox.Text;
@@ -884,7 +886,7 @@ namespace DiaryApp
 
             if (TaskEntry == null)
             {
-                // 创建新任务
+                // 鍒涘缓鏂颁换鍔?
                 TaskEntry = new TaskEntry
                 {
                     Id = Guid.NewGuid().ToString(),
@@ -900,7 +902,7 @@ namespace DiaryApp
             }
             else
             {
-                // 更新现有任务
+                // 鏇存柊鐜版湁浠诲姟
                 TaskEntry.Title = TitleTextBox.Text;
                 TaskEntry.Priority = PriorityComboBox.SelectedIndex + 1;
                 TaskEntry.Status = (TaskStatus)StatusComboBox.SelectedIndex;
@@ -908,6 +910,7 @@ namespace DiaryApp
                 TaskEntry.ProjectTags = new List<string>(_currentProjectTags);
                 TaskEntry.CompletedAt = CompletedDatePicker.SelectedDate;
                 TaskEntry.Chapters = chapters;
+                TaskEntry.ReminderSettings = _tempReminderSettings;
             }
 
             DialogResult = true;
@@ -934,12 +937,12 @@ namespace DiaryApp
             Close();
         }
 
-        // 任务类型选择改变事件
+        // 浠诲姟绫诲瀷閫夋嫨鏀瑰彉浜嬩欢
         private void TaskTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             try
             {
-                // 检查控件是否已经初始化，避免在XAML初始化过程中触发事件导致的空引用异常
+                // 妫€鏌ユ帶浠舵槸鍚﹀凡缁忓垵濮嬪寲锛岄伩鍏嶅湪XAML鍒濆鍖栬繃绋嬩腑瑙﹀彂浜嬩欢瀵艰嚧鐨勭┖寮曠敤寮傚父
                 if (ProjectTagsPanel == null || ProjectTagsDisplayPanel == null || TaskTypeComboBox == null)
                 {
                     System.Diagnostics.Debug.WriteLine("TaskTypeComboBox_SelectionChanged: 控件尚未初始化完成");
@@ -951,15 +954,15 @@ namespace DiaryApp
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"TaskTypeComboBox_SelectionChanged异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"TaskTypeComboBox_SelectionChanged 异常: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
-        // 更新项目标签控件的可见性
+        // 鏇存柊椤圭洰鏍囩鎺т欢鐨勫彲瑙佹€?
         private void UpdateProjectTagsVisibility()
         {
-            // 检查控件是否已经初始化，避免空引用异常
+            // 妫€鏌ユ帶浠舵槸鍚﹀凡缁忓垵濮嬪寲锛岄伩鍏嶇┖寮曠敤寮傚父
             if (ProjectTagsPanel == null || ProjectTagsDisplayPanel == null || TaskTypeComboBox == null)
             {
                 return;
@@ -977,14 +980,14 @@ namespace DiaryApp
             }
         }
 
-        // 添加项目标签
+        // 娣诲姞椤圭洰鏍囩
         private void AddTagButton_Click(object sender, RoutedEventArgs e)
         {
             var tagText = ProjectTagsTextBox.Text?.Trim();
             if (!string.IsNullOrEmpty(tagText) && tagText != ProjectTagsTextBox.Tag?.ToString())
             {
                 bool globalTagAdded = false;
-                // 分割多个标签（用逗号分隔）
+                // 鍒嗗壊澶氫釜鏍囩锛堢敤閫楀彿鍒嗛殧锛?
                 var tags = tagText.Split(new[] { ',', '，' }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var tag in tags)
                 {
@@ -996,7 +999,7 @@ namespace DiaryApp
                             _currentProjectTags.Add(trimmedTag);
                         }
 
-                        // 保存到全局标签
+                        // 淇濆瓨鍒板叏灞€鏍囩
                         if (_appData != null)
                         {
                             if (_appData.GlobalTags == null) _appData.GlobalTags = new List<string>();
@@ -1020,7 +1023,7 @@ namespace DiaryApp
             }
         }
 
-        // 移除项目标签
+        // 绉婚櫎椤圭洰鏍囩
         private void RemoveTagButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.Tag is string tag)
@@ -1030,7 +1033,7 @@ namespace DiaryApp
             }
         }
 
-        // 刷新项目标签显示
+        // 鍒锋柊椤圭洰鏍囩鏄剧ず
         private void RefreshProjectTagsDisplay()
         {
             ProjectTagsItemsControl.ItemsSource = null;
@@ -1103,13 +1106,13 @@ namespace DiaryApp
                 if (_appData.GlobalTags != null && _appData.GlobalTags.Contains(tag))
                 {
                     _appData.GlobalTags.Remove(tag);
-                    // 重新显示弹窗以刷新列表
+                    // 閲嶆柊鏄剧ず寮圭獥浠ュ埛鏂板垪琛?
                     ShowQuickTagPopup();
                     
-                    // 保存数据
+                    // 淇濆瓨鏁版嵁
                     SaveAppData();
                 }
-                // 防止事件冒泡导致弹窗关闭
+                // 闃叉浜嬩欢鍐掓场瀵艰嚧寮圭獥鍏抽棴
                 e.Handled = true;
             }
         }
@@ -1122,51 +1125,128 @@ namespace DiaryApp
             }
         }
 
-        // 提醒按钮点击事件
+        // 鎻愰啋鎸夐挳鐐瑰嚮浜嬩欢
         private void ReminderButton_Click(object sender, RoutedEventArgs e)
         {
-            // 创建一个临时任务对象用于显示
+            // 鍒涘缓涓€涓复鏃朵换鍔″璞＄敤浜庢樉绀?
             var displayTask = TaskEntry ?? new TaskEntry { Title = TitleTextBox.Text.Trim() }; 
             
-            // 确定要使用的提醒设置（优先使用临时的，如果没有则使用任务的）
-            var reminderSettings = _tempReminderSettings ?? TaskEntry?.ReminderSettings;
+            // 纭畾瑕佷娇鐢ㄧ殑鎻愰啋璁剧疆锛堜紭鍏堜娇鐢ㄤ复鏃剁殑锛屽鏋滄病鏈夊垯浣跨敤浠诲姟鐨勶級
+            var reminderSettings = _tempReminderSettings ?? TaskEntry?.ReminderSettings?.Clone() as ReminderSetting;
 
-            // 打开提醒设置窗口
+            // 鎵撳紑鎻愰啋璁剧疆绐楀彛
             var reminderWindow = new ReminderSettingsWindow(displayTask, reminderSettings);
             reminderWindow.Owner = this;
             bool? result = reminderWindow.ShowDialog();
 
             if (result == true)
             {
-                // 如果用户点击了保存
+                // 濡傛灉鐢ㄦ埛鐐瑰嚮浜嗕繚瀛?
                 if (reminderWindow.IsSaveRequested && reminderWindow.ReminderSettings != null)
                 {
-                    // 根据情况保存到临时变量或任务对象
-                    if (TaskEntry != null)
-                    {
-                        TaskEntry.ReminderSettings = reminderWindow.ReminderSettings;
-                    }
-                    else
-                    {
-                        _tempReminderSettings = reminderWindow.ReminderSettings;
-                    }
-                    MessageBox.Show("提醒设置已保存", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
-                    UpdateReminderInfoDisplay();
+                    // 鏍规嵁鎯呭喌淇濆瓨鍒颁复鏃跺彉閲忔垨浠诲姟瀵硅薄
+                    _tempReminderSettings = reminderWindow.ReminderSettings;
+                    MessageBox.Show("提醒设置已保存。", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                    RefreshReminderInfoDisplay();
                 }
             }
         }
         
         /// <summary>
-        /// 更新提醒信息显示
+        /// 鏇存柊鎻愰啋淇℃伅鏄剧ず
         /// </summary>
+        private void RefreshReminderInfoDisplay()
+        {
+            var reminderSettings = _tempReminderSettings ?? TaskEntry?.ReminderSettings;
+            if (reminderSettings == null)
+            {
+                if (ReminderInfoPanel != null)
+                {
+                    ReminderInfoPanel.Visibility = Visibility.Collapsed;
+                }
+                return;
+            }
+
+            ReminderStartDateText.Text = reminderSettings.StartDate.HasValue
+                ? $"{reminderSettings.StartDate.Value:yyyy-MM-dd} {(reminderSettings.ReminderTime ?? TimeSpan.Zero):hh\\:mm}"
+                : "";
+
+            ReminderTypeText.Text = reminderSettings.ReminderType switch
+            {
+                ReminderType.Once => "Once",
+                ReminderType.Daily => (reminderSettings.IntervalDays ?? 1) > 1
+                    ? $"Daily (every {reminderSettings.IntervalDays} days)"
+                    : "Daily",
+                ReminderType.Weekly => reminderSettings.WeekDays != null && reminderSettings.WeekDays.Count > 0
+                    ? $"Weekly ({string.Join(", ", reminderSettings.WeekDays.Select(GetWeekDayLabel))})"
+                    : "Weekly",
+                ReminderType.Monthly => reminderSettings.MonthlyDayNumber.HasValue && reminderSettings.MonthlyDayOfWeek.HasValue
+                    ? $"Monthly (week {reminderSettings.MonthlyDayNumber}, {GetWeekDayLabel(reminderSettings.MonthlyDayOfWeek.Value)})"
+                    : "Monthly",
+                ReminderType.Yearly => "Yearly",
+                ReminderType.Interval => $"Interval ({Math.Max(1, reminderSettings.IntervalDays ?? 1)} days)",
+                _ => "Not set"
+            };
+
+            if (reminderSettings.NextReminderDate == null && reminderSettings.IsEnabled && reminderSettings.IsActive)
+            {
+                reminderSettings.NextReminderDate = ReminderScheduler.CalculateNextReminderDate(reminderSettings);
+            }
+
+            NextReminderDateText.Text = reminderSettings.NextReminderDate?.ToString("yyyy-MM-dd HH:mm") ?? "";
+            ReminderStatusText.Text = reminderSettings.IsEnabled && reminderSettings.IsActive ? "Enabled" : "Disabled";
+            _reminderDates = CalculatePreviewReminderDates(reminderSettings);
+
+            if (ReminderCalendar != null)
+            {
+                if (reminderSettings.StartDate.HasValue)
+                {
+                    ReminderCalendar.DisplayDateStart = reminderSettings.StartDate.Value;
+                    ReminderCalendar.DisplayDateEnd = reminderSettings.StartDate.Value.AddYears(1);
+                    ReminderCalendar.SelectedDate = reminderSettings.NextReminderDate ?? reminderSettings.StartDate.Value;
+                }
+
+                ReminderCalendar.DisplayMode = CalendarMode.Month;
+                ReminderCalendar.DisplayMode = CalendarMode.Month;
+            }
+
+            ReminderInfoPanel.Visibility = Visibility.Visible;
+        }
+
+        private string GetWeekDayLabel(DayOfWeek dayOfWeek)
+        {
+            return dayOfWeek switch
+            {
+                DayOfWeek.Monday => "Mon",
+                DayOfWeek.Tuesday => "Tue",
+                DayOfWeek.Wednesday => "Wed",
+                DayOfWeek.Thursday => "Thu",
+                DayOfWeek.Friday => "Fri",
+                DayOfWeek.Saturday => "Sat",
+                DayOfWeek.Sunday => "Sun",
+                _ => "?"
+            };
+        }
+
+        private List<DateTime> CalculatePreviewReminderDates(ReminderSetting reminderSettings)
+        {
+            if (!reminderSettings.StartDate.HasValue)
+            {
+                return new List<DateTime>();
+            }
+
+            var startDate = reminderSettings.StartDate.Value.Date;
+            return ReminderScheduler.CalculateReminderDates(reminderSettings, startDate, startDate.AddYears(1));
+        }
+
         private void UpdateReminderInfoDisplay()
         {
-            // 获取当前的提醒设置
+            // 鑾峰彇褰撳墠鐨勬彁閱掕缃?
             var reminderSettings = _tempReminderSettings ?? TaskEntry?.ReminderSettings;
             
             if (reminderSettings != null)
             {
-                // 更新显示内容
+                // 鏇存柊鏄剧ず鍐呭
                 string startDateText = "";
                 if (reminderSettings.StartDate.HasValue)
                 {
@@ -1179,7 +1259,7 @@ namespace DiaryApp
                 }
                 ReminderStartDateText.Text = startDateText;
                 
-                // 处理不同的提醒方式
+                // 澶勭悊涓嶅悓鐨勬彁閱掓柟寮?
                 string reminderTypeText = "";
                 switch (reminderSettings.ReminderType)
                 {
@@ -1187,7 +1267,7 @@ namespace DiaryApp
                         reminderTypeText = "每日提醒";
                         if (reminderSettings.IntervalDays.HasValue && reminderSettings.IntervalDays.Value > 1)
                         {
-                            reminderTypeText += $"（每{reminderSettings.IntervalDays.Value}天）";
+                            reminderTypeText += $"（每 {reminderSettings.IntervalDays.Value} 天）";
                         }
                         break;
                     case ReminderType.Weekly:
@@ -1208,7 +1288,7 @@ namespace DiaryApp
                         if (reminderSettings.MonthlyDayNumber.HasValue && reminderSettings.MonthlyDayOfWeek.HasValue)
                         {
                             var dayNames = new[] { "日", "一", "二", "三", "四", "五", "六" };
-                            reminderTypeText += $"（每月第{reminderSettings.MonthlyDayNumber.Value}个{dayNames[(int)reminderSettings.MonthlyDayOfWeek.Value]}）";
+                            reminderTypeText += $"（每月第{reminderSettings.MonthlyDayNumber.Value}个星期{dayNames[(int)reminderSettings.MonthlyDayOfWeek.Value]}）";
                         }
                         break;
                     case ReminderType.Yearly:
@@ -1218,14 +1298,14 @@ namespace DiaryApp
                         reminderTypeText = "间隔提醒";
                         if (reminderSettings.IntervalDays.HasValue)
                         {
-                            reminderTypeText += $"（每{reminderSettings.IntervalDays.Value}天）";
+                            reminderTypeText += $"（每 {reminderSettings.IntervalDays.Value} 天）";
                         }
                         break;
                 }
                 
                 ReminderTypeText.Text = reminderTypeText;
                 
-                // 显示下次提醒时间
+                // 鏄剧ず涓嬫鎻愰啋鏃堕棿
                 string nextReminderText = "";
                 if (reminderSettings.NextReminderDate.HasValue)
                 {
@@ -1235,41 +1315,41 @@ namespace DiaryApp
                 
                 ReminderStatusText.Text = reminderSettings.IsActive ? "已启用" : "已禁用";
                 
-                // 计算所有提醒日期
+                // 璁＄畻鎵€鏈夋彁閱掓棩鏈?
                 _reminderDates = CalculateAllReminderDates(reminderSettings);
                 
-                // 更新日历控件
+                // 鏇存柊鏃ュ巻鎺т欢
                 if (ReminderCalendar != null)
                 {
-                    // 设置日历的显示范围
+                    // 璁剧疆鏃ュ巻鐨勬樉绀鸿寖鍥?
                     if (reminderSettings.StartDate.HasValue)
                     {
                         ReminderCalendar.DisplayDateStart = reminderSettings.StartDate.Value;
                         ReminderCalendar.DisplayDateEnd = reminderSettings.StartDate.Value.AddYears(1);
                     }
                     
-                    // 如果有下次提醒日期，选中该日期
+                    // 濡傛灉鏈変笅娆℃彁閱掓棩鏈燂紝閫変腑璇ユ棩鏈?
                     if (reminderSettings.NextReminderDate.HasValue)
                     {
                         ReminderCalendar.SelectedDate = reminderSettings.NextReminderDate.Value;
                     }
-                    // 否则如果有开始日期，选中该日期
+                    // 鍚﹀垯濡傛灉鏈夊紑濮嬫棩鏈燂紝閫変腑璇ユ棩鏈?
                     else if (reminderSettings.StartDate.HasValue)
                     {
                         ReminderCalendar.SelectedDate = reminderSettings.StartDate.Value;
                     }
                     
-                    // 重新加载日历以显示所有提醒日期
+                    // 閲嶆柊鍔犺浇鏃ュ巻浠ユ樉绀烘墍鏈夋彁閱掓棩鏈?
                     ReminderCalendar.DisplayMode = CalendarMode.Month;
                     ReminderCalendar.DisplayMode = CalendarMode.Month;
                 }
                 
-                // 显示提醒信息面板
+                // 鏄剧ず鎻愰啋淇℃伅闈㈡澘
                 ReminderInfoPanel.Visibility = Visibility.Visible;
             }
         }
 
-        // 计算所有提醒日期
+        // 璁＄畻鎵€鏈夋彁閱掓棩鏈?
         private List<DateTime> CalculateAllReminderDates(ReminderSetting reminderSettings)
         {
             var reminderDates = new List<DateTime>();
@@ -1283,7 +1363,7 @@ namespace DiaryApp
             switch (reminderSettings.ReminderType)
             {
                 case ReminderType.Daily:
-                    // 每日提醒
+                    // 姣忔棩鎻愰啋
                     for (var date = startDate; date <= endDate; date = date.AddDays(1))
                     {
                         reminderDates.Add(date);
@@ -1291,7 +1371,7 @@ namespace DiaryApp
                     break;
 
                 case ReminderType.Weekly:
-                    // 每周提醒
+                    // 姣忓懆鎻愰啋
                     if (reminderSettings.WeekDays != null && reminderSettings.WeekDays.Count > 0)
                     {
                         for (var date = startDate; date <= endDate; date = date.AddDays(1))
@@ -1305,12 +1385,12 @@ namespace DiaryApp
                     break;
 
                 case ReminderType.Monthly:
-                    // 每月提醒
+                    // 姣忔湀鎻愰啋
                     for (var date = startDate; date <= endDate; date = date.AddMonths(1))
                     {
                         if (reminderSettings.MonthlyDayNumber.HasValue && reminderSettings.MonthlyDayOfWeek.HasValue)
                         {
-                            // 计算每月的第几个星期几
+                            // 璁＄畻姣忔湀鐨勭鍑犱釜鏄熸湡鍑?
                             var targetDate = GetMonthlyWeekDayDate(date.Year, date.Month, 
                                 reminderSettings.MonthlyDayNumber.Value, reminderSettings.MonthlyDayOfWeek.Value);
                             if (targetDate.HasValue && targetDate.Value >= startDate)
@@ -1320,14 +1400,14 @@ namespace DiaryApp
                         }
                         else
                         {
-                            // 默认每月同一天
+                            // 榛樿姣忔湀鍚屼竴澶?
                             reminderDates.Add(date);
                         }
                     }
                     break;
 
                 case ReminderType.Yearly:
-                    // 每年提醒
+                    // 姣忓勾鎻愰啋
                     for (var date = startDate; date <= endDate; date = date.AddYears(1))
                     {
                         reminderDates.Add(date);
@@ -1335,7 +1415,7 @@ namespace DiaryApp
                     break;
 
                 case ReminderType.Interval:
-                    // 间隔提醒（如隔一天）
+                    // 闂撮殧鎻愰啋锛堝闅斾竴澶╋級
                     if (reminderSettings.IntervalDays.HasValue && reminderSettings.IntervalDays.Value > 0)
                     {
                         var interval = reminderSettings.IntervalDays.Value;
@@ -1350,7 +1430,7 @@ namespace DiaryApp
             return reminderDates;
         }
 
-        // 获取每月第几个星期几的日期
+        // 鑾峰彇姣忔湀绗嚑涓槦鏈熷嚑鐨勬棩鏈?
         private DateTime? GetMonthlyWeekDayDate(int year, int month, int weekNumber, DayOfWeek dayOfWeek)
         {
             try
@@ -1359,14 +1439,14 @@ namespace DiaryApp
                 var firstDayOfWeek = (int)firstDayOfMonth.DayOfWeek;
                 var targetDayOfWeek = (int)dayOfWeek;
 
-                // 计算第一个目标星期几的日期
+                // 璁＄畻绗竴涓洰鏍囨槦鏈熷嚑鐨勬棩鏈?
                 var daysUntilTarget = (targetDayOfWeek - firstDayOfWeek + 7) % 7;
                 var firstTargetDate = firstDayOfMonth.AddDays(daysUntilTarget);
 
-                // 计算第几个星期几的日期
+                // 璁＄畻绗嚑涓槦鏈熷嚑鐨勬棩鏈?
                 var targetDate = firstTargetDate.AddDays((weekNumber - 1) * 7);
 
-                // 确保日期在当月范围内
+                // 纭繚鏃ユ湡鍦ㄥ綋鏈堣寖鍥村唴
                 if (targetDate.Month == month)
                 {
                     return targetDate;
@@ -1386,13 +1466,13 @@ namespace DiaryApp
             return _reminderDates.Any(d => d.Date == date.Date);
         }
 
-        // 日历日期加载事件处理
+        // 鏃ュ巻鏃ユ湡鍔犺浇浜嬩欢澶勭悊
         private void ReminderCalendar_Loaded(object sender, RoutedEventArgs e)
         {
             UpdateCalendarReminderDates();
         }
 
-        // 日历显示月份改变事件处理
+        // 鏃ュ巻鏄剧ず鏈堜唤鏀瑰彉浜嬩欢澶勭悊
         private void ReminderCalendar_DisplayModeChanged(object sender, CalendarModeChangedEventArgs e)
         {
             if (e.NewMode == CalendarMode.Month)
@@ -1404,7 +1484,7 @@ namespace DiaryApp
             }
         }
 
-        // 日历选择日期改变事件处理
+        // 鏃ュ巻閫夋嫨鏃ユ湡鏀瑰彉浜嬩欢澶勭悊
         private void ReminderCalendar_SelectedDatesChanged(object sender, SelectionChangedEventArgs e)
         {
             Dispatcher.BeginInvoke(() =>
@@ -1413,10 +1493,10 @@ namespace DiaryApp
             }, System.Windows.Threading.DispatcherPriority.Render);
         }
 
-        // 测试日历更新按钮点击事件
+        // 娴嬭瘯鏃ュ巻鏇存柊鎸夐挳鐐瑰嚮浜嬩欢
         private void TestCalendarButton_Click(object sender, RoutedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("测试日历更新按钮被点击");
+            System.Diagnostics.Debug.WriteLine("测试日历刷新按钮被点击");
             System.Diagnostics.Debug.WriteLine($"当前提醒日期数量: {_reminderDates.Count}");
             
             // 强制重新计算提醒日期
@@ -1441,14 +1521,14 @@ namespace DiaryApp
                 System.Diagnostics.Debug.WriteLine($"提醒日期: {date:yyyy-MM-dd}");
             }
 
-            // 使用Dispatcher异步执行，确保日历控件完全加载
+            // 浣跨敤Dispatcher寮傛鎵ц锛岀‘淇濇棩鍘嗘帶浠跺畬鍏ㄥ姞杞?
             Dispatcher.BeginInvoke(() =>
             {
                 try
                 {
                     System.Diagnostics.Debug.WriteLine("开始查找日历中的日期按钮...");
                     
-                    // 直接查找日历控件中的所有日期按钮
+                    // 鐩存帴鏌ユ壘鏃ュ巻鎺т欢涓殑鎵€鏈夋棩鏈熸寜閽?
                     var dayButtons = FindVisualChildren<System.Windows.Controls.Primitives.CalendarDayButton>(ReminderCalendar);
                     System.Diagnostics.Debug.WriteLine($"找到 {dayButtons.Count} 个日期按钮");
                     
@@ -1459,7 +1539,7 @@ namespace DiaryApp
                         {
                             if (IsReminderDate(date))
                             {
-                                // 使用Tag属性标记为提醒日期，触发样式
+                                // 使用 Tag 标记提醒日期，以触发样式
                                 dayButton.Tag = "ReminderDate";
                                 highlightedCount++;
                                 System.Diagnostics.Debug.WriteLine($"高亮日期: {date:yyyy-MM-dd}");
@@ -1475,13 +1555,13 @@ namespace DiaryApp
                 }
                 catch (Exception ex)
                 {
-                    // 静默处理异常，避免影响用户体验
+                    // 闈欓粯澶勭悊寮傚父锛岄伩鍏嶅奖鍝嶇敤鎴蜂綋楠?
                     System.Diagnostics.Debug.WriteLine($"更新日历提醒日期时出错: {ex.Message}");
                 }
             }, System.Windows.Threading.DispatcherPriority.Render);
         }
 
-        // 查找可视子元素
+        // 鏌ユ壘鍙瀛愬厓绱?
         private T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
         {
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
@@ -1501,7 +1581,7 @@ namespace DiaryApp
             return null;
         }
 
-        // 查找所有可视子元素
+        // 鏌ユ壘鎵€鏈夊彲瑙嗗瓙鍏冪礌
         private List<T> FindVisualChildren<T>(DependencyObject parent) where T : DependencyObject
         {
             var children = new List<T>();
@@ -1547,3 +1627,6 @@ namespace DiaryApp
         }
     }
 }
+
+
+

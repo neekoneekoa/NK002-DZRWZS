@@ -1,9 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
-using System.Globalization;
 
 namespace DiaryApp;
 
@@ -14,104 +12,82 @@ public partial class SettingsWindow : Window
     public SettingsWindow()
     {
         InitializeComponent();
-        
-        // 支持窗口拖动
-        this.MouseLeftButtonDown += (s, e) =>
-        {
-            if (e.LeftButton == MouseButtonState.Pressed)
-            {
-                DragMove();
-            }
-        };
-        
         _appData = new AppData();
-        // 设置数据上下文
+        InitializeWindow();
         DataContext = new SettingsViewModel(_appData);
     }
 
     public SettingsWindow(AppData appData)
     {
         InitializeComponent();
-        
-        // 支持窗口拖动
-        this.MouseLeftButtonDown += (s, e) =>
+        _appData = appData;
+        InitializeWindow();
+        DataContext = new SettingsViewModel(appData);
+        InitializeTimePickers();
+
+        HourComboBox.SelectionChanged += TimeComboBox_SelectionChanged;
+        MinuteComboBox.SelectionChanged += TimeComboBox_SelectionChanged;
+    }
+
+    private void InitializeWindow()
+    {
+        MouseLeftButtonDown += (s, e) =>
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 DragMove();
             }
         };
-        
-        _appData = appData;
-        // 设置数据上下文
-        DataContext = new SettingsViewModel(appData);
-        
-        // 初始化时间选择器
-        InitializeTimePickers();
-        
-        // 添加选择变更事件处理
-        HourComboBox.SelectionChanged += TimeComboBox_SelectionChanged;
-        MinuteComboBox.SelectionChanged += TimeComboBox_SelectionChanged;
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
     {
-        this.WindowState = WindowState.Minimized;
+        WindowState = WindowState.Minimized;
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
-        this.Close();
+        Close();
     }
 
     private void OKButton_Click(object sender, RoutedEventArgs e)
     {
-        this.Close();
+        Close();
     }
-    
-    // 初始化时间选择器
+
     private void InitializeTimePickers()
     {
-        // 设置小时选择器
-        int hour = _appData.ReminderSetting.ReminderTime.HasValue ? _appData.ReminderSetting.ReminderTime.Value.Hours : 20;
+        var hour = _appData.ReminderSetting.ReminderTime?.Hours ?? 20;
         HourComboBox.SelectedIndex = hour;
-        
-        // 设置分钟选择器
-        int minute = _appData.ReminderSetting.ReminderTime.HasValue ? _appData.ReminderSetting.ReminderTime.Value.Minutes : 0;
-        int minuteIndex = Array.IndexOf(new int[] { 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55 }, minute);
+
+        var minute = _appData.ReminderSetting.ReminderTime?.Minutes ?? 0;
+        var minuteIndex = Array.IndexOf(new[] { 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55 }, minute);
         MinuteComboBox.SelectedIndex = minuteIndex >= 0 ? minuteIndex : 0;
     }
-    
-    // 时间选择变更事件处理
+
     private void TimeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (HourComboBox.SelectedItem != null && MinuteComboBox.SelectedItem != null)
+        if (HourComboBox.SelectedItem is not ComboBoxItem hourItem ||
+            MinuteComboBox.SelectedItem is not ComboBoxItem minuteItem ||
+            !int.TryParse(hourItem.Content?.ToString(), out var hour) ||
+            !int.TryParse(minuteItem.Content?.ToString(), out var minute))
         {
-            // 获取选择的小时和分钟
-            int hour = 0;
-            int minute = 0;
-            
-            ComboBoxItem hourItem = HourComboBox.SelectedItem as ComboBoxItem;
-            ComboBoxItem minuteItem = MinuteComboBox.SelectedItem as ComboBoxItem;
-            
-            if (hourItem != null && int.TryParse(hourItem.Content.ToString(), out hour) &&
-                minuteItem != null && int.TryParse(minuteItem.Content.ToString(), out minute))
-            {
-                // 更新提醒设置
-                _appData.ReminderSetting.ReminderTime = new TimeSpan(hour, minute, 0);
-            }
+            return;
         }
+
+        _appData.ReminderSetting.ReminderTime = new TimeSpan(hour, minute, 0);
     }
 }
 
-// 设置窗口的数据模型
 public class SettingsViewModel
 {
     public string Version { get; }
     public string BuildDate { get; }
     public string BuildTime { get; }
     public string CurrentTime { get; }
-    public ReminderSetting ReminderSetting { get; set; } = new ReminderSetting();
+    public ReminderSetting ReminderSetting { get; set; } = new();
+    public string ChangeLog { get; }
+    public string LimitationNote { get; }
 
     public SettingsViewModel()
     {
@@ -119,6 +95,18 @@ public class SettingsViewModel
         BuildDate = AppVersion.BUILD_DATE;
         BuildTime = AppVersion.BUILD_TIME;
         CurrentTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        ChangeLog = string.Join("\n",
+            "1. 修复六大板块标签在鼠标悬停时的颜色串位问题。",
+            "2. 删除仓库中的个人记录，替换为覆盖各模块的中性测试数据。",
+            "3. 调整日记编辑窗口宽度，并把时间记录饼状图移回可视区域。",
+            "4. 为任务补充一次性提醒，可设置具体日期和时间。",
+            "5. 修复循环提醒逻辑，支持每 3 天等间隔提醒。",
+            "6. 加宽时间记录编辑窗口，确保内容完整显示。",
+            "7. 标签颜色改为稳定映射，同一标签每次保持一致。",
+            "8. 将“今日打卡”按钮上移到连续打卡信息旁边。",
+            "9. 重构导入导出格式，兼容旧版备份并为后续版本预留扩展。");
+        LimitationNote =
+            "任务提醒目前仅支持桌面端弹窗提醒，开源本地版本暂未接入手机推送。";
     }
 
     public SettingsViewModel(AppData appData) : this()

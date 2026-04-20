@@ -5,17 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DiaryApp"
         mc:Ignorable="d"
-        Title="编辑时间记录" Height="400" Width="500"
+        Title="编辑时间记录" Height="620" Width="720" MinHeight="620" MinWidth="720"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize">
-    
+
     <Window.Resources>
-        <!-- 颜色定义 -->
         <Color x:Key="PrimaryColor">#FF6C5CE7</Color>
         <Color x:Key="SecondaryColor">#FFA29BFE</Color>
         <Color x:Key="AccentColor">#FFFF7675</Color>
     </Window.Resources>
-    
+
     <Border CornerRadius="15" Background="#FDFDFD" Margin="10">
         <Grid Margin="20">
             <Grid.RowDefinitions>
@@ -28,39 +27,33 @@
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            
-            <!-- 标题 -->
+
             <TextBlock Grid.Row="0" Text="编辑时间记录" FontSize="20" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,20" HorizontalAlignment="Center"/>
-            
-            <!-- 日期选择 -->
+
             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,15" VerticalAlignment="Center">
                 <TextBlock Text="日期：" FontSize="14" Foreground="#636E72" Width="80"/>
-                <DatePicker x:Name="DatePicker" Width="200" Height="30"/>
+                <DatePicker x:Name="DatePicker" Width="420" Height="32"/>
             </StackPanel>
-            
-            <!-- 开始时间 -->
+
             <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,15" VerticalAlignment="Center">
                 <TextBlock Text="开始时间：" FontSize="14" Foreground="#636E72" Width="80"/>
-                <ComboBox x:Name="StartTimeComboBox" Width="200" Height="30"/>
+                <ComboBox x:Name="StartTimeComboBox" Width="420" Height="32"/>
             </StackPanel>
-            
-            <!-- 结束时间 -->
+
             <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,15" VerticalAlignment="Center">
                 <TextBlock Text="结束时间：" FontSize="14" Foreground="#636E72" Width="80"/>
-                <ComboBox x:Name="EndTimeComboBox" Width="200" Height="30"/>
+                <ComboBox x:Name="EndTimeComboBox" Width="420" Height="32"/>
             </StackPanel>
-            
-            <!-- 活动名称 -->
+
             <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,0,0,15" VerticalAlignment="Center">
                 <TextBlock Text="活动名称：" FontSize="14" Foreground="#636E72" Width="80"/>
-                <TextBox x:Name="ActivityTextBox" Width="200" Height="30" FontSize="14" Padding="5"/>
+                <TextBox x:Name="ActivityTextBox" Width="420" Height="32" FontSize="14" Padding="5"/>
             </StackPanel>
-            
-            <!-- 标签 -->
+
             <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,0,0,15" VerticalAlignment="Center">
                 <TextBlock Text="标签：" FontSize="14" Foreground="#636E72" Width="80"/>
                 <Grid>
-                    <TextBox x:Name="CategoryTextBox" Width="200" Height="30" FontSize="14" Padding="5"
+                    <TextBox x:Name="CategoryTextBox" Width="420" Height="32" FontSize="14" Padding="5"
                              PreviewMouseLeftButtonUp="CategoryTextBox_PreviewMouseLeftButtonUp"
                              GotFocus="CategoryTextBox_GotFocus"/>
                     <Popup x:Name="QuickTagPopup" PlacementTarget="{Binding ElementName=CategoryTextBox}" StaysOpen="False" PopupAnimation="Slide">
@@ -69,7 +62,7 @@
                                 <DropShadowEffect BlurRadius="10" ShadowDepth="2" Direction="270" Color="#EEEEEE" Opacity="0.5"/>
                             </Border.Effect>
                             <StackPanel>
-                                <TextBlock Text="📌 快捷标签" FontSize="12" FontWeight="Bold" Foreground="#636E72" Margin="0,0,0,8"/>
+                                <TextBlock Text="快捷标签" FontSize="12" FontWeight="Bold" Foreground="#636E72" Margin="0,0,0,8"/>
                                 <ItemsControl x:Name="QuickTagsItemsControl">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -81,7 +74,7 @@
                                             <Border Background="{Binding Converter={StaticResource TagToColorConverter}}" CornerRadius="12" Margin="0,0,6,6" Padding="10,4" Cursor="Hand">
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock Text="{Binding}" Foreground="White" FontWeight="Bold" FontSize="12" Margin="0,0,6,0" MouseLeftButtonDown="QuickTag_Click"/>
-                                                    <Button Content="×" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="14" 
+                                                    <Button Content="x" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="14"
                                                             Click="DeleteQuickTagButton_Click" Tag="{Binding}" Focusable="False"
                                                             Padding="2,-2,2,0" VerticalAlignment="Center" HorizontalAlignment="Center"
                                                             ToolTip="删除此快捷标签"/>
@@ -96,14 +89,12 @@
                     </Popup>
                 </Grid>
             </StackPanel>
-            
-            <!-- 备注 -->
+
             <StackPanel Grid.Row="6" Margin="0,0,0,20">
                 <TextBlock Text="备注：" FontSize="14" Foreground="#636E72" Margin="0,0,0,5"/>
-                <TextBox x:Name="NotesTextBox" AcceptsReturn="True" TextWrapping="Wrap" FontSize="14" Height="80" Padding="5"/>
+                <TextBox x:Name="NotesTextBox" AcceptsReturn="True" TextWrapping="Wrap" FontSize="14" Height="220" Padding="8" VerticalScrollBarVisibility="Auto"/>
             </StackPanel>
-            
-            <!-- 按钮 -->
+
             <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                 <Button x:Name="SaveButton" Content="保存" Width="80" Height="35" Background="#6C5CE7" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="SaveButton_Click"/>
                 <Button x:Name="DeleteButton" Content="删除" Width="80" Height="35" Background="#FF7675" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="DeleteButton_Click"/>

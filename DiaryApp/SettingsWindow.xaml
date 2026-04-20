@@ -5,12 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DiaryApp"
         mc:Ignorable="d"
-        Title="设置" Height="400" Width="500"
+        Title="设置" Height="640" Width="560"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
-        <!-- 颜色定义 -->
         <Color x:Key="PrimaryColor">#FF6C5CE7</Color>
         <Color x:Key="SecondaryColor">#FFA29BFE</Color>
         <Color x:Key="AccentColor">#FFFF7675</Color>
@@ -20,106 +19,95 @@
         <Border.Effect>
             <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.3" Color="#6C5CE7"/>
         </Border.Effect>
-        
+
         <Grid Margin="20">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/> <!-- 标题栏 -->
-                <RowDefinition Height="*"/>    <!-- 设置内容 -->
-                <RowDefinition Height="Auto"/> <!-- 按钮栏 -->
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- 标题栏 -->
             <Border Grid.Row="0" Background="#F8F9FA" CornerRadius="10,10,0,0" Margin="-20,-20,-20,20" Padding="20,15">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    
+
                     <TextBlock Grid.Column="0" Text="应用设置" FontSize="18" FontWeight="Bold" Foreground="#2D3436" VerticalAlignment="Center"/>
-                    
+
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <Button Content="—" Width="25" Height="25" Click="MinimizeButton_Click" Background="Transparent" BorderThickness="0" Foreground="#B2BEC3" FontSize="14"/>
-                        <Button Content="✕" Width="25" Height="25" Click="CloseButton_Click" Background="Transparent" BorderThickness="0" Foreground="#FF7675" FontSize="14" FontWeight="Bold" Margin="5,0,0,0"/>
+                        <Button Content="-" Width="25" Height="25" Click="MinimizeButton_Click" Background="Transparent" BorderThickness="0" Foreground="#B2BEC3" FontSize="14"/>
+                        <Button Content="X" Width="25" Height="25" Click="CloseButton_Click" Background="Transparent" BorderThickness="0" Foreground="#FF7675" FontSize="14" FontWeight="Bold" Margin="5,0,0,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- 设置内容 -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="0,10">
-                    
-                    <!-- 版本信息区域 -->
                     <Border Background="#F1F2F6" CornerRadius="10" Padding="20" Margin="0,0,0,20">
                         <StackPanel>
-                            <TextBlock Text="📋 版本信息" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,15"/>
-                            
+                            <TextBlock Text="Version" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,15"/>
+
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                
-                                <TextBlock Grid.Column="0" Text="版本号：" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Version}" FontWeight="Bold" Foreground="#2D3436" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="Version:" FontWeight="SemiBold" Foreground="#636E72"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Version}" FontWeight="Bold" Foreground="#2D3436"/>
                             </Grid>
-                            
+
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                
-                                <TextBlock Grid.Column="0" Text="发布日期：" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="1" Text="{Binding BuildDate}" Foreground="#2D3436" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="Build date:" FontWeight="SemiBold" Foreground="#636E72"/>
+                                <TextBlock Grid.Column="1" Text="{Binding BuildDate}" Foreground="#2D3436"/>
                             </Grid>
-                            
+
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                
-                                <TextBlock Grid.Column="0" Text="编译时间：" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="1" Text="{Binding BuildTime}" Foreground="#2D3436" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="Build time:" FontWeight="SemiBold" Foreground="#636E72"/>
+                                <TextBlock Grid.Column="1" Text="{Binding BuildTime}" Foreground="#2D3436"/>
                             </Grid>
-                            
-                            <Grid Margin="0,10,0,0">
+
+                            <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                
-                                <TextBlock Grid.Column="0" Text="当前时间：" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="1" Text="{Binding CurrentTime}" Foreground="#2D3436" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="Current time:" FontWeight="SemiBold" Foreground="#636E72"/>
+                                <TextBlock Grid.Column="1" Text="{Binding CurrentTime}" Foreground="#2D3436"/>
                             </Grid>
                         </StackPanel>
                     </Border>
 
-                    <!-- 提醒功能设置区域 -->
                     <Border Background="#F1F2F6" CornerRadius="10" Padding="20" Margin="0,0,0,20">
                         <StackPanel>
-                            <TextBlock Text="🔔 提醒功能" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,15"/>
-                            
+                            <TextBlock Text="Reminder" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,15"/>
+
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                
-                                <TextBlock Grid.Column="0" Text="启用提醒：" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Center"/>
-                                <ToggleButton Grid.Column="1" IsChecked="{Binding ReminderSetting.IsEnabled}" Foreground="#2D3436" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="Enable:" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Center"/>
+                                <ToggleButton Grid.Column="1" IsChecked="{Binding ReminderSetting.IsEnabled}" VerticalAlignment="Center"/>
                             </Grid>
-                            
+
                             <Grid Margin="0,10">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                
-                                <TextBlock Grid.Column="0" Text="提醒时间：" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="Time:" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Center"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <ComboBox x:Name="HourComboBox" Width="80" Margin="0,0,5,0" Foreground="#2D3436">
+                                    <ComboBox x:Name="HourComboBox" Width="80" Margin="0,0,5,0">
                                         <ComboBoxItem>00</ComboBoxItem>
                                         <ComboBoxItem>01</ComboBoxItem>
                                         <ComboBoxItem>02</ComboBoxItem>
@@ -145,8 +133,8 @@
                                         <ComboBoxItem>22</ComboBoxItem>
                                         <ComboBoxItem>23</ComboBoxItem>
                                     </ComboBox>
-                                    <TextBlock Text=":" VerticalAlignment="Center" Margin="5,0" Foreground="#2D3436"/>
-                                    <ComboBox x:Name="MinuteComboBox" Width="80" Foreground="#2D3436">
+                                    <TextBlock Text=":" VerticalAlignment="Center" Margin="5,0"/>
+                                    <ComboBox x:Name="MinuteComboBox" Width="80">
                                         <ComboBoxItem>00</ComboBoxItem>
                                         <ComboBoxItem>05</ComboBoxItem>
                                         <ComboBoxItem>10</ComboBoxItem>
@@ -162,78 +150,65 @@
                                     </ComboBox>
                                 </StackPanel>
                             </Grid>
-                            
+
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                
-                                <TextBlock Grid.Column="0" Text="提醒消息：" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Top"/>
-                                <TextBox Grid.Column="1" Text="{Binding ReminderSetting.ReminderMessage}" Foreground="#2D3436" VerticalAlignment="Top" Height="60" TextWrapping="Wrap"/>
-                            </Grid>
-                            
-                            <Grid Margin="0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="120"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                <TextBlock Grid.Column="0" Text="后台运行：" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Center"/>
-                                <ToggleButton Grid.Column="1" IsChecked="{Binding ReminderSetting.IsMinimizedToTray}" Foreground="#2D3436" VerticalAlignment="Center" Content="最小化到系统托盘" HorizontalAlignment="Left"/>
+                                <TextBlock Grid.Column="0" Text="Message:" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Top"/>
+                                <TextBox Grid.Column="1" Text="{Binding ReminderSetting.ReminderMessage}" Height="60" TextWrapping="Wrap"/>
                             </Grid>
                         </StackPanel>
                     </Border>
 
-                    <!-- 应用信息区域 -->
                     <Border Background="#F1F2F6" CornerRadius="10" Padding="20">
                         <StackPanel>
-                            <TextBlock Text="ℹ️ 应用信息" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,15"/>
-                            
+                            <TextBlock Text="App Info" FontSize="16" FontWeight="Bold" Foreground="#2D3436" Margin="0,0,0,15"/>
+
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                
-                                <TextBlock Grid.Column="0" Text="应用名称：" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="1" Text="MoeDiary - 我的日记" Foreground="#2D3436" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="App:" FontWeight="SemiBold" Foreground="#636E72"/>
+                                <TextBlock Grid.Column="1" Text="MoeDiary / 电子助手" Foreground="#2D3436"/>
                             </Grid>
-                            
+
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                
-                                <TextBlock Grid.Column="0" Text="开发者：" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="1" Text="电子任务助手" Foreground="#2D3436" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="Project type:" FontWeight="SemiBold" Foreground="#636E72"/>
+                                <TextBlock Grid.Column="1" Text="WPF desktop app" Foreground="#2D3436"/>
                             </Grid>
-                            
-                            <Grid Margin="0,5">
+
+                            <Grid Margin="0,10,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                
-                                <TextBlock Grid.Column="0" Text="功能特性：" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Top"/>
-                                <TextBlock Grid.Column="1" Text="• 日记编写与管理&#10;• 自动备份功能&#10;• 数据导入导出&#10;• 跨设备同步&#10;• 定时提醒功能" Foreground="#2D3436" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="Fix log:" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="1" Text="{Binding ChangeLog}" Foreground="#2D3436" TextWrapping="Wrap"/>
+                            </Grid>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Limit note:" FontWeight="SemiBold" Foreground="#636E72" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="1" Text="{Binding LimitationNote}" Foreground="#2D3436" TextWrapping="Wrap"/>
                             </Grid>
                         </StackPanel>
                     </Border>
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- 按钮栏 -->
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
                 <Button Content="确定" Width="80" Height="35" Click="OKButton_Click"
-                        Background="#6C5CE7" Foreground="White" BorderThickness="0">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="8"/>
-                        </Style>
-                    </Button.Resources>
-                </Button>
+                        Background="#6C5CE7" Foreground="White" BorderThickness="0"/>
             </StackPanel>
         </Grid>
     </Border>

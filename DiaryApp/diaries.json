@@ -1,16 +1,16 @@
 [
-  {
-    "Id": "d7c00aa5-f56b-4c83-a824-594ccebca56a",
-    "Title": "\u4E0D\u9519",
-    "Content": "",
-    "CreatedAt": "2026-01-02T20:50:24.0076905+08:00",
-    "DateStr": "01-02 20:50"
-  },
-  {
-    "Id": "1e2f90f1-c053-4b0e-a86d-7d33421bda02",
-    "Title": "\u4ECA\u5929\u7684\u5FC3\u60C5...",
-    "Content": "\u725B\u9F3B",
-    "CreatedAt": "2026-01-02T20:50:14.6519259+08:00",
-    "DateStr": "01-02 20:50"
-  }
+    {
+        "Id":  "aaf4e193-7506-4667-b9ca-d88d1156ff8f",
+        "Title":  "Sample diary A",
+        "Content":  "This is a neutral sample diary entry for repository demos.",
+        "CreatedAt":  "2026-04-18T09:15:00",
+        "DateStr":  "04-18 09:15"
+    },
+    {
+        "Id":  "2113fd25-0ae3-40c7-be02-91a47bf8b5ab",
+        "Title":  "Sample diary B",
+        "Content":  "This entry exists to cover legacy diary import examples.",
+        "CreatedAt":  "2026-04-17T20:30:00",
+        "DateStr":  "04-17 20:30"
+    }
 ]

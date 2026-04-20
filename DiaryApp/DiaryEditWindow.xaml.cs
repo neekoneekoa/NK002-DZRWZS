@@ -41,6 +41,7 @@ namespace DiaryApp
         public DiaryEditWindow(PersonalInfo personalInfo, AppData appData, bool isNewEntry = true)
         {
             InitializeComponent();
+            Loaded += DiaryEditWindow_Loaded;
             _isNewEntry = isNewEntry;
             _personalInfo = personalInfo;
             _appData = appData;
@@ -62,6 +63,7 @@ namespace DiaryApp
         public DiaryEditWindow(PersonalInfo personalInfo, AppData appData, DiaryEntry entry)
         {
             InitializeComponent();
+            Loaded += DiaryEditWindow_Loaded;
             _isNewEntry = false;
             _personalInfo = personalInfo;
             _appData = appData;
@@ -73,6 +75,17 @@ namespace DiaryApp
             
             // 绘制饼状图
             DrawPieChart();
+        }
+
+        private void DiaryEditWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (Owner == null)
+            {
+                return;
+            }
+
+            Width = Math.Max(Owner.ActualWidth, MinWidth);
+            Height = Math.Max(Owner.ActualHeight, MinHeight);
         }
 
         private void InitializeRichTextBox()

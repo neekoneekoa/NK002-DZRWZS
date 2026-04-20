@@ -6,139 +6,151 @@
         xmlns:local="clr-namespace:DiaryApp"
         mc:Ignorable="d"
         Title="提醒设置"
-        Width="500"
-        Height="450"
+        Width="560"
+        Height="540"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="CanResize">
+        ResizeMode="CanResize"
+        MinWidth="560"
+        MinHeight="540">
     <Window.Resources>
-        <!-- 颜色定义 -->
         <Color x:Key="PrimaryColor">#FF6C5CE7</Color>
         <Color x:Key="SecondaryColor">#FF00CEC9</Color>
         <Color x:Key="AccentColor">#FF636E72</Color>
         <Color x:Key="LightColor">#FFDFE6E9</Color>
         <Color x:Key="DarkColor">#FF2D3436</Color>
     </Window.Resources>
-    
+
     <Border CornerRadius="10" Background="#FDFDFD" Margin="10">
-        <Grid Margin="20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="150"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            
-            <!-- 标题 -->
-            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="提醒设置" FontSize="20" FontWeight="Bold" Foreground="#6C5CE7" Margin="0,0,0,20" HorizontalAlignment="Center"/>
-            
-            <!-- 开始日期 -->
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="开始日期：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
-            <DatePicker Grid.Row="1" Grid.Column="1" x:Name="StartDatePicker" Width="200" Height="30" Margin="0,5,0,5"/>
-            
-            <!-- 提醒类型 -->
-            <TextBlock Grid.Row="2" Grid.Column="0" Text="提醒类型：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
-            <ComboBox Grid.Row="2" Grid.Column="1" x:Name="ReminderTypeComboBox" Width="200" Height="30" Margin="0,5,0,5">
-                <ComboBoxItem Content="每日" Tag="Daily"/>
-                <ComboBoxItem Content="每周" Tag="Weekly"/>
-                <ComboBoxItem Content="每月" Tag="Monthly"/>
-                <ComboBoxItem Content="每年" Tag="Yearly"/>
-                <ComboBoxItem Content="间隔" Tag="Interval"/>
-            </ComboBox>
-            
-            <!-- 每周设置 -->
-            <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,5,0,5" x:Name="WeeklySettingsGrid">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="150"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="每周重复：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
-                <CheckBox Grid.Column="1" Content="一" x:Name="MondayCheckBox" Margin="5,0,5,0" VerticalAlignment="Center"/>
-                <CheckBox Grid.Column="2" Content="二" x:Name="TuesdayCheckBox" Margin="5,0,5,0" VerticalAlignment="Center"/>
-                <CheckBox Grid.Column="3" Content="三" x:Name="WednesdayCheckBox" Margin="5,0,5,0" VerticalAlignment="Center"/>
-                <CheckBox Grid.Column="4" Content="四" x:Name="ThursdayCheckBox" Margin="5,0,5,0" VerticalAlignment="Center"/>
-                <CheckBox Grid.Column="5" Content="五" x:Name="FridayCheckBox" Margin="5,0,5,0" VerticalAlignment="Center"/>
-                <CheckBox Grid.Column="6" Content="六" x:Name="SaturdayCheckBox" Margin="5,0,5,0" VerticalAlignment="Center"/>
-                <CheckBox Grid.Column="7" Content="日" x:Name="SundayCheckBox" Margin="5,0,5,0" VerticalAlignment="Center"/>
-            </Grid>
-            
-            <!-- 每月设置 -->
-            <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,5,0,5" x:Name="MonthlySettingsGrid">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <Grid Margin="20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="150"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="每月重复：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="第" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
-                    <ComboBox x:Name="MonthlyDayNumberComboBox" Width="80" Height="30" Margin="5,0,5,0">
-                        <ComboBoxItem Content="1" Tag="1"/>
-                        <ComboBoxItem Content="2" Tag="2"/>
-                        <ComboBoxItem Content="3" Tag="3"/>
-                        <ComboBoxItem Content="4" Tag="4"/>
-                        <ComboBoxItem Content="5" Tag="5"/>
-                    </ComboBox>
-                    <TextBlock Text="个星期的" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
-                    <ComboBox x:Name="MonthlyDayOfWeekComboBox" Width="80" Height="30" Margin="5,0,5,0">
-                        <ComboBoxItem Content="一" Tag="Monday"/>
-                        <ComboBoxItem Content="二" Tag="Tuesday"/>
-                        <ComboBoxItem Content="三" Tag="Wednesday"/>
-                        <ComboBoxItem Content="四" Tag="Thursday"/>
-                        <ComboBoxItem Content="五" Tag="Friday"/>
-                        <ComboBoxItem Content="六" Tag="Saturday"/>
-                        <ComboBoxItem Content="日" Tag="Sunday"/>
-                    </ComboBox>
+
+                <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="提醒设置" FontSize="20" FontWeight="Bold"
+                           Foreground="#6C5CE7" Margin="0,0,0,20" HorizontalAlignment="Center"/>
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="开始日期：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
+                <DatePicker Grid.Row="1" Grid.Column="1" x:Name="StartDatePicker" Width="220" Height="32" Margin="0,5,0,5"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="提醒类型：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
+                <ComboBox Grid.Row="2" Grid.Column="1" x:Name="ReminderTypeComboBox" Width="220" Height="32" Margin="0,5,0,5">
+                    <ComboBoxItem Content="单次提醒" Tag="Once"/>
+                    <ComboBoxItem Content="每天" Tag="Daily"/>
+                    <ComboBoxItem Content="每周" Tag="Weekly"/>
+                    <ComboBoxItem Content="每月" Tag="Monthly"/>
+                    <ComboBoxItem Content="每年" Tag="Yearly"/>
+                    <ComboBoxItem Content="每隔几天" Tag="Interval"/>
+                </ComboBox>
+
+                <Grid Grid.Row="3" Grid.ColumnSpan="2" Margin="0,5,0,5" x:Name="WeeklySettingsGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="每周重复：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
+                    <CheckBox Grid.Column="1" Content="一" x:Name="MondayCheckBox" Margin="5,0"/>
+                    <CheckBox Grid.Column="2" Content="二" x:Name="TuesdayCheckBox" Margin="5,0"/>
+                    <CheckBox Grid.Column="3" Content="三" x:Name="WednesdayCheckBox" Margin="5,0"/>
+                    <CheckBox Grid.Column="4" Content="四" x:Name="ThursdayCheckBox" Margin="5,0"/>
+                    <CheckBox Grid.Column="5" Content="五" x:Name="FridayCheckBox" Margin="5,0"/>
+                    <CheckBox Grid.Column="6" Content="六" x:Name="SaturdayCheckBox" Margin="5,0"/>
+                    <CheckBox Grid.Column="7" Content="日" x:Name="SundayCheckBox" Margin="5,0"/>
+                </Grid>
+
+                <Grid Grid.Row="4" Grid.ColumnSpan="2" Margin="0,5,0,5" x:Name="MonthlySettingsGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="每月重复：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="第" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="MonthlyDayNumberComboBox" Width="80" Height="32" Margin="5,0">
+                            <ComboBoxItem Content="1" Tag="1"/>
+                            <ComboBoxItem Content="2" Tag="2"/>
+                            <ComboBoxItem Content="3" Tag="3"/>
+                            <ComboBoxItem Content="4" Tag="4"/>
+                            <ComboBoxItem Content="5" Tag="5"/>
+                        </ComboBox>
+                        <TextBlock Text="个星期的" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="MonthlyDayOfWeekComboBox" Width="90" Height="32" Margin="5,0">
+                            <ComboBoxItem Content="一" Tag="Monday"/>
+                            <ComboBoxItem Content="二" Tag="Tuesday"/>
+                            <ComboBoxItem Content="三" Tag="Wednesday"/>
+                            <ComboBoxItem Content="四" Tag="Thursday"/>
+                            <ComboBoxItem Content="五" Tag="Friday"/>
+                            <ComboBoxItem Content="六" Tag="Saturday"/>
+                            <ComboBoxItem Content="日" Tag="Sunday"/>
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
+
+                <Grid Grid.Row="5" Grid.ColumnSpan="2" Margin="0,5,0,5" x:Name="IntervalSettingsGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="间隔天数：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBox x:Name="IntervalDaysTextBox" Width="80" Height="32" Margin="0,0,5,0"
+                                 Text="3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+                        <TextBlock Text="天" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="提醒时间：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
+                <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBox x:Name="ReminderTimeTextBox" Width="120" Height="32" Margin="0,0,8,0"
+                             Text="20:00" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+                    <Button x:Name="SelectTimeButton" Content="选择" Width="88" Height="32" Click="SelectTimeButton_Click"/>
+                </StackPanel>
+
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="状态：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
+                <StackPanel Grid.Row="7" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <RadioButton Content="启用" x:Name="StatusActiveRadio" Margin="0,0,12,0" IsChecked="True"/>
+                    <RadioButton Content="关闭" x:Name="StatusInactiveRadio"/>
+                </StackPanel>
+
+                <TextBlock Grid.Row="8" Grid.Column="0" Text="提醒说明：" FontSize="14" Foreground="#636E72" VerticalAlignment="Top"/>
+                <TextBox Grid.Row="8" Grid.Column="1" x:Name="ReminderMessageTextBox" Height="68" TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto" Padding="8" Margin="0,2,0,0"/>
+
+                <Border Grid.Row="9" Grid.ColumnSpan="2" Background="#F5F6FA" CornerRadius="8" Padding="12" Margin="0,12,0,0">
+                    <TextBlock Text="当前版本仅支持桌面提醒。手机推送暂未接入，但单次提醒和每隔 N 天提醒都可以正常使用。"
+                               Foreground="#636E72" TextWrapping="Wrap"/>
+                </Border>
+
+                <StackPanel Grid.Row="11" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,24,0,0">
+                    <Button x:Name="SaveButton" Content="保存" Width="100" Height="40"
+                            Background="#6C5CE7" Foreground="White" BorderThickness="0"
+                            Margin="0,0,10,0" Click="SaveButton_Click"/>
+                    <Button x:Name="CancelButton" Content="取消" Width="100" Height="40"
+                            Background="#BDC3C7" Foreground="#2D3436" BorderThickness="0"
+                            Click="CancelButton_Click"/>
                 </StackPanel>
             </Grid>
-            
-            <!-- 间隔设置 -->
-            <Grid Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,5,0,5" x:Name="IntervalSettingsGrid">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="150"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="间隔天数：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBox x:Name="IntervalDaysTextBox" Width="80" Height="30" Margin="0,0,5,0" Text="1" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
-                    <TextBlock Text="天" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
-                </StackPanel>
-            </Grid>
-            
-            <!-- 提醒时间 -->
-            <TextBlock Grid.Row="6" Grid.Column="0" Text="提醒时间：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
-            <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBox x:Name="ReminderTimeTextBox" Width="100" Height="30" Margin="0,0,5,0" Text="20:00" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
-                <Button x:Name="SelectTimeButton" Content="选择" Width="80" Height="30" Click="SelectTimeButton_Click"/>
-            </StackPanel>
-            
-            <!-- 状态 -->
-            <TextBlock Grid.Row="7" Grid.Column="0" Text="提醒状态：" FontSize="14" Foreground="#636E72" VerticalAlignment="Center"/>
-            <StackPanel Grid.Row="7" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <RadioButton Content="开启" x:Name="StatusActiveRadio" Margin="0,0,10,0" IsChecked="True"/>
-                <RadioButton Content="关闭" x:Name="StatusInactiveRadio"/>
-            </StackPanel>
-            
-            <!-- 按钮 -->
-            <StackPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-                <Button x:Name="SaveButton" Content="保存" Width="100" Height="40" Background="#6C5CE7" Foreground="White" BorderThickness="0" Margin="0,0,10,0" Click="SaveButton_Click"/>
-                <Button x:Name="CancelButton" Content="取消" Width="100" Height="40" Background="#BDC3C7" Foreground="#2D3436" BorderThickness="0" Click="CancelButton_Click"/>
-            </StackPanel>
-        </Grid>
+        </ScrollViewer>
     </Border>
 </Window>

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -11,15 +10,23 @@ namespace DiaryApp
 {
     public partial class MindMapWindow : Window
     {
-        private MindMapNode _rootNode;
-        private Dictionary<string, FrameworkElement> _nodeElements = new Dictionary<string, FrameworkElement>();
-        private Dictionary<string, FrameworkElement> _connectionLines = new Dictionary<string, FrameworkElement>();
-        private MindMapNode? _selectedNode = null;
+        private readonly MindMapNode _rootNode;
+        private readonly Dictionary<string, FrameworkElement> _nodeElements = new();
+        private readonly Dictionary<string, FrameworkElement> _connectionLines = new();
+        private MindMapNode? _selectedNode;
 
         public MindMapWindow(MindMapNode rootNode)
         {
             InitializeComponent();
-            _rootNode = rootNode;
+            _rootNode = rootNode ?? new MindMapNode
+            {
+                Content = "个人资料",
+                IsRoot = true,
+                IsExpanded = true
+            };
+
+            _rootNode.IsRoot = true;
+            _rootNode.IsExpanded = true;
             RenderMindMap();
         }
 
@@ -29,105 +36,101 @@ namespace DiaryApp
             _nodeElements.Clear();
             _connectionLines.Clear();
 
-            double canvasWidth = MindMapCanvas.Width;
             double canvasHeight = MindMapCanvas.Height;
-
             double rootX = 80;
             double rootY = canvasHeight / 2;
 
-            CalculateNodePositions(_rootNode, rootX, rootY, 0);
+            CalculateNodePositions(_rootNode, rootX, rootY);
             RenderNodeVisuals(_rootNode);
         }
 
-        private double CalculateNodePositions(MindMapNode node, double x, double y, int level)
+        private void CalculateNodePositions(MindMapNode node, double x, double y)
         {
             node.X = x;
             node.Y = y;
 
             if (!node.IsExpanded || node.Children.Count == 0)
             {
-                return y;
+                return;
             }
 
-            double horizontalSpacing = 200;
-            double verticalSpacing = 80;
-
+            const double horizontalSpacing = 220;
+            const double verticalSpacing = 90;
             double startY = y - (node.Children.Count - 1) * verticalSpacing / 2;
-            
+
             for (int i = 0; i < node.Children.Count; i++)
             {
                 double childY = startY + i * verticalSpacing;
-                CalculateNodePositions(node.Children[i], x + horizontalSpacing, childY, level + 1);
+                CalculateNodePositions(node.Children[i], x + horizontalSpacing, childY);
             }
-
-            return y;
         }
 
         private void RenderNodeVisuals(MindMapNode node)
         {
             Border nodeBorder = CreateNodeBorder(node);
-            
-            // 强制计算节点大小
             nodeBorder.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
             nodeBorder.Arrange(new Rect(0, 0, nodeBorder.DesiredSize.Width, nodeBorder.DesiredSize.Height));
-            
-            double nodeHeight = nodeBorder.ActualHeight;
+
+            double nodeWidth = nodeBorder.DesiredSize.Width;
+            double nodeHeight = nodeBorder.DesiredSize.Height;
+
             Canvas.SetLeft(nodeBorder, node.X);
             Canvas.SetTop(nodeBorder, node.Y - nodeHeight / 2);
             MindMapCanvas.Children.Add(nodeBorder);
             _nodeElements[node.Id] = nodeBorder;
 
-            if (node.IsExpanded && node.Children.Count > 0)
+            if (!node.IsExpanded || node.Children.Count == 0)
             {
-                foreach (var child in node.Children)
-                {
-                    Line connectionLine = CreateConnectionLine(node.X + nodeBorder.ActualWidth, node.Y, child.X, child.Y);
-                    MindMapCanvas.Children.Insert(0, connectionLine);
-                    _connectionLines[$"{node.Id}_{child.Id}"] = connectionLine;
+                return;
+            }
 
-                    RenderNodeVisuals(child);
-                }
+            foreach (var child in node.Children)
+            {
+                var line = CreateConnectionLine(node.X + nodeWidth, node.Y, child.X, child.Y);
+                MindMapCanvas.Children.Insert(0, line);
+                _connectionLines[$"{node.Id}_{child.Id}"] = line;
+                RenderNodeVisuals(child);
             }
         }
 
         private Border CreateNodeBorder(MindMapNode node)
         {
-            Style nodeStyle = node.IsRoot ? (Style)FindResource("RootNodeStyle") : (Style)FindResource("ChildNodeStyle");
-            
-            Border border = new Border
+            Style nodeStyle = node.IsRoot
+                ? (Style)FindResource("RootNodeStyle")
+                : (Style)FindResource("ChildNodeStyle");
+
+            var border = new Border
             {
                 Style = nodeStyle,
                 Tag = node
             };
 
-            Grid grid = new Grid();
-            
-            StackPanel mainPanel = new StackPanel
+            var mainPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal
             };
 
-            TextBlock textBlock = new TextBlock
+            var textBlock = new TextBlock
             {
                 Text = node.Content,
                 Foreground = Brushes.White,
                 FontSize = node.IsRoot ? 16 : 14,
                 FontWeight = node.IsRoot ? FontWeights.Bold : FontWeights.Normal,
                 TextWrapping = TextWrapping.Wrap,
-                MaxWidth = 120,
+                MaxWidth = 150,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 5, 0)
+                Margin = new Thickness(0, 0, 6, 0)
             };
 
-            StackPanel buttonPanel = new StackPanel
+            var buttonPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 VerticalAlignment = VerticalAlignment.Center
             };
 
-            Button expandButton = new Button
+            var expandButton = new Button
             {
-                Content = node.IsExpanded ? "▼" : "▶",
+                Content = node.IsExpanded ? ">" : "v",
                 Width = 20,
                 Height = 20,
                 Background = Brushes.Transparent,
@@ -141,7 +144,7 @@ namespace DiaryApp
             };
             expandButton.Click += ExpandCollapseButton_Click;
 
-            Button addButton = new Button
+            var addButton = new Button
             {
                 Content = "+",
                 Width = 20,
@@ -156,9 +159,9 @@ namespace DiaryApp
             };
             addButton.Click += AddChildButton_Click;
 
-            Button editButton = new Button
+            var editButton = new Button
             {
-                Content = "✏",
+                Content = "编",
                 Width = 20,
                 Height = 20,
                 Background = Brushes.Transparent,
@@ -167,13 +170,14 @@ namespace DiaryApp
                 FontSize = 12,
                 Cursor = Cursors.Hand,
                 Margin = new Thickness(0, 0, 3, 0),
-                Tag = node
+                Tag = node,
+                ToolTip = "编辑节点"
             };
             editButton.Click += EditNodeButton_Click;
 
-            Button deleteButton = new Button
+            var deleteButton = new Button
             {
-                Content = "✕",
+                Content = "删",
                 Width = 20,
                 Height = 20,
                 Background = Brushes.Transparent,
@@ -182,6 +186,7 @@ namespace DiaryApp
                 FontSize = 12,
                 Cursor = Cursors.Hand,
                 Tag = node,
+                ToolTip = "删除节点",
                 Visibility = node.IsRoot ? Visibility.Collapsed : Visibility.Visible
             };
             deleteButton.Click += DeleteNodeButton_Click;
@@ -195,8 +200,7 @@ namespace DiaryApp
             mainPanel.Children.Add(buttonPanel);
 
             border.Child = mainPanel;
-
-            border.MouseLeftButtonDown += (s, e) =>
+            border.MouseLeftButtonDown += (_, e) =>
             {
                 _selectedNode = node;
                 e.Handled = true;
@@ -205,7 +209,7 @@ namespace DiaryApp
             return border;
         }
 
-        private Line CreateConnectionLine(double x1, double y1, double x2, double y2)
+        private static Line CreateConnectionLine(double x1, double y1, double x2, double y2)
         {
             return new Line
             {
@@ -224,6 +228,7 @@ namespace DiaryApp
             if (sender is Button button && button.Tag is MindMapNode node)
             {
                 node.IsExpanded = !node.IsExpanded;
+                node.UpdatedAt = DateTime.Now;
                 RenderMindMap();
             }
         }
@@ -247,76 +252,90 @@ namespace DiaryApp
                 "请输入分支内容：",
                 "添加分支",
                 "",
-                -1, -1);
+                -1,
+                -1);
 
-            if (!string.IsNullOrWhiteSpace(content))
+            if (string.IsNullOrWhiteSpace(content))
             {
-                var newNode = new MindMapNode
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    Content = content,
-                    IsExpanded = true
-                };
-                parent.Children.Add(newNode);
-                parent.UpdatedAt = DateTime.Now;
-                RenderMindMap();
+                return;
             }
+
+            var newNode = new MindMapNode
+            {
+                Id = Guid.NewGuid().ToString(),
+                Content = content.Trim(),
+                IsExpanded = true,
+                UpdatedAt = DateTime.Now
+            };
+
+            parent.Children.Add(newNode);
+            parent.IsExpanded = true;
+            parent.UpdatedAt = DateTime.Now;
+            RenderMindMap();
         }
 
         private void EditNodeButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.Tag is MindMapNode node)
+            if (sender is not Button button || button.Tag is not MindMapNode node)
             {
-                string newContent = Microsoft.VisualBasic.Interaction.InputBox(
-                    "请输入新的内容：",
-                    "修改分支",
-                    node.Content,
-                    -1, -1);
-
-                if (!string.IsNullOrWhiteSpace(newContent))
-                {
-                    node.Content = newContent;
-                    node.UpdatedAt = DateTime.Now;
-                    RenderMindMap();
-                }
+                return;
             }
+
+            string newContent = Microsoft.VisualBasic.Interaction.InputBox(
+                "请输入新的内容：",
+                "修改分支",
+                node.Content,
+                -1,
+                -1);
+
+            if (string.IsNullOrWhiteSpace(newContent))
+            {
+                return;
+            }
+
+            node.Content = newContent.Trim();
+            node.UpdatedAt = DateTime.Now;
+            RenderMindMap();
         }
 
         private void DeleteNodeButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.Tag is MindMapNode node)
+            if (sender is not Button button || button.Tag is not MindMapNode node)
             {
-                string message = $"确定要删除分支 \"{node.Content}\" 及其所有子分支吗？";
-                if (node.Children.Count > 0)
-                {
-                    message += $"\n\n将同时删除 {CountAllChildren(node)} 个子分支。";
-                }
+                return;
+            }
 
-                var result = MessageBox.Show(
-                    message,
-                    "确认删除",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+            string message = $"确定要删除分支“{node.Content}”及其所有子分支吗？";
+            if (node.Children.Count > 0)
+            {
+                message += $"\n\n将同时删除 {CountAllChildren(node)} 个子分支。";
+            }
 
-                if (result == MessageBoxResult.Yes)
-                {
-                    DeleteNode(_rootNode, node.Id);
-                    RenderMindMap();
-                }
+            var result = MessageBox.Show(
+                message,
+                "确认删除",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                DeleteNode(_rootNode, node.Id);
+                RenderMindMap();
             }
         }
 
-        private int CountAllChildren(MindMapNode node)
+        private static int CountAllChildren(MindMapNode node)
         {
             int count = node.Children.Count;
             foreach (var child in node.Children)
             {
                 count += CountAllChildren(child);
             }
+
             return count;
         }
 
-        private bool DeleteNode(MindMapNode parent, string nodeId)
+        private static bool DeleteNode(MindMapNode parent, string nodeId)
         {
             for (int i = 0; i < parent.Children.Count; i++)
             {
@@ -326,18 +345,20 @@ namespace DiaryApp
                     parent.UpdatedAt = DateTime.Now;
                     return true;
                 }
+
                 if (DeleteNode(parent.Children[i], nodeId))
                 {
                     return true;
                 }
             }
+
             return false;
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             _rootNode.UpdatedAt = DateTime.Now;
-            MessageBox.Show("个人数据已保存！", "保存成功", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("思维导图已保存。", "保存成功", MessageBoxButton.OK, MessageBoxImage.Information);
             DialogResult = true;
             Close();
         }

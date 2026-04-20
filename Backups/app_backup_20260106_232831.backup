@@ -1,32 +1,433 @@
-﻿{
-  "info": {
-    "version": "1.0",
-    "createdAt": "2026-01-06T23:28:52.1515648+08:00",
-    "description": "\u624B\u52A8\u5BFC\u51FA\u5907\u4EFD",
-    "checksum": "RSDevppTzaRoOEOktkANclL1sYymirn3nrqFco3FdxQ=",
-    "entryCount": 1
-  },
-  "diaries": [
-    {
-      "id": "b3b2e40a-d482-4f5c-aa00-2aff70add2d5",
-      "title": "\u8FC7\u751F\u65E5",
-      "content": "\u4ECA\u5929\u8FC7\u751F\u65E5\u4E86\uFF0C\u4ECA\u5929\u5176\u5B9E\u505A\u7684\u5F88\u5C11\u3002\u4ECA\u5929\u5E94\u8BE5\u5C31\u662F\u8D77\u70B9\u4E86\uFF0C\u4EE5\u540E\u8FD9\u4E2A\u8F6F\u4EF6\u5C31\u7528\u6765\u8BB0\u5F55\u6211\u4E86\u3002\u6B63\u597D\uFF0C\u4ECA\u5929\u4E3B\u8981\u4E5F\u5728\u5F00\u53D1\u8FD9\u6B3E\u8F6F\u4EF6\u3002\u628A\u65E5\u8BB0\u7684\u529F\u80FD\u505A\u8D77\u6765\u4E86\u3002\u8FD9\u51E0\u5929\u5C31\u8D76\u7D27\u628A\u5176\u4ED6\u677F\u5757\u7684\u529F\u80FD\u90FD\u5B8C\u5584\u4E00\u4E0B\u3002\r\n",
-      "photos": [],
-      "tags": [
-        "\u5927\u9910",
-        "\u751F\u65E5",
-        "\u9879\u76EEK22",
-        "\u4EFB\u52A1\u7A0B\u5E8F\u5F00\u53D1"
-      ],
-      "createdAt": "2026-01-06T23:18:41",
-      "dateStr": "2026-01-06 23:18",
-      "dateOnly": "2026-01-06",
-      "timeOnly": "23:18",
-      "contentPreview": "\u4ECA\u5929\u8FC7\u751F\u65E5\u4E86\uFF0C\u4ECA\u5929\u5176\u5B9E\u505A\u7684\u5F88\u5C11\u3002\u4ECA\u5929\u5E94\u8BE5\u5C31\u662F\u8D77\u70B9\u4E86\uFF0C\u4EE5\u540E\u8FD9\u4E2A\u8F6F\u4EF6\u5C31\u7528\u6765\u8BB0\u5F55\u6211\u4E86\u3002\u6B63\u597D\uFF0C\u4ECA\u5929\u4E3B\u8981\u4E5F\u5728\u5F00\u53D1\u8FD9\u6B3E\u8F6F\u4EF6...",
-      "searchableText": "\u8FC7\u751F\u65E5 \u4ECA\u5929\u8FC7\u751F\u65E5\u4E86\uFF0C\u4ECA\u5929\u5176\u5B9E\u505A\u7684\u5F88\u5C11\u3002\u4ECA\u5929\u5E94\u8BE5\u5C31\u662F\u8D77\u70B9\u4E86\uFF0C\u4EE5\u540E\u8FD9\u4E2A\u8F6F\u4EF6\u5C31\u7528\u6765\u8BB0\u5F55\u6211\u4E86\u3002\u6B63\u597D\uFF0C\u4ECA\u5929\u4E3B\u8981\u4E5F\u5728\u5F00\u53D1\u8FD9\u6B3E\u8F6F\u4EF6\u3002\u628A\u65E5\u8BB0\u7684\u529F\u80FD\u505A\u8D77\u6765\u4E86\u3002\u8FD9\u51E0\u5929\u5C31\u8D76\u7D27\u628A\u5176\u4ED6\u677F\u5757\u7684\u529F\u80FD\u90FD\u5B8C\u5584\u4E00\u4E0B\u3002\r\n \u5927\u9910 \u751F\u65E5 \u9879\u76EEk22 \u4EFB\u52A1\u7A0B\u5E8F\u5F00\u53D1"
-    }
-  ],
-  "tasks": [],
-  "timeRecords": [],
-  "checkIns": []
+{
+    "format":  "DiaryAppBackup",
+    "formatVersion":  2,
+    "appVersion":  "0.2.0",
+    "exportedAt":  "2026-04-20T10:00:00",
+    "data":  {
+                 "info":  {
+                              "version":  "0.2.0",
+                              "createdAt":  "2026-04-20T10:00:00",
+                              "description":  "Open source demo backup",
+                              "checksum":  "",
+                              "entryCount":  14
+                          },
+                 "diaries":  [
+                                 {
+                                     "id":  "a3ff4a6f-7f5b-46e1-a76c-8fa38b95264b",
+                                     "title":  "Morning review",
+                                     "content":  "Checked UI polish and reminder flow today.\r\nNext step is to replace personal data with sample content.",
+                                     "photos":  [
+
+                                                ],
+                                     "tags":  [
+                                                  "review",
+                                                  "dev"
+                                              ],
+                                     "parameters":  [
+                                                        {
+                                                            "id":  "ea9ef63e-841a-4f49-84ab-59c019e6a7ed",
+                                                            "name":  "Focus",
+                                                            "value":  "2.5",
+                                                            "unit":  "hours"
+                                                        },
+                                                        {
+                                                            "id":  "9afd4774-4cb8-4cd5-af83-bec488fb5584",
+                                                            "name":  "Mood",
+                                                            "value":  "steady",
+                                                            "unit":  ""
+                                                        }
+                                                    ],
+                                     "createdAt":  "2026-04-18T09:15:00",
+                                     "periodType":  0
+                                 },
+                                 {
+                                     "id":  "dc7e2041-7564-4da7-98c6-a3eb33191226",
+                                     "title":  "Open source weekly note",
+                                     "content":  "This week was focused on export compatibility, task reminders, and layout fixes.\r\nThe repo is now closer to a clean demo state.",
+                                     "photos":  [
+
+                                                ],
+                                     "tags":  [
+                                                  "open-source",
+                                                  "writing"
+                                              ],
+                                     "parameters":  [
+
+                                                    ],
+                                     "createdAt":  "2026-04-17T20:30:00",
+                                     "periodType":  1
+                                 },
+                                 {
+                                     "id":  "2d43599f-58ce-4520-b9f9-b9529125df2d",
+                                     "title":  "April summary",
+                                     "content":  "Main learning topics this month were WPF maintenance, backup formats, and desktop reminder handling.",
+                                     "photos":  [
+
+                                                ],
+                                     "tags":  [
+                                                  "study",
+                                                  "demo"
+                                              ],
+                                     "parameters":  [
+
+                                                    ],
+                                     "createdAt":  "2026-04-01T21:00:00",
+                                     "periodType":  2
+                                 }
+                             ],
+                 "tasks":  [
+                               {
+                                   "id":  "e7f8c8d4-79a4-4ff3-b405-fac696349bd0",
+                                   "title":  "Prepare open source notes",
+                                   "priority":  2,
+                                   "level":  1,
+                                   "status":  1,
+                                   "taskType":  1,
+                                   "projectTags":  [
+                                                       "open-source",
+                                                       "docs"
+                                                   ],
+                                   "chapters":  [
+                                                    {
+                                                        "id":  "063c8847-3a19-41d2-96c7-b070d947f114",
+                                                        "title":  "Chapter 1",
+                                                        "content":  "Collect the nine requested changes into app info.",
+                                                        "subTasks":  [
+                                                                         {
+                                                                             "id":  "f12cd57c-7b3a-4c60-a7a3-258971314bcd",
+                                                                             "title":  "Write fix log",
+                                                                             "isCompleted":  false,
+                                                                             "createdAt":  "2026-04-18T10:15:00",
+                                                                             "scheduledTime":  null,
+                                                                             "content":  "Summarize all completed fixes in the settings window.",
+                                                                             "notes":  "",
+                                                                             "durationDays":  1,
+                                                                             "startDate":  "2026-04-18T00:00:00",
+                                                                             "endDate":  "2026-04-20T00:00:00"
+                                                                         }
+                                                                     ],
+                                                        "notes":  "",
+                                                        "createdAt":  "2026-04-18T10:10:00",
+                                                        "orderIndex":  0
+                                                    }
+                                                ],
+                                   "subTasks":  [
+
+                                                ],
+                                   "content":  "Clean app info, screenshots, and demo notes.",
+                                   "createdAt":  "2026-04-18T10:00:00",
+                                   "completedAt":  null,
+                                   "reminderSettings":  {
+                                                            "isEnabled":  true,
+                                                            "reminderTime":  "09:00:00",
+                                                            "reminderMessage":  "Task reminder: prepare open source notes.",
+                                                            "isMinimizedToTray":  true,
+                                                            "startDate":  "2026-04-18T09:00:00",
+                                                            "reminderType":  5,
+                                                            "intervalDays":  3,
+                                                            "weekDays":  [
+                                                                             1,
+                                                                             2,
+                                                                             3,
+                                                                             4,
+                                                                             5
+                                                                         ],
+                                                            "monthlyDayNumber":  1,
+                                                            "monthlyDayOfWeek":  1,
+                                                            "nextReminderDate":  "2026-04-21T09:00:00",
+                                                            "isActive":  true,
+                                                            "lastTriggeredAt":  null
+                                                        },
+                                   "fontSize":  14,
+                                   "textColor":  "#000000",
+                                   "backgroundColor":  "#FFFFFF",
+                                   "isUnderline":  false,
+                                   "totalDays":  7,
+                                   "startDate":  "2026-04-18T00:00:00",
+                                   "endDate":  "2026-04-25T00:00:00"
+                               },
+                               {
+                                   "id":  "c681e995-1249-4c3a-a578-0a0f3f62acc0",
+                                   "title":  "Check import compatibility",
+                                   "priority":  1,
+                                   "level":  1,
+                                   "status":  0,
+                                   "taskType":  0,
+                                   "projectTags":  [
+
+                                                   ],
+                                   "chapters":  [
+
+                                                ],
+                                   "subTasks":  [
+
+                                                ],
+                                   "content":  "Verify that both .diary and .backup files can be imported.",
+                                   "createdAt":  "2026-04-19T14:00:00",
+                                   "completedAt":  null,
+                                   "reminderSettings":  {
+                                                            "isEnabled":  true,
+                                                            "reminderTime":  "16:30:00",
+                                                            "reminderMessage":  "One-time reminder: test legacy import support.",
+                                                            "isMinimizedToTray":  true,
+                                                            "startDate":  "2026-04-20T16:30:00",
+                                                            "reminderType":  0,
+                                                            "intervalDays":  1,
+                                                            "weekDays":  [
+
+                                                                         ],
+                                                            "monthlyDayNumber":  1,
+                                                            "monthlyDayOfWeek":  1,
+                                                            "nextReminderDate":  "2026-04-20T16:30:00",
+                                                            "isActive":  true,
+                                                            "lastTriggeredAt":  null
+                                                        },
+                                   "fontSize":  14,
+                                   "textColor":  "#000000",
+                                   "backgroundColor":  "#FFFFFF",
+                                   "isUnderline":  false,
+                                   "totalDays":  1,
+                                   "startDate":  "2026-04-20T00:00:00",
+                                   "endDate":  "2026-04-20T00:00:00"
+                               },
+                               {
+                                   "id":  "84168d6f-a77a-4392-88c7-4dccc1849deb",
+                                   "title":  "Publish demo build",
+                                   "priority":  2,
+                                   "level":  1,
+                                   "status":  2,
+                                   "taskType":  1,
+                                   "projectTags":  [
+                                                       "release"
+                                                   ],
+                                   "chapters":  [
+                                                    {
+                                                        "id":  "60c2b5cf-5ee2-4c5e-8891-a6609b16a591",
+                                                        "title":  "Chapter 1",
+                                                        "content":  "Build the demo package and verify reminders.",
+                                                        "subTasks":  [
+
+                                                                     ],
+                                                        "notes":  "",
+                                                        "createdAt":  "2026-04-10T09:30:00",
+                                                        "orderIndex":  0
+                                                    }
+                                                ],
+                                   "subTasks":  [
+
+                                                ],
+                                   "content":  "Ship a clean demo version for repository review.",
+                                   "createdAt":  "2026-04-10T09:00:00",
+                                   "completedAt":  "2026-04-15T18:00:00",
+                                   "reminderSettings":  null,
+                                   "fontSize":  14,
+                                   "textColor":  "#000000",
+                                   "backgroundColor":  "#FFFFFF",
+                                   "isUnderline":  false,
+                                   "totalDays":  5,
+                                   "startDate":  "2026-04-10T00:00:00",
+                                   "endDate":  "2026-04-15T00:00:00"
+                               }
+                           ],
+                 "timeRecords":  [
+                                     {
+                                         "id":  "47dead85-71ee-4d9b-b9fe-89701193de10",
+                                         "date":  "2026-04-18T00:00:00",
+                                         "startTime":  "09:00:00",
+                                         "endTime":  "11:30:00",
+                                         "activity":  "UI cleanup",
+                                         "category":  "dev",
+                                         "notes":  "Adjusted windows and chart area.",
+                                         "createdAt":  "2026-04-18T09:00:00"
+                                     },
+                                     {
+                                         "id":  "401e01ed-63a8-406d-ba67-05cab78ab980",
+                                         "date":  "2026-04-18T00:00:00",
+                                         "startTime":  "14:00:00",
+                                         "endTime":  "15:30:00",
+                                         "activity":  "Backup testing",
+                                         "category":  "test",
+                                         "notes":  "Checked both new and old import flows.",
+                                         "createdAt":  "2026-04-18T14:00:00"
+                                     },
+                                     {
+                                         "id":  "6fe9c36f-7bab-4fac-9796-206c9c3e2543",
+                                         "date":  "2026-04-19T00:00:00",
+                                         "startTime":  "19:00:00",
+                                         "endTime":  "20:00:00",
+                                         "activity":  "Evening walk",
+                                         "category":  "health",
+                                         "notes":  "Sample exercise record for the demo app.",
+                                         "createdAt":  "2026-04-19T19:00:00"
+                                     }
+                                 ],
+                 "checkInProjects":  [
+                                         {
+                                             "id":  "faf0cbaf-cf9a-4876-b2e0-4cc8595b7746",
+                                             "name":  "Morning run",
+                                             "type":  "habit",
+                                             "deadlineDate":  null,
+                                             "tags":  [
+                                                          "fitness"
+                                                      ],
+                                             "createdAt":  "2026-04-01T08:00:00",
+                                             "updatedAt":  "2026-04-20T08:00:00"
+                                         },
+                                         {
+                                             "id":  "560f7ee8-a397-4a58-97cc-9562e5166e9d",
+                                             "name":  "English study",
+                                             "type":  "study",
+                                             "deadlineDate":  null,
+                                             "tags":  [
+                                                          "learning"
+                                                      ],
+                                             "createdAt":  "2026-04-01T21:00:00",
+                                             "updatedAt":  "2026-04-20T21:00:00"
+                                         }
+                                     ],
+                 "checkIns":  [
+                                  {
+                                      "id":  "833d93d2-2408-4b59-b410-db7da30f4629",
+                                      "projectId":  "faf0cbaf-cf9a-4876-b2e0-4cc8595b7746",
+                                      "type":  "habit",
+                                      "date":  "2026-04-18T00:00:00",
+                                      "value":  "Done",
+                                      "streak":  0,
+                                      "tags":  [
+                                                   "fitness",
+                                                   "morning"
+                                               ],
+                                      "notes":  "Ran 3 km.",
+                                      "photos":  [
+
+                                                 ],
+                                      "createdAt":  "2026-04-18T08:00:00",
+                                      "updatedAt":  "2026-04-18T08:00:00"
+                                  },
+                                  {
+                                      "id":  "a805ec7a-4977-4f5f-9728-cbb4b45db741",
+                                      "projectId":  "faf0cbaf-cf9a-4876-b2e0-4cc8595b7746",
+                                      "type":  "habit",
+                                      "date":  "2026-04-19T00:00:00",
+                                      "value":  "Done",
+                                      "streak":  0,
+                                      "tags":  [
+                                                   "fitness"
+                                               ],
+                                      "notes":  "Stretch for 20 minutes.",
+                                      "photos":  [
+
+                                                 ],
+                                      "createdAt":  "2026-04-19T08:00:00",
+                                      "updatedAt":  "2026-04-19T08:00:00"
+                                  },
+                                  {
+                                      "id":  "5b3252cc-d57d-4561-a103-932e39ac2a1e",
+                                      "projectId":  "faf0cbaf-cf9a-4876-b2e0-4cc8595b7746",
+                                      "type":  "habit",
+                                      "date":  "2026-04-20T00:00:00",
+                                      "value":  "Done",
+                                      "streak":  0,
+                                      "tags":  [
+                                                   "fitness",
+                                                   "streak"
+                                               ],
+                                      "notes":  "Light recovery run.",
+                                      "photos":  [
+
+                                                 ],
+                                      "createdAt":  "2026-04-20T08:00:00",
+                                      "updatedAt":  "2026-04-20T08:00:00"
+                                  },
+                                  {
+                                      "id":  "60d8c186-42c9-4f97-9f14-94d5fa2713b3",
+                                      "projectId":  "560f7ee8-a397-4a58-97cc-9562e5166e9d",
+                                      "type":  "study",
+                                      "date":  "2026-04-18T00:00:00",
+                                      "value":  "Done",
+                                      "streak":  0,
+                                      "tags":  [
+                                                   "learning"
+                                               ],
+                                      "notes":  "Reviewed 30 words.",
+                                      "photos":  [
+
+                                                 ],
+                                      "createdAt":  "2026-04-18T21:00:00",
+                                      "updatedAt":  "2026-04-18T21:00:00"
+                                  },
+                                  {
+                                      "id":  "5362b4cd-3db7-4110-ae1a-c305ca37bf7a",
+                                      "projectId":  "560f7ee8-a397-4a58-97cc-9562e5166e9d",
+                                      "type":  "study",
+                                      "date":  "2026-04-20T00:00:00",
+                                      "value":  "Done",
+                                      "streak":  0,
+                                      "tags":  [
+                                                   "learning",
+                                                   "review"
+                                               ],
+                                      "notes":  "Listened for 25 minutes.",
+                                      "photos":  [
+
+                                                 ],
+                                      "createdAt":  "2026-04-20T21:00:00",
+                                      "updatedAt":  "2026-04-20T21:00:00"
+                                  }
+                              ],
+                 "personalInfo":  {
+                                      "id":  "personal_info",
+                                      "name":  "Open Source Demo",
+                                      "phone":  "13800000000",
+                                      "birthday":  "2000-01-01T00:00:00",
+                                      "savings":  8888.88,
+                                      "lastUpdated":  "2026-04-20T09:30:00"
+                                  },
+                 "reminderSetting":  {
+                                         "isEnabled":  false,
+                                         "reminderTime":  "20:00:00",
+                                         "reminderMessage":  "Check tasks and time records for today.",
+                                         "isMinimizedToTray":  true,
+                                         "startDate":  "2026-04-20T20:00:00",
+                                         "reminderType":  1,
+                                         "intervalDays":  1,
+                                         "weekDays":  [
+                                                          1,
+                                                          2,
+                                                          3,
+                                                          4,
+                                                          5
+                                                      ],
+                                         "monthlyDayNumber":  1,
+                                         "monthlyDayOfWeek":  1,
+                                         "nextReminderDate":  null,
+                                         "isActive":  false,
+                                         "lastTriggeredAt":  null
+                                     },
+                 "globalTags":  [
+                                    "review",
+                                    "dev",
+                                    "open-source",
+                                    "health",
+                                    "fitness",
+                                    "study",
+                                    "writing",
+                                    "demo"
+                                ],
+                 "countdowns":  [
+                                    {
+                                        "id":  "3b4b012f-7245-4a44-8867-1482976f5c4a",
+                                        "title":  "Beta demo day",
+                                        "targetDate":  "2026-05-01T00:00:00",
+                                        "createdAt":  "2026-04-20T09:00:00"
+                                    },
+                                    {
+                                        "id":  "6b9a823c-4d1a-4959-aed9-5acd54e733c2",
+                                        "title":  "Open source notes release",
+                                        "targetDate":  "2026-05-12T00:00:00",
+                                        "createdAt":  "2026-04-20T09:00:00"
+                                    }
+                                ],
+                 "countdown":  null
+             }
 }
